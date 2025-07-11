@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const {ipcRenderer} = require('electron');
 
 const configPath = path.join(__dirname, '..', 'config.json');
 
@@ -18,7 +19,7 @@ function saveConfig(data) {
 const views = {
     'nav-streamer': 'view-streamer',
     'nav-keys': 'view-keys',
-    'nav-userfilter': 'view-userfilter'
+    'nav-userfilter': 'view-userfilter',
 };
 
 Object.keys(views).forEach(navId => {
@@ -99,7 +100,29 @@ document.getElementById('saveUserBtn').addEventListener('click', () => {
     loadAll();
 });
 
-// Placeholder do startu nasłuchu
-document.getElementById('startListeningBtn').addEventListener('click', () => {
-    alert('Tu w przyszłości uruchomimy nasłuch TikTok Live!');
+const startListeningBtn = document.getElementById('startListeningBtn');
+startListeningBtn.addEventListener('click', async () => {
+    const res = await ipcRenderer.invoke('start-listener');
+    if (res.status === 'started') {
+        startListeningBtn.setAttribute('hidden', '');
+        stopListeningBtn.removeAttribute('hidden');
+        alert('Nasłuch rozpoczęty!');
+    } else if (res.status === 'already-running') {
+        alert('Nasłuch już trwa.');
+    } else {
+        alert('Nie udało się rozpocząć nasłuchu.');
+    }
 });
+
+const stopListeningBtn = document.getElementById('stopListeningBtn');
+stopListeningBtn.addEventListener('click', async () => {
+    const res = await ipcRenderer.invoke('stop-listener');
+    if (res.status === 'stopped') {
+        stopListeningBtn.setAttribute('hidden', '');
+        startListeningBtn.removeAttribute('hidden');
+        alert('Nasłuch został zatrzymany.');
+    } else if (res.status === 'not-running') {
+        alert('Nasłuch nie był uruchomiony.');
+    }
+});
+
