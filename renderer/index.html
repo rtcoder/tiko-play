@@ -1,17 +1,47 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>TikoPlay – Start</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>TikoPlay</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="container">
-  <h1>TikoPlay</h1>
-  <p>Podaj ID streamera TikTok:</p>
-  <input type="text" id="streamerId" placeholder="@twojanazwa">
-  <button id="saveBtn">Zapisz i kontynuuj</button>
+<div class="sidebar">
+  <div class="sidebar-header">TikoPlay</div>
+  <div class="sidebar-item" id="nav-streamer">
+    🎥 Streamer<br><small id="sidebar-streamer-id">-</small>
+  </div>
+  <div class="sidebar-item" id="nav-keys">
+    🎮 Klawisze<br><small id="sidebar-accepted-chars">-</small>
+  </div>
+  <div class="sidebar-item" id="nav-userfilter">
+    👤 Użytkownik<br><small id="sidebar-accepted-user">-</small>
+  </div>
 </div>
+
+<div class="content">
+  <section id="view-streamer" class="view active">
+    <h2>Streamer ID</h2>
+    <input type="text" id="streamerId" placeholder="@twojanazwa" />
+    <button id="saveStreamerBtn">Zapisz</button>
+  </section>
+
+  <section id="view-keys" class="view">
+    <h2>Akceptowane klawisze</h2>
+    <p>Podaj znaki akceptowane (oddzielone przecinkami, np. <code>1,2,3,w,a,s,d</code>):</p>
+    <input type="text" id="acceptedChars" placeholder="np. 1,2,3,w,a,s,d" />
+    <button id="saveKeysBtn">Zapisz</button>
+    <button id="startListeningBtn">Zacznij nasłuchiwać</button>
+  </section>
+
+  <section id="view-userfilter" class="view">
+    <h2>Filtr użytkownika</h2>
+    <p>Podaj nazwę użytkownika TikTok, którego komentarze mają być brane pod uwagę (opcjonalne):</p>
+    <input type="text" id="acceptedUser" placeholder="np. user123" />
+    <button id="saveUserBtn">Zapisz</button>
+  </section>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
