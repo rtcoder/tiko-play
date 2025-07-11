@@ -1,9 +1,10 @@
 {
-  "streamerId": "sx",
-  "commandMappings": [
-    {
-      "comment": "sac",
-      "key": "d"
-    }
+  "streamerId": "@gracz",
+  "acceptedChars": [
+    "4",
+    "2",
+    "4",
+    "r",
+    "w"
   ]
 }

@@ -2,20 +2,17 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <title>TikoPlay – Mapowanie</title>
+  <title>TikoPlay – Konfiguracja komend</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="container">
-  <h1>Mapowanie komend</h1>
-  <p>Wprowadź komentarze i przypisane im klawisze:</p>
+  <h1>TikoPlay</h1>
+  <p>Podaj znaki, które mają być akceptowane jako komendy (oddzielone przecinkami, np. <code>1,2,3</code>):</p>
+  <input type="text" id="acceptedChars" placeholder="np. 1,2,3,w,a,s,d">
 
-  <div id="mappings">
-    <!-- dynamicznie dodane pola -->
-  </div>
-
-  <button id="addBtn">Dodaj kolejną komendę</button>
-  <button id="saveBtn">Zapisz mapowanie</button>
+  <br><br>
+  <button id="saveBtn">Zapisz</button>
   <hr>
   <button id="settingsBtn">Wróć do ustawień streamera</button>
 </div>
