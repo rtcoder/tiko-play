@@ -8,6 +8,8 @@ body {
 }
 
 .sidebar {
+    display: flex;
+    flex-direction: column;
     width: 200px;
     background: #1e1e1e;
     padding: 20px;

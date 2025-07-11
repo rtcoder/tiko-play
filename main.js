@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const {app, BrowserWindow} = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -10,8 +10,8 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,  // tylko na starcie, potem warto izolować
-            contextIsolation: false
-        }
+            contextIsolation: false,
+        },
     });
 
     let config = {};
@@ -19,11 +19,7 @@ function createWindow() {
         config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
     }
 
-    if (config.streamerId) {
-        win.loadFile('renderer/mapping.html');
-    } else {
-        win.loadFile('renderer/index.html');
-    }
+    win.loadFile('renderer/index.html');
 }
 
 app.whenReady().then(createWindow);

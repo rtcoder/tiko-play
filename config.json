@@ -1,3 +1,8 @@
 {
-  "streamerId": "dad"
+  "streamerId": "dad",
+  "acceptedChars": [
+    "1",
+    "h"
+  ],
+  "acceptedUser": "gfdz"
 }
