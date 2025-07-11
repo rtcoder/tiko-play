@@ -1,3 +1,9 @@
 {
-  "streamerId": ""
+  "streamerId": "sx",
+  "commandMappings": [
+    {
+      "comment": "sac",
+      "key": "d"
+    }
+  ]
 }
