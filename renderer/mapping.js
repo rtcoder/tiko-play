@@ -43,5 +43,8 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 document.getElementById('settingsBtn').addEventListener('click', () => {
     location.href = 'index.html';
 });
+document.getElementById('userFilterBtn').addEventListener('click', () => {
+    location.href = 'userfilter.html';
+});
 
 window.addEventListener('DOMContentLoaded', loadAcceptedChars);

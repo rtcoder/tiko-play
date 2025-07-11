@@ -37,3 +37,8 @@ button {
     cursor: pointer;
     font-weight: bold;
 }
+button#startListeningBtn {
+    background-color: #0abde3;
+    color: #121212;
+    font-weight: bold;
+}
