@@ -5,7 +5,7 @@ REM call venv\Scripts\activate
 REM Zainstaluj zależności
 pip install -r requirements.txt
 
-REM Buduj simulate.exe bez konsoli
-pyinstaller simulate.spec
+REM Buduj tiko-play.exe bez konsoli
+pyinstaller tiko-play.spec
 
 pause

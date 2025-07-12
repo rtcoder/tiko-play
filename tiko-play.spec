@@ -1,10 +1,10 @@
 
-# simulate.spec
+# tiko-play.spec
 
 block_cipher = None
 
 a = Analysis(
-    ['simulate.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -26,13 +26,13 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='simulate',
+    name='tiko-play',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,
-    icon='simulate.ico',
+    icon='tiko-play.ico',
 )
 
 coll = COLLECT(
@@ -43,5 +43,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='simulate',
+    name='tiko-play',
 )

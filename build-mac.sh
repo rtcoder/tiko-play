@@ -5,5 +5,5 @@
 # Zainstaluj zależności
 pip install -r requirements.txt
 
-# Buduj simulate (dostaniesz plik simulate w dist/)
-pyinstaller simulate.spec
+# Buduj tiko-play (dostaniesz plik tiko-play w dist/)
+pyinstaller tiko-play.spec

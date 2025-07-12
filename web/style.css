@@ -1,0 +1,80 @@
+body {
+    font-family: sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    color: #333;
+}
+
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+    width: 150px;
+    background-color: #e0e0e0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ccc;
+}
+
+.sidebar .menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .nav-button {
+    margin-bottom: 10px;
+}
+
+#listen-button {
+    margin-top: auto; /* Przycisk na dole */
+    background-color: #4CAF50;
+    color: white;
+}
+
+#listen-button.running {
+    background-color: #f44336; /* Czerwony gdy działa */
+}
+
+/* --- Główna zawartość --- */
+.content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.view {
+    display: none; /* Domyślnie ukryte */
+}
+
+.view.active {
+    display: block; /* Pokazuje aktywny widok */
+}
+
+input[type="text"] {
+    width: 90%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#save-button {
+    margin-top: 20px;
+    background-color: #008CBA;
+    color: white;
+}
+
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    opacity: 0.9;
+}
