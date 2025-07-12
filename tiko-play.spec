@@ -1,4 +1,3 @@
-
 # tiko-play.spec
 
 block_cipher = None
@@ -7,7 +6,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('web/index.html', 'web'), ('web/style.css', 'web'), ('web/script.js', 'web')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

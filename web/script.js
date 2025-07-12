@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('streamer_id').value = settings.streamer_id;
         document.getElementById('allowed_keys').value = settings.allowed_keys;
         document.getElementById('target_user').value = settings.target_user;
+        document.querySelector('.keys').innerHTML = settings.allowed_keys.split(',').map(key => `<div class="single-key">${key.trim()}</div>`).join('');
 
         updateListenButton();
     }
