@@ -143,10 +143,32 @@ button:hover {
     cursor: default;
     user-select: none;
     transition: all 0.05s ease-out;
+    position: relative;
 }
 
-.single-key:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 var(--key-border),
-    0 2px 0 var(--key-shadow);
+.single-key .delete-key {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: -5px;
+    right: -5px;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: #212728;
+    border: 1px solid #666666;
+}
+
+.single-key .delete-key::before,
+.single-key .delete-key::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 15px;
+    background-color: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+.single-key .delete-key::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
 }
