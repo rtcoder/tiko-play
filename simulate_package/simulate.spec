@@ -1,5 +1,5 @@
+
 # simulate.spec
-# Użyj: pyinstaller simulate.spec
 
 block_cipher = None
 
@@ -31,8 +31,8 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,  # False = brak okna konsoli
-    icon='simulate.ico',  # podaj ścieżkę do swojej ikony lub zostaw None
+    console=False,
+    icon='simulate.ico',
 )
 
 coll = COLLECT(

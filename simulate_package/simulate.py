@@ -1,4 +1,4 @@
-# simulate.py
+
 import sys
 import pyautogui
 
