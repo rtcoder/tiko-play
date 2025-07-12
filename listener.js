@@ -1,6 +1,7 @@
-const { TikTokLiveConnection } = require('tiktok-live-connector');
+const {TikTokLiveConnection} = require('tiktok-live-connector');
 const fs = require('fs');
 const path = require('path');
+const {execFile} = require('child_process');
 
 // Wczytujemy konfigurację
 const configPath = path.join(__dirname, 'config.json');
@@ -28,8 +29,19 @@ console.log(`[TikoPlay] Akceptowane komendy: ${acceptedChars.join(', ')}`);
 
 // Tworzymy połączenie
 let tiktok = new TikTokLiveConnection(streamerId, {
-    enableExtendedGiftInfo: false
+    enableExtendedGiftInfo: false,
 });
+
+function sendKey(key) {
+    const exePath = path.join(__dirname, 'tools', 'simulate.exe');
+    execFile(exePath, [key], (error, stdout, stderr) => {
+        if (error) {
+            console.error(`[simulate.exe] Błąd: ${error.message}`);
+            return;
+        }
+        console.log(`[simulate.exe] OK: ${stdout}`);
+    });
+}
 
 // Obsługa komentarzy
 tiktok.on('chat', (data) => {
@@ -44,7 +56,7 @@ tiktok.on('chat', (data) => {
     // Akceptujemy tylko pojedyncze znaki, które są na liście
     if (comment.length === 1 && acceptedChars.includes(comment)) {
         console.log(`[HIT] ${username}: "${comment}" -> akcja!`);
-        // TODO: tutaj zasymuluj naciśnięcie klawisza
+        sendKey(comment);
     } else {
         console.log(`[POMINIĘTO] ${username}: "${comment}"`);
     }
