@@ -25,8 +25,7 @@ def save_settings(settings):
     # 2. Zaktualizuj stan listenera w pamięci (tak jak wcześniej)
     listener.streamer_id = settings.get("streamer_id", "")
     listener.target_user = settings.get("target_user", "")
-    keys_raw = settings.get("allowed_keys", [])
-    listener.allowed_keys = [k.strip() for k in keys_raw if k.strip()]
+    listener.key_mapping = settings.get("key_mapping", {})
 
     print(f"Zapisano ustawienia do {CONFIG_FILE}:", settings)
     return True
@@ -44,8 +43,7 @@ def get_settings():
                 # 2. Zaktualizuj stan listenera na podstawie wczytanych danych
                 listener.streamer_id = settings.get("streamer_id", "")
                 listener.target_user = settings.get("target_user", "")
-                keys_raw = settings.get("allowed_keys", [])
-                listener.allowed_keys = [k.strip() for k in keys_raw if k.strip()]
+                listener.key_mapping = settings.get("key_mapping", {})
                 print(f"Wczytano ustawienia z pliku {CONFIG_FILE}")
         except (json.JSONDecodeError, IOError) as e:
             print(f"Błąd odczytu pliku {CONFIG_FILE}: {e}. Używam domyślnych ustawień.")
@@ -53,7 +51,7 @@ def get_settings():
     # 3. Zawsze zwracaj aktualny stan listenera do interfejsu
     return {
         "streamer_id": listener.streamer_id,
-        "allowed_keys": listener.allowed_keys,
+        "key_mapping": listener.key_mapping,
         "target_user": listener.target_user
     }
 

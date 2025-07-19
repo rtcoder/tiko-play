@@ -1,46 +1,48 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <title>TikoPlay</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="text/javascript" src="/eel.js"></script>
-    <script type="text/javascript" src="script.js" defer></script>
+  <meta charset="UTF-8">
+  <title>TikoPlay</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="text/javascript" src="/eel.js"></script>
+  <script type="text/javascript" src="script.js" defer></script>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="sidebar">
-        <div class="menu">
-            <button class="nav-button active" data-view="streamer">Streamer</button>
-            <button class="nav-button" data-view="keys">Klawisze</button>
-            <button class="nav-button" data-view="user">Użytkownik</button>
-        </div>
-        <button id="listen-button">🎧 Nasłuchuj</button>
+  <div class="sidebar">
+    <div class="menu">
+      <button class="nav-button active" data-view="streamer">Streamer</button>
+      <button class="nav-button" data-view="keys">Klawisze</button>
+      <button class="nav-button" data-view="user">Użytkownik</button>
+    </div>
+    <button id="listen-button">🎧 Nasłuchuj</button>
+  </div>
+
+  <div class="content">
+    <div id="streamer-view" class="view active">
+      <h2>ID Streamera TikTok</h2>
+      <p>Podaj unikalne ID streamera (np. @nazwa_uzytkownika)</p>
+      <input type="text" id="streamer_id">
     </div>
 
-    <div class="content">
-        <div id="streamer-view" class="view active">
-            <h2>ID Streamera TikTok</h2>
-            <p>Podaj unikalne ID streamera (np. @nazwa_uzytkownika)</p>
-            <input type="text" id="streamer_id">
-        </div>
-
-        <div id="keys-view" class="view">
-            <h2>Akceptowalne klawisze</h2>
-            <p>Wprowadź klawisze, które mają być akceptowane (oddzielone przecinkami).</p>
-            <div class="keys"></div>
-            <input type="text" id="allowed_keys" placeholder="np. w, a, s, d, 1, 2">
-        </div>
-
-        <div id="user-view" class="view">
-            <h2>Filtruj użytkownika (opcjonalnie)</h2>
-            <p>Wpisz unikalny nick użytkownika, aby reagować tylko na jego komentarze.</p>
-            <input type="text" id="target_user">
-        </div>
-
-        <button id="save-button">Zapisz wszystko</button>
+    <div id="keys-view" class="view">
+      <h2>Mapowanie komentarzy</h2>
+      <p>Dodaj komentarz i przypisz klawisz, który ma zostać naciśnięty.</p>
+      <div id="mapping-list"></div>
+      <input type="text" id="new_comment" placeholder="np. lewo">
+      <input type="text" id="new_key" placeholder="np. a">
+      <button id="add-mapping">Dodaj mapowanie</button>
     </div>
+
+    <div id="user-view" class="view">
+      <h2>Filtruj użytkownika (opcjonalnie)</h2>
+      <p>Wpisz unikalny nick użytkownika, aby reagować tylko na jego komentarze.</p>
+      <input type="text" id="target_user">
+    </div>
+
+    <button id="save-button">Zapisz wszystko</button>
+  </div>
 </div>
 
 </body>

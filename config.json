@@ -1,9 +1,9 @@
 {
-    "streamer_id": "df`df",
-    "allowed_keys": [
-        "f",
-        "w",
-        "c"
-    ],
-    "target_user": "sdsd"
+  "streamer_id": "@retropurysta",
+  "key_mapping": {
+    "1": "1",
+    "lewo": "a",
+    "prawo": "d"
+  },
+  "target_user": "adriannaalbrych"
 }

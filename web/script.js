@@ -1,36 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const allowed_keys=[];
+    const allowed_keys = [];
     const navButtons = document.querySelectorAll('.nav-button');
     const views = document.querySelectorAll('.view');
     const listenButton = document.getElementById('listen-button');
     const saveButton = document.getElementById('save-button');
+    const mappingList = document.getElementById('mapping-list');
+    const newCommentInput = document.getElementById('new_comment');
+    const newKeyInput = document.getElementById('new_key');
+    const addMappingBtn = document.getElementById('add-mapping');
+    let keyMapping = {};
+
+
+    function renderMapping() {
+        mappingList.innerHTML = '';
+        for (const [comment, key] of Object.entries(keyMapping)) {
+            const item = document.createElement('div');
+            item.classList.add('mapping-item');
+            item.innerHTML = `<div class="single-key"><div class="delete-key"></div><strong>${comment}</strong> → ${key}</div>`;
+            mappingList.appendChild(item);
+        }
+    }
 
     async function initialize() {
         const settings = await eel.get_settings()();
+        keyMapping = settings.key_mapping || {};
+        renderMapping();
         document.getElementById('streamer_id').value = settings.streamer_id;
-        allowed_keys.push(...settings.allowed_keys);
         document.getElementById('target_user').value = settings.target_user;
-        document.querySelector('.keys').innerHTML = settings.allowed_keys
-            .map(key => `<div class="single-key"><div class="delete-key"></div> ${key.trim()}</div>`).join('');
         updateListenButton();
     }
 
-    document.querySelector('.keys').addEventListener('click', (e) => {
+    addMappingBtn.addEventListener('click', () => {
+        const comment = newCommentInput.value.trim().toLowerCase();
+        const key = newKeyInput.value.trim();
+        if (comment && key) {
+            keyMapping[comment] = key;
+            renderMapping();
+            newCommentInput.value = '';
+            newKeyInput.value = '';
+        }
+    });
+
+    mappingList.addEventListener('click', (e) => {
         if (e.target.classList.contains('delete-key')) {
             const key = e.target.parentElement.innerText.trim();
             allowed_keys.splice(allowed_keys.indexOf(key), 1);
             e.target.parentElement.remove();
         }
     });
-    document.querySelector('#allowed_keys').addEventListener('input', (e) => {
-        if(e.data !== ',') {
-            return;
-        }
-        allowed_keys.push(...e.target.value.split(',').map(key => key.trim()).filter(key => key.length > 0));
-        document.querySelector('.keys').innerHTML = allowed_keys
-            .map(key => `<div class="single-key"><div class="delete-key"></div> ${key.trim()}</div>`).join('');
-        e.target.value = '';
-    })
 
     navButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -41,10 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('active');
         });
     });
+
     saveButton.addEventListener('click', async () => {
         const settings = {
             streamer_id: document.getElementById('streamer_id').value,
-            allowed_keys,
+            key_mapping: keyMapping,
             target_user: document.getElementById('target_user').value,
         };
         const success = await eel.save_settings(settings)();
@@ -52,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Ustawienia zapisane!');
         }
     });
+
     listenButton.addEventListener('click', async () => {
         const result = await eel.toggle_listening()();
         if (result.error) {

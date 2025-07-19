@@ -7,16 +7,11 @@ import threading
 class TikTokListener:
     def __init__(self):
         self.streamer_id = ""
-        self.allowed_keys = []
+        self.key_mapping = {}
         self.target_user = ""
         self.client = None
         self.running = False
         self.thread = None
-
-    def configure(self, streamer_id, keys, target_user):
-        self.streamer_id = streamer_id
-        self.allowed_keys = keys
-        self.target_user = target_user
 
     def start(self):
         if not self.streamer_id or self.running:
@@ -29,16 +24,20 @@ class TikTokListener:
             async def on_comment(event: CommentEvent):
                 if self.target_user and event.user.unique_id != self.target_user:
                     return
-                if event.comment in self.allowed_keys:
-                    pyautogui.press(event.comment)
+                comment = event.comment.strip().lower()
+                if comment in self.key_mapping:
+                    key = self.key_mapping[comment]
+                    print(f"🟢 Komentarz '{comment}' → uruchamiam klawisz '{key}'")
+                    pyautogui.press(key)
+                else:
+                    print(f"⚪ Nieobsługiwany komentarz: '{comment}'")
 
             self.running = True
-
             try:
                 self.client.run()
             except UserNotFoundError:
-                print("brak streamera")
-                self.running = False
+                print("❌ Nie znaleziono streamera.")
+            self.running = False
 
         self.thread = threading.Thread(target=run, daemon=True)
         self.thread.start()
