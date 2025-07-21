@@ -8,7 +8,6 @@
   <script type="text/javascript" src="script.js" defer></script>
 </head>
 <body>
-
 <div class="app-container">
   <div class="sidebar">
     <div class="menu">
@@ -18,7 +17,6 @@
     </div>
     <button id="listen-button">🎧 Nasłuchuj</button>
   </div>
-
   <div class="content">
     <div id="streamer-view" class="view active">
       <h2>ID Streamera TikTok</h2>
@@ -28,11 +26,50 @@
 
     <div id="keys-view" class="view">
       <h2>Mapowanie komentarzy</h2>
-      <p>Dodaj komentarz i przypisz klawisz, który ma zostać naciśnięty.</p>
-      <div id="mapping-list"></div>
+      <p>Dodaj komentarz i przypisz akcję (naciśnięcie klawisza lub kombinacji).</p>
+      <div class="radio">
+        <label><input type="radio" name="key_mode" value="single" checked> Pojedynczy klawisz</label>
+        <label><input type="radio" name="key_mode" value="combo"> Kombinacja klawiszy</label>
+      </div>
+      <label for="new_comment">Komentarz:</label>
       <input type="text" id="new_comment" placeholder="np. lewo">
-      <input type="text" id="new_key" placeholder="np. a">
-      <button id="add-mapping">Dodaj mapowanie</button>
+
+      <div id="single-key-area">
+        <input type="text" id="typed_key" placeholder="lub naciśnij zwykły klawisz">
+      </div>
+      <div id="combo-key-area" style="display: none;">
+        <div id="combo-list"></div>
+        <input type="text" id="combo-input" placeholder="Wciśnij klawisz i dodaj">
+        <button id="add-combo-key">+ Dodaj do kombinacji</button>
+      </div>
+      <button id="add-mapping">➕ Dodaj mapowanie</button>
+      <table>
+        <thead>
+        <tr>
+          <th>Komentarz</th>
+          <th>Akcja</th>
+        </tr>
+        </thead>
+        <tbody id="mapping-table"></tbody>
+      </table>
+      <template id="special-keys-template">
+        <select class="special_keys">
+          <option value="">– wybierz specjalny klawisz –</option>
+          <option value="enter">Enter</option>
+          <option value="space">Spacja</option>
+          <option value="tab">Tab</option>
+          <option value="esc">Escape</option>
+          <option value="backspace">Backspace</option>
+          <option value="delete">Delete</option>
+          <option value="up">Strzałka w górę</option>
+          <option value="down">Strzałka w dół</option>
+          <option value="left">Strzałka w lewo</option>
+          <option value="right">Strzałka w prawo</option>
+          <option value="ctrl">Ctrl</option>
+          <option value="shift">Shift</option>
+          <option value="alt">Alt</option>
+        </select>
+      </template>
     </div>
 
     <div id="user-view" class="view">
@@ -40,10 +77,8 @@
       <p>Wpisz unikalny nick użytkownika, aby reagować tylko na jego komentarze.</p>
       <input type="text" id="target_user">
     </div>
-
     <button id="save-button">Zapisz wszystko</button>
   </div>
 </div>
-
 </body>
 </html>

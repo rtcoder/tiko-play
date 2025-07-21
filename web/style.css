@@ -1,3 +1,6 @@
+@import "sidebar.css";
+@import "keys-view.css";
+
 :root {
     /* --- Dark Theme Variables (Default) --- */
     --body-bg: #1a1a1a;
@@ -13,13 +16,20 @@
     --input-text: #e0e0e0;
     --listen-button-running: #f44336;
     --listen-button-active: #4CAF50;
-    --save-button-bg: #007bb5;
+    --active-bg: #007bb5;
 
     /* --- Keyboard Key Variables (Dark Theme) --- */
     --key-bg: #4a4a4a;
     --key-border: #666666;
     --key-shadow: rgba(0, 0, 0, 0.5);
     --key-text: #f0f0f0;
+}
+
+* {
+    user-select: none;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
@@ -32,41 +42,7 @@ body {
 .app-container {
     display: flex;
     height: 100vh;
-}
-
-/* --- Sidebar --- */
-.sidebar {
-    width: 150px;
-    background-color: var(--sidebar-bg);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--sidebar-border);
-}
-
-.sidebar .menu {
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar .nav-button {
-    margin-bottom: 10px;
-    background-color: var(--button-bg);
-    color: var(--button-text);
-}
-
-.sidebar .nav-button.active {
-    background-color: var(--button-bg-active);
-}
-
-#listen-button {
-    margin-top: auto; /* Przycisk na dole */
-    background-color: var(--listen-button-active);
-    color: white;
-}
-
-#listen-button.running {
-    background-color: var(--listen-button-running); /* Czerwony gdy działa */
+    padding-left: 200px;
 }
 
 /* --- Główna zawartość --- */
@@ -77,16 +53,16 @@ body {
 }
 
 .view {
-    display: none; /* Domyślnie ukryte */
+    display: none !important;
 }
 
 .view.active {
-    display: block; /* Pokazuje aktywny widok */
+    display: flex !important;
+    flex-direction: column;
 }
 
 input[type="text"] {
     width: 90%;
-    padding: 8px;
     margin-top: 10px;
     border: 1px solid var(--input-border);
     border-radius: 4px;
@@ -94,16 +70,18 @@ input[type="text"] {
     color: var(--input-text);
     height: 30px;
     font-size: 20px;
+    padding: 20px;
+}
+select,input{
     outline: none;
 }
-
-input[type="text"]:focus {
+:is(input, select):focus {
     border-color: var(--input-border-active);
 }
 
 #save-button {
     margin-top: 20px;
-    background-color: var(--save-button-bg);
+    background-color: var(--active-bg);
     color: white;
 }
 
@@ -119,56 +97,4 @@ button {
 
 button:hover {
     opacity: 0.9;
-}
-
-/* --- Single Key Style --- */
-.single-key {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    min-width: 40px;
-    height: 40px;
-    padding: 5px 10px;
-    margin: 5px;
-    background-color: var(--key-bg);
-    border: 1px solid var(--key-border);
-    border-radius: 4px;
-    box-shadow: 0 3px 0 var(--key-border),
-    0 4px 0 var(--key-shadow);
-    font-family: 'Segoe UI', 'Roboto', sans-serif;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--key-text);
-    text-transform: uppercase;
-    cursor: default;
-    user-select: none;
-    transition: all 0.05s ease-out;
-    position: relative;
-}
-
-.single-key .delete-key {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    top: -5px;
-    right: -5px;
-    border-radius: 50%;
-    cursor: pointer;
-    background-color: #212728;
-    border: 1px solid #666666;
-}
-
-.single-key .delete-key::before,
-.single-key .delete-key::after {
-    content: '';
-    position: absolute;
-    width: 2px;
-    height: 15px;
-    background-color: white;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(45deg);
-}
-.single-key .delete-key::after {
-    transform: translate(-50%, -50%) rotate(-45deg);
 }

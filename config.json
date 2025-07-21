@@ -1,9 +1,23 @@
 {
-  "streamer_id": "@retropurysta",
-  "key_mapping": {
-    "1": "1",
-    "lewo": "a",
-    "prawo": "d"
-  },
-  "target_user": "adriannaalbrych"
+    "streamer_id": "@retropurysta",
+    "target_user": "adriannaalbrych1",
+    "mappings": {
+        "s": [
+            "up"
+        ],
+        "sa": [
+            "up"
+        ],
+        "sas": [
+            "down"
+        ],
+        "lewo": [
+            "left"
+        ],
+        "aa": [
+            "ctrl",
+            "a",
+            "x"
+        ]
+    }
 }

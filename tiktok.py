@@ -1,17 +1,24 @@
+import threading
+
+import pyautogui
 from TikTokLive import TikTokLiveClient
 from TikTokLive.client.errors import UserNotFoundError
 from TikTokLive.events import CommentEvent
-import pyautogui
-import threading
+
 
 class TikTokListener:
     def __init__(self):
         self.streamer_id = ""
-        self.key_mapping = {}
         self.target_user = ""
+        self.mappings = {}
         self.client = None
         self.running = False
         self.thread = None
+
+    def configure(self, settings):
+        self.streamer_id = settings.get("streamer_id", "")
+        self.target_user = settings.get("target_user", "")
+        self.mappings = settings.get("mappings", {})
 
     def start(self):
         if not self.streamer_id or self.running:
@@ -25,19 +32,20 @@ class TikTokListener:
                 if self.target_user and event.user.unique_id != self.target_user:
                     return
                 comment = event.comment.strip().lower()
-                if comment in self.key_mapping:
-                    key = self.key_mapping[comment]
-                    print(f"🟢 Komentarz '{comment}' → uruchamiam klawisz '{key}'")
-                    pyautogui.press(key)
-                else:
-                    print(f"⚪ Nieobsługiwany komentarz: '{comment}'")
+                print(f"Komentarz: {comment}")
+                if comment in self.mappings:
+                    keys = self.mappings[comment]
+                    if len(keys) == 1:
+                        pyautogui.press(keys[0])
+                    else:
+                        pyautogui.hotkey(*keys)
 
             self.running = True
             try:
                 self.client.run()
             except UserNotFoundError:
-                print("❌ Nie znaleziono streamera.")
-            self.running = False
+                print("Nie znaleziono streamera")
+                self.running = False
 
         self.thread = threading.Thread(target=run, daemon=True)
         self.thread.start()
