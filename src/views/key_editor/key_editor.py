@@ -1,9 +1,11 @@
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel,
     QPushButton, QScrollArea, QHBoxLayout, QComboBox, QMessageBox
 )
 
-from presets import PRESETS
+from src.views.key_editor.presets import PRESETS
+from src.config import save_config
 from src.views.key_editor.mapping_row import MappingRow
 
 
@@ -12,6 +14,11 @@ class KeysEditor(QWidget):
         super().__init__()
         self.config = config
         self.on_save = on_save
+
+        self.autosave_timer = QTimer(self)
+        self.autosave_timer.setSingleShot(True)
+        self.autosave_timer.setInterval(500)  # ms
+        self.autosave_timer.timeout.connect(self.autosave)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -66,6 +73,16 @@ class KeysEditor(QWidget):
         for m in self.config["mappings"]:
             self.add_row(m)
 
+    def schedule_autosave(self):
+        self.autosave_timer.start()
+
+    def autosave(self):
+        save_config(self.config)
+
+        # opcjonalny log
+        if hasattr(self, "logger") and self.logger:
+            self.logger.log("💾 Autosave")
+
     def apply_preset(self):
         name = self.preset_select.currentText()
 
@@ -88,6 +105,7 @@ class KeysEditor(QWidget):
         ]
 
         self.rebuild()
+        self.schedule_autosave()
         self.preset_select.setCurrentIndex(0)
 
     def add_row(self, mapping):
@@ -96,7 +114,7 @@ class KeysEditor(QWidget):
         row = MappingRow(
             mapping,
             index=index,
-            on_change=lambda: None,
+            on_change=lambda: self.schedule_autosave,
             on_remove=lambda r=mapping: self.remove_mapping(r)
         )
         self.rows_layout.addWidget(row)
@@ -105,6 +123,7 @@ class KeysEditor(QWidget):
         mapping = {"trigger": "", "keys": [""]}
         self.config["mappings"].append(mapping)
         self.add_row(mapping)
+        self.schedule_autosave()
 
     def remove_mapping(self, index):
         print(f"removing {index}")
@@ -113,6 +132,7 @@ class KeysEditor(QWidget):
             self.config["mappings"].pop(index)
 
         self.rebuild()
+        self.schedule_autosave()
 
     def rebuild(self):
         while self.rows_layout.count():

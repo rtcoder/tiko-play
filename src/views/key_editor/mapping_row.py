@@ -63,10 +63,14 @@ class MappingRow(QWidget):
             self.mapping["keys"].append(value)
             self.render_keys()
 
+        self.on_change()
+
     def remove_key(self, index):
         if 0 <= index < len(self.mapping["keys"]):
             self.mapping["keys"].pop(index)
             self.render_keys()
+
+        self.on_change()
 
     def render_keys(self):
         # wyczyść layout
