@@ -5,21 +5,31 @@
     {
       "trigger": "1",
       "keys": [
-        "1"
+        "1",
+        "4",
+        "8",
+        "2"
       ]
     },
     {
       "trigger": "lewo",
       "keys": [
-        "left"
+        "left",
+        "space"
       ]
     },
     {
-      "trigger": "ult",
+      "trigger": "lkj",
       "keys": [
-        "ctrl",
-        "shift",
-        "x"
+        "tab",
+        "backspace"
+      ]
+    },
+    {
+      "trigger": "ss",
+      "keys": [
+        "space",
+        "tab"
       ]
     }
   ]

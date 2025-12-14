@@ -5,12 +5,14 @@ import threading
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QPushButton,
-    QLabel, QLineEdit, QListWidget, QListWidgetItem
+    QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QStackedWidget
 )
-from PySide6.QtCore import Qt
 
 from config import load_config, save_config
+from key_editor import KeysEditor
 from listener import TikTokListener
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -45,13 +47,22 @@ class MainWindow(QMainWindow):
         layout.addLayout(sidebar, 1)
 
         # CONTENT
-        self.content = QVBoxLayout()
-        layout.addLayout(self.content, 4)
+        self.stack = QStackedWidget()
+        layout.addWidget(self.stack, 4)
 
         # VIEWS
         self.view_streamer = self.build_streamer_view()
-        self.view_keys = self.build_keys_view()
+        self.view_keys = KeysEditor(
+            self.config,
+            on_save=lambda: save_config(self.config)
+        )
         self.view_user = self.build_user_view()
+
+        self.stack.addWidget(self.view_streamer)
+        self.stack.addWidget(self.view_keys)
+        self.stack.addWidget(self.view_user)
+
+        self.stack.setCurrentWidget(self.view_streamer)
 
         self.switch_view(self.view_streamer)
         self.btn_streamer.setChecked(True)
@@ -62,15 +73,8 @@ class MainWindow(QMainWindow):
         self.btn_user.clicked.connect(lambda: self.switch_view(self.view_user))
         self.btn_toggle.clicked.connect(self.toggle_listener)
 
-    def clear_content(self):
-        while self.content.count():
-            item = self.content.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
     def switch_view(self, widget):
-        self.clear_content()
-        self.content.addWidget(widget)
+        self.stack.setCurrentWidget(widget)
 
     def build_streamer_view(self):
         w = QWidget()
@@ -134,6 +138,7 @@ class MainWindow(QMainWindow):
                 target=lambda: asyncio.run(self.listener.start(self.config)),
                 daemon=True
             ).start()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
