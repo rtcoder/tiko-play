@@ -3,8 +3,8 @@ from PySide6.QtWidgets import (
     QPushButton, QComboBox
 )
 
-from key_chip import KeyChip
-from special_keys import SPECIAL_KEYS
+from src.views.key_editor.key_editor import KeyChip
+from src.views.key_editor.special_keys import SPECIAL_KEYS
 
 
 class MappingRow(QWidget):

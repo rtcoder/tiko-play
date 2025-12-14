@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-CONFIG_PATH = Path("config.json")
+CONFIG_PATH = Path("../config.json")
 
 def load_config():
     if CONFIG_PATH.exists():
