@@ -9,13 +9,13 @@ struct ListenerState {
 #[tauri::command]
 fn start_listener(state: State<ListenerState>) -> Result<(), String> {
     let mut guard = state.process.lock().unwrap();
-
     if guard.is_some() {
         return Err("Listener already running".into());
     }
 
     let child = Command::new("python")
         .arg("python/listener.py")
+        .arg("config.json")
         .spawn()
         .map_err(|e| e.to_string())?;
 
