@@ -5,11 +5,12 @@ from TikTokLive import TikTokLiveClient
 from TikTokLive.events import CommentEvent
 
 class TikTokListener:
-    def __init__(self):
+    def __init__(self, logger=None):
         self.client = None
         self.running = False
         self.task = None
         self.cooldowns = {}
+        self.logger = logger
 
     async def start(self, config):
         if self.running:
@@ -23,6 +24,7 @@ class TikTokListener:
             for m in config.get("mappings", [])
         }
 
+        self.log(f"🔌 Łączenie z @{streamer}")
         self.client = TikTokLiveClient(unique_id=streamer)
 
         @self.client.on(CommentEvent)
@@ -32,6 +34,8 @@ class TikTokListener:
 
             comment = event.comment.strip().lower()
             user = event.user.unique_id
+
+            self.log(f"💬 {user}: {comment}")
 
             if target_user and user != target_user:
                 return
@@ -47,6 +51,7 @@ class TikTokListener:
             self.cooldowns[comment] = now
 
             keys = mappings[comment]
+            self.log(f"🎮 Trigger '{comment}' → {keys}")
             print(f"Trigger '{comment}' -> {keys}")
 
             if len(keys) == 1:
@@ -63,3 +68,9 @@ class TikTokListener:
 
     def stop(self):
         self.running = False
+        self.log("⏹ Listener zatrzymany")
+
+    def log(self, msg):
+        if self.logger:
+            self.logger.log(msg)
+

@@ -12,6 +12,8 @@ from PySide6.QtWidgets import (
 from config import load_config, save_config
 from key_editor import KeysEditor
 from listener import TikTokListener
+from log_view import LogView
+from ui_logger import UILogger
 
 
 class MainWindow(QMainWindow):
@@ -19,9 +21,17 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("TikoPlay")
         self.resize(900, 550)
-
         self.config = load_config()
-        self.listener = TikTokListener()
+
+        self.log_view = None
+        self.logger = None
+
+        if self.config.get("show_logs", True):
+            self.logger = UILogger()
+            self.log_view = LogView()
+            self.logger.message.connect(self.log_view.append_log)
+
+        self.listener = TikTokListener(logger=self.logger)
 
         root = QWidget()
         self.setCentralWidget(root)
@@ -49,6 +59,13 @@ class MainWindow(QMainWindow):
         # CONTENT
         self.stack = QStackedWidget()
         layout.addWidget(self.stack, 4)
+
+
+        if self.log_view:
+            content = QVBoxLayout()
+            content.addWidget(self.stack, 1)
+            content.addWidget(self.log_view)
+            layout.addLayout(content, 4)
 
         # VIEWS
         self.view_streamer = self.build_streamer_view()

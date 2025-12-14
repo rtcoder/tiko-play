@@ -1,4 +1,6 @@
 {
+  "version": 1,
+  "show_logs": false,
   "streamer_id": "@retrourysta",
   "target_user": "ss",
   "mappings": [
