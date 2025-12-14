@@ -33,6 +33,12 @@
         "space",
         "tab"
       ]
+    },
+    {
+      "trigger": "sss",
+      "keys": [
+        "a"
+      ]
     }
   ]
 }
