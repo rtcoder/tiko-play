@@ -1,18 +1,26 @@
 {
-    "streamer_id": "@retrourysta",
-    "target_user": "",
-    "mappings": [
-        {
-            "trigger": "lewo",
-            "keys": ["left"]
-        },
-        {
-            "trigger": "skok",
-            "keys": ["space"]
-        },
-        {
-            "trigger": "ult",
-            "keys": ["ctrl", "shift", "x"]
-        }
-    ]
+  "streamer_id": "@retrourysta",
+  "target_user": "ss",
+  "mappings": [
+    {
+      "trigger": "1",
+      "keys": [
+        "1"
+      ]
+    },
+    {
+      "trigger": "lewo",
+      "keys": [
+        "left"
+      ]
+    },
+    {
+      "trigger": "ult",
+      "keys": [
+        "ctrl",
+        "shift",
+        "x"
+      ]
+    }
+  ]
 }
