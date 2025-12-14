@@ -3,7 +3,8 @@ from PySide6.QtWidgets import (
     QPushButton, QScrollArea, QHBoxLayout
 )
 
-from mapping_row import MappingRow
+from src.views.key_editor.mapping_row import MappingRow
+
 
 class KeysEditor(QWidget):
     def __init__(self, config, on_save):
