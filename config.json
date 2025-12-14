@@ -1,23 +1,18 @@
 {
-    "streamer_id": "@retropurysta",
-    "target_user": "adriannaalbrych1",
-    "mappings": {
-        "s": [
-            "up"
-        ],
-        "sa": [
-            "up"
-        ],
-        "sas": [
-            "down"
-        ],
-        "lewo": [
-            "left"
-        ],
-        "aa": [
-            "ctrl",
-            "a",
-            "x"
-        ]
-    }
+    "streamer_id": "@retrourysta",
+    "target_user": "",
+    "mappings": [
+        {
+            "trigger": "lewo",
+            "keys": ["left"]
+        },
+        {
+            "trigger": "skok",
+            "keys": ["space"]
+        },
+        {
+            "trigger": "ult",
+            "keys": ["ctrl", "shift", "x"]
+        }
+    ]
 }

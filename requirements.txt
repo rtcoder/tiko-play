@@ -1,4 +1,0 @@
-pyautogui
-pyinstaller
-TikTokLive
-eel
