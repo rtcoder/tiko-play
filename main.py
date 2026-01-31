@@ -1,7 +1,13 @@
 import sys
+import os
+
+if getattr(sys, "frozen", False):
+    base = sys._MEIPASS
+    os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = (
+        os.path.join(base, "PySide6", "Qt", "plugins", "platforms")
+    )
 
 from PySide6.QtWidgets import QApplication
-
 from src.views.main_window import MainWindow
 
 if __name__ == "__main__":
