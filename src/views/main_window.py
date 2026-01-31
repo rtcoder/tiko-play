@@ -10,7 +10,6 @@ from PySide6.QtWidgets import (
 
 from src.config import load_config, save_config
 from src.views.key_editor.key_editor import KeysEditor
-from src.listener import TikTokListener
 from src.views.log_view import LogView
 from src.ui_logger import UILogger
 
@@ -30,7 +29,7 @@ class MainWindow(QMainWindow):
             self.log_view = LogView()
             self.logger.message.connect(self.log_view.append_log)
 
-        self.listener = TikTokListener(logger=self.logger)
+        self.listener = None
 
         root = QWidget()
         self.setCentralWidget(root)
@@ -143,11 +142,15 @@ class MainWindow(QMainWindow):
         save_config(self.config)
 
     def toggle_listener(self):
-        if self.listener.running:
+        if self.listener and self.listener.running:
             self.listener.stop()
             self.btn_toggle.setText("🎧 Nasłuchuj")
         else:
+            from src.listener import TikTokListener  # LAZY IMPORT
+
             self.config = load_config()
+            self.listener = TikTokListener(logger=self.logger)
+
             self.btn_toggle.setText("⏹ Zatrzymaj")
             threading.Thread(
                 target=lambda: asyncio.run(self.listener.start(self.config)),
