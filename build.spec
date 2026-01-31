@@ -41,9 +41,15 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    upx_exclude=[],
-    runtime_tmpdir=None,
-    console=False,   # ❗ GUI APP
-    icon=tiko-play.ico
+    console=False,
+    icon='tiko_play.ico'
 )
+
+app = BUNDLE(
+    exe,
+    name="TikoPlay.app",
+    icon='tiko_play.icns',
+    bundle_identifier="com.tikoplay.app",
+)
+
 
