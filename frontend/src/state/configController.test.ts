@@ -1,9 +1,10 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { ConfigController } from "./configController";
 const config = {
-  version: 2 as const,
-  streamer_id: "a",
-  target_user: "",
+  version: 3 as const,
+  platform: "tiktok" as const,
+  tiktok: { channel: "a", target_user: "" },
+  twitch: { channel: "", target_user: "" },
   show_logs: false,
   countdown_enabled: true,
   mappings: [],
@@ -24,15 +25,15 @@ it("serializes saves and never overwrites newest draft with old response", async
   };
   const ctrl = new ConfigController(api);
   await ctrl.reload();
-  ctrl.edit({ ...config, streamer_id: "A" });
+  ctrl.edit({ ...config, tiktok: { channel: "A", target_user: "" } });
   const pending = ctrl.flush();
-  ctrl.edit({ ...config, streamer_id: "B" });
-  ctrl.edit({ ...config, streamer_id: "C" });
+  ctrl.edit({ ...config, tiktok: { channel: "B", target_user: "" } });
+  ctrl.edit({ ...config, tiktok: { channel: "C", target_user: "" } });
   resolve({ config: writes[0][0], config_revision: 2 });
   await Promise.resolve();
   await Promise.resolve();
-  expect(ctrl.state.draft?.streamer_id).toBe("C");
-  expect(writes[1][0].streamer_id).toBe("C");
+  expect(ctrl.state.draft?.tiktok.channel).toBe("C");
+  expect(writes[1][0].tiktok.channel).toBe("C");
   expect(writes[1][1]).toBe(2);
   resolve({ config: writes[1][0], config_revision: 3 });
   await pending;
@@ -50,7 +51,7 @@ it("debounces 500ms and blocks start after save error", async () => {
   };
   const ctrl = new ConfigController(api);
   await ctrl.reload();
-  ctrl.edit({ ...config, streamer_id: "b" });
+  ctrl.edit({ ...config, tiktok: { channel: "b", target_user: "" } });
   await vi.advanceTimersByTimeAsync(499);
   expect(api.save).not.toHaveBeenCalled();
   await vi.advanceTimersByTimeAsync(1);

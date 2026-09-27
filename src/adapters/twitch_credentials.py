@@ -1,9 +1,11 @@
 """One credential record, stored only in the operating system's vault."""
+
 import asyncio
 import json
 import sys
 from dataclasses import asdict, dataclass, field
 from typing import Protocol
+
 from src.core.models import AppError
 
 
@@ -38,7 +40,10 @@ class NativeCredentialStore:
         elif sys.platform == "win32":
             from keyring.backends.Windows import WinVaultKeyring as Keyring
         else:
-            raise AppError("credential_store_unavailable", "Brak obsługi systemowego magazynu poświadczeń Twitcha.")
+            raise AppError(
+                "credential_store_unavailable",
+                "Brak obsługi systemowego magazynu poświadczeń Twitcha.",
+            )
         self._backend = Keyring()
         return self._backend
 
@@ -52,7 +57,10 @@ class NativeCredentialStore:
                 await task
                 raise
         except Exception:
-            raise AppError("credential_store_unavailable", "Nie można odczytać lub zapisać konta w systemowym magazynie poświadczeń.") from None
+            raise AppError(
+                "credential_store_unavailable",
+                "Nie można odczytać lub zapisać konta w systemowym magazynie poświadczeń.",
+            ) from None
 
     async def load(self):
         def read():
@@ -61,17 +69,32 @@ class NativeCredentialStore:
                 return None
             data = json.loads(raw)
             result = TwitchCredentials(**data)
-            if not all(isinstance(data[k], str) and data[k] for k in ("client_id", "user_id", "login", "access_token", "refresh_token")) or not isinstance(result.expires_at, (int, float)):
+            if not all(
+                isinstance(data[k], str) and data[k]
+                for k in (
+                    "client_id",
+                    "user_id",
+                    "login",
+                    "access_token",
+                    "refresh_token",
+                )
+            ) or not isinstance(result.expires_at, (int, float)):
                 raise ValueError("Invalid credential record")
             return result
+
         return await self._io(read)
 
     async def save(self, credentials):
-        await self._io(lambda: self.native_backend().set_password(self.SERVICE, self.ACCOUNT, json.dumps(asdict(credentials))))
+        await self._io(
+            lambda: self.native_backend().set_password(
+                self.SERVICE, self.ACCOUNT, json.dumps(asdict(credentials))
+            )
+        )
 
     async def delete(self):
         def remove():
             backend = self.native_backend()
             if backend.get_password(self.SERVICE, self.ACCOUNT) is not None:
                 backend.delete_password(self.SERVICE, self.ACCOUNT)
+
         await self._io(remove)

@@ -54,11 +54,20 @@ class ListenerService:
         return self.state()
 
     def authorization_lost(self):
-        if self._state.active_platform != "twitch" or self._state.status not in ("connecting", "connected"):
+        if self._state.active_platform != "twitch" or self._state.status not in (
+            "connecting",
+            "connected",
+        ):
             return
         self.keyboard.disable()
-        self._change(status="error", output="disabled", error={
-            "code": "twitch_auth_required", "message": "Sesja Twitcha nie jest dostępna. Połącz konto ponownie."})
+        self._change(
+            status="error",
+            output="disabled",
+            error={
+                "code": "twitch_auth_required",
+                "message": "Sesja Twitcha nie jest dostępna. Połącz konto ponownie.",
+            },
+        )
         if self._task and not self._task.done():
             self._cancel_once()
 
@@ -103,11 +112,22 @@ class ListenerService:
             generation = self._state.generation
 
             async def comment(user, text):
-                if generation != self._state.generation or self._stop or self._state.status not in ("connecting", "connected"):
+                if (
+                    generation != self._state.generation
+                    or self._stop
+                    or self._state.status not in ("connecting", "connected")
+                ):
                     return
-                self.events.publish("comment", {"user": user, "comment": text,
-                    "platform": snapshot.config.platform, "channel": snapshot.config.active_source().channel,
-                    "generation": generation})
+                self.events.publish(
+                    "comment",
+                    {
+                        "user": user,
+                        "comment": text,
+                        "platform": snapshot.config.platform,
+                        "channel": snapshot.config.active_source().channel,
+                        "generation": generation,
+                    },
+                )
                 if self._stop or self._state.output != "enabled":
                     return
                 keys = matcher.match(user, text)
@@ -135,9 +155,7 @@ class ListenerService:
             self.keyboard.enable(generation)
             self._change(output="enabled")
             await child
-            raise AppError(
-                "connection_lost", "Połączenie z czatem zostało zakończone"
-            )
+            raise AppError("connection_lost", "Połączenie z czatem zostało zakończone")
         except asyncio.CancelledError:
             self.keyboard.disable()
             if not self._stop and self._state.status != "error":

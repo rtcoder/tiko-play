@@ -48,7 +48,10 @@ class ConfigStore:
                 **data,
                 "version": 3,
                 "platform": "tiktok",
-                "tiktok": {"channel": data.get("streamer_id", ""), "target_user": data.get("target_user", "")},
+                "tiktok": {
+                    "channel": data.get("streamer_id", ""),
+                    "target_user": data.get("target_user", ""),
+                },
                 "twitch": {},
                 "mappings": [
                     {**m, "id": m.get("id") or str(uuid4())}
@@ -99,7 +102,9 @@ class ConfigStore:
                     f.flush()
                     os.fsync(f.fileno())
             except FileExistsError:
-                target = self.path.with_name(f"config.v{version}.backup.{uuid4().hex}.json")
+                target = self.path.with_name(
+                    f"config.v{version}.backup.{uuid4().hex}.json"
+                )
                 with target.open("xb") as f:
                     f.write(backup)
                     f.flush()

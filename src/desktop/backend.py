@@ -92,12 +92,25 @@ class BackendHost(QObject):
                     )
 
             keyboard = KeyboardExecutor(PyAutoGUIKeyboard(), report=report)
-            twitch_http = httpx.AsyncClient(timeout=10, follow_redirects=False, trust_env=False)
-            auth = TwitchAuthService(get_twitch_client_id(), NativeCredentialStore(), twitch_http, bus)
-            self.listener = ListenerService(ChatAdapterFactory(auth, twitch_http, websocket_connect), keyboard, bus)
+            twitch_http = httpx.AsyncClient(
+                timeout=10, follow_redirects=False, trust_env=False
+            )
+            auth = TwitchAuthService(
+                get_twitch_client_id(), NativeCredentialStore(), twitch_http, bus
+            )
+            self.listener = ListenerService(
+                ChatAdapterFactory(auth, twitch_http, websocket_connect), keyboard, bus
+            )
             auth.subscribe_invalidated(self.listener.authorization_lost)
             restore_task = asyncio.create_task(auth.restore())
-            app = create_app(store, self.listener, bus, self.sessions, self.static_dir, twitch_auth=auth)
+            app = create_app(
+                store,
+                self.listener,
+                bus,
+                self.sessions,
+                self.static_dir,
+                twitch_auth=auth,
+            )
             config = uvicorn.Config(
                 app,
                 host="127.0.0.1",

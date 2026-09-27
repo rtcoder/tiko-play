@@ -1,4 +1,5 @@
 """Public application identity; never put a client secret here."""
+
 import os
 
 TWITCH_CLIENT_ID = ""

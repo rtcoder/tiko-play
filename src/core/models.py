@@ -55,7 +55,9 @@ class ChannelConfig(BaseModel):
     @classmethod
     def users_valid(cls, value):
         if value.strip() and not allowed_users(value):
-            raise ValueError("Wpisz nicki użytkowników lub wyczyść pole, aby dopuścić wszystkich")
+            raise ValueError(
+                "Wpisz nicki użytkowników lub wyczyść pole, aby dopuścić wszystkich"
+            )
         return value
 
     @field_validator("channel")
@@ -69,6 +71,7 @@ class TwitchChannelConfig(ChannelConfig):
     @classmethod
     def twitch_channel(cls, value):
         import re
+
         value = value.lower()
         if value and not re.fullmatch(r"[a-z0-9_]+", value):
             raise ValueError("Podaj login kanału Twitch, bez adresu URL")

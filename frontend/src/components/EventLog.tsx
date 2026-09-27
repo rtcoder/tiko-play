@@ -38,7 +38,7 @@ export function EventLog({
                 </span>
                 <span>
                   {e.type === "comment"
-                    ? `${e.payload.user}: ${e.payload.comment}`
+                    ? `${e.payload.platform ? `[${e.payload.platform === "twitch" ? "Twitch" : "TikTok"} · @${e.payload.channel}] ` : ""}${e.payload.user}: ${e.payload.comment}`
                     : e.type === "action"
                       ? (e.payload.keys as string[]).join(" + ")
                       : String(e.payload.message ?? e.payload.status ?? "")}

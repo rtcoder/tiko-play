@@ -1,4 +1,10 @@
-import type { AppState, AppConfig, ConfigSnapshot } from "./types";
+import type {
+  AppState,
+  AppConfig,
+  ConfigSnapshot,
+  TwitchAuthState,
+  TwitchActivation,
+} from "./types";
 let csrf = "";
 export class RequestError extends Error {
   constructor(
@@ -53,4 +59,11 @@ export const configApi = {
     }),
   start: (expected_revision: number) =>
     request<AppState>("/api/listener/start", "POST", { expected_revision }),
+};
+
+export const twitchAuthApi = {
+  state: () => request<TwitchAuthState>("/api/twitch/auth"),
+  start: () => request<TwitchActivation>("/api/twitch/auth/start", "POST"),
+  cancel: () => request<TwitchAuthState>("/api/twitch/auth/cancel", "POST"),
+  disconnect: () => request<TwitchAuthState>("/api/twitch/auth", "DELETE"),
 };

@@ -4,18 +4,29 @@ import { it, expect, vi } from "vitest";
 import App from "./App";
 const fixture = vi.hoisted(() => ({
   config: {
-    version: 2,
-    streamer_id: "a",
-    target_user: "",
+    version: 3,
+    platform: "tiktok",
+    tiktok: { channel: "a", target_user: "" },
+    twitch: { channel: "b", target_user: "" },
     mappings: [],
     show_logs: false,
     countdown_enabled: true,
+  },
+  connected: false,
+  auth: {
+    configured: true,
+    status: "disconnected",
+    login: null,
+    error: null,
+    attempt_id: 0,
   },
   state: {
     status: "connected",
     output: "enabled",
     generation: 1,
     active_config_revision: 1,
+    active_platform: "tiktok",
+    active_channel: "a",
     config_revision: 1,
     instance_id: "x",
     error: null,
@@ -27,6 +38,7 @@ vi.mock("./api/client", () => ({
   bootstrapSession: async () => {},
   fetchState: async () => fixture.state,
   request: async (path: string) => (path === "/api/keys" ? [] : {}),
+  twitchAuthApi: { state: async () => fixture.auth },
   configApi: {
     load: async () => ({ config: fixture.config, config_revision: 1 }),
     save: vi.fn(),
@@ -41,7 +53,7 @@ vi.mock("./api/events", () => ({
       watermark: 0,
       instance_id: "x",
     });
-    connection(false);
+    connection(fixture.connected);
     return () => {};
   },
 }));
@@ -68,9 +80,37 @@ it("saves multiple allowed users from the multiline field", async () => {
   fireEvent.change(field, { target: { value: users } });
   await waitFor(() =>
     expect(configApi.save).toHaveBeenCalledWith(
-      expect.objectContaining({ target_user: users }),
+      expect.objectContaining({ tiktok: { channel: "a", target_user: users } }),
       1,
     ),
   );
   expect(field).toHaveValue(users);
+});
+
+it("blocks Twitch start without authentication", async () => {
+  fixture.connected = true;
+  fixture.config.platform = "twitch";
+  fixture.state.status = "stopped";
+  render(<App />);
+  expect(
+    await screen.findByRole("button", { name: /Rozpocznij nasłuch/ }),
+  ).toBeDisabled();
+  fixture.connected = false;
+  fixture.config.platform = "tiktok";
+  fixture.state.status = "connected";
+});
+it("shows active Twitch source while settings select TikTok", async () => {
+  fixture.connected = true;
+  fixture.state.active_platform = "twitch";
+  fixture.state.active_channel = "live_channel";
+  render(<App />);
+  expect(
+    await screen.findByText("Aktywne źródło: Twitch · @live_channel"),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Źródło czatu" })).toHaveValue(
+    "tiktok",
+  );
+  fixture.connected = false;
+  fixture.state.active_platform = "tiktok";
+  fixture.state.active_channel = "a";
 });

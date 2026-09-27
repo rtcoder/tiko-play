@@ -4,11 +4,17 @@ export interface Mapping {
   keys: string[];
   [key: string]: unknown;
 }
-export interface AppConfig {
-  version: 2;
-  streamer_id: string;
-  /** Allowed nicknames separated by commas, semicolons or newlines; empty = everyone. */
+export type Platform = "tiktok" | "twitch";
+export interface ChannelConfig {
+  channel: string;
   target_user: string;
+  [key: string]: unknown;
+}
+export interface AppConfig {
+  version: 3;
+  platform: Platform;
+  tiktok: ChannelConfig;
+  twitch: ChannelConfig;
   mappings: Mapping[];
   show_logs: boolean;
   countdown_enabled: boolean;
@@ -24,6 +30,8 @@ export interface ApiError {
   field_errors?: Record<string, string>;
 }
 export interface AppState {
+  active_platform: Platform | null;
+  active_channel: string | null;
   status: string;
   output: string;
   generation: number;
@@ -47,4 +55,17 @@ export interface Snapshot {
   events: AppEvent[];
   watermark: number;
   instance_id: string;
+}
+
+export interface TwitchAuthState {
+  configured: boolean;
+  status: "disconnected" | "pending" | "connected" | "error";
+  login: string | null;
+  error: ApiError | null;
+  attempt_id: number;
+}
+export interface TwitchActivation extends TwitchAuthState {
+  user_code: string;
+  verification_uri: string;
+  expires_at: number;
 }

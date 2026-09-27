@@ -170,8 +170,15 @@ def create_app(store, listener, events, sessions, static_dir: Path, *, twitch_au
             )
         if not snap.config.active_source().channel:
             raise AppError("streamer_required", "Podaj nick kanału", status=422)
-        if snap.config.platform == "twitch" and twitch_auth.state()["status"] != "connected":
-            raise AppError("twitch_auth_required", "Połącz konto Twitch przed rozpoczęciem nasłuchu.", status=409)
+        if (
+            snap.config.platform == "twitch"
+            and twitch_auth.state()["status"] != "connected"
+        ):
+            raise AppError(
+                "twitch_auth_required",
+                "Połącz konto Twitch przed rozpoczęciem nasłuchu.",
+                status=409,
+            )
         listener.start(snap)
         return state()
 

@@ -11,9 +11,10 @@ export function ConfigRecovery({
   const [text, setText] = useState(
     JSON.stringify(
       state.recovery_data ?? {
-        version: 2,
-        streamer_id: "",
-        target_user: "",
+        version: 3,
+        platform: "tiktok",
+        tiktok: { channel: "", target_user: "" },
+        twitch: { channel: "", target_user: "" },
         mappings: [],
         show_logs: false,
         countdown_enabled: true,
@@ -49,12 +50,24 @@ export function ConfigRecovery({
             onClick={async () => {
               try {
                 const value = JSON.parse(text);
-                if (value.version !== 2) {
-                  value.version = 2;
-                  value.mappings = (value.mappings ?? []).map((m: object) => ({
-                    ...m,
-                    id: crypto.randomUUID(),
-                  }));
+                if (![undefined, 1, 2, 3].includes(value.version))
+                  throw new Error("Nieobsługiwana wersja konfiguracji.");
+                if (value.version !== 3) {
+                  value.version = 3;
+                  value.platform = "tiktok";
+                  value.tiktok = {
+                    channel: value.streamer_id ?? "",
+                    target_user: value.target_user ?? "",
+                  };
+                  value.twitch = { channel: "", target_user: "" };
+                  delete value.streamer_id;
+                  delete value.target_user;
+                  value.mappings = (value.mappings ?? []).map(
+                    (m: { id?: string }) => ({
+                      ...m,
+                      id: m.id ?? crypto.randomUUID(),
+                    }),
+                  );
                 }
                 await request("/api/config/repair", "POST", value);
                 onRecovered();

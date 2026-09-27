@@ -698,3 +698,27 @@ label > textarea {
   resize: vertical;
   min-height: 84px;
 }
+
+.chat-source-card select {
+  width: 100%;
+  margin-top: 8px;
+}
+.twitch-account {
+  border-top: 1px solid var(--border, #383849);
+  margin-top: 24px;
+  padding-top: 8px;
+}
+.twitch-account button {
+  margin: 6px 8px 6px 0;
+}
+.twitch-account a {
+  color: inherit;
+  text-decoration: underline;
+}
+.activation-code {
+  font-family: monospace;
+  letter-spacing: 0.15em;
+}
+.active-source {
+  font-weight: 600;
+}

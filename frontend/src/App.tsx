@@ -1,12 +1,24 @@
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { bootstrapSession, configApi, fetchState, request } from "./api/client";
+import { useEffect, useState, useSyncExternalStore, useRef } from "react";
+import {
+  bootstrapSession,
+  configApi,
+  fetchState,
+  request,
+  twitchAuthApi,
+} from "./api/client";
 import { subscribeEvents } from "./api/events";
-import type { AppConfig, AppEvent, AppState } from "./api/types";
+import type {
+  AppConfig,
+  AppEvent,
+  AppState,
+  TwitchAuthState,
+} from "./api/types";
 import { ConfigController } from "./state/configController";
 import { MappingEditor } from "./components/MappingEditor";
 import { EventLog } from "./components/EventLog";
 import { ConfigRecovery } from "./components/ConfigRecovery";
+import { ChatSourceSettings } from "./components/ChatSourceSettings";
 const labels: Record<string, string> = {
   stopped: "Zatrzymany",
   connecting: "Łączenie…",
@@ -27,6 +39,13 @@ export default function App() {
     controller.subscribe,
     controller.snapshot,
   );
+  const [auth, setAuth] = useState<TwitchAuthState | null>(null);
+  const authRevision = useRef(0);
+  const refreshAuth = async () => {
+    const revision = ++authRevision.current;
+    const result = await twitchAuthApi.state();
+    if (revision === authRevision.current) setAuth(result);
+  };
   const [state, setState] = useState<AppState | null>(null);
   const [connected, setConnected] = useState(false);
   const [events, setEvents] = useState<AppEvent[]>([]);
@@ -47,6 +66,7 @@ export default function App() {
         const s = await fetchState();
         if (!mounted) return;
         setState(s);
+        await refreshAuth();
         const [k, p] = await Promise.all([
           request<string[]>("/api/keys"),
           request<typeof presets>("/api/presets"),
@@ -59,6 +79,7 @@ export default function App() {
         stop = subscribeEvents(
           (snap) => {
             setState(snap.state);
+            void refreshAuth().catch(showError);
             setEvents(snap.events);
             if (snap.state.config_revision)
               void controller
@@ -67,6 +88,10 @@ export default function App() {
           },
           (event) => {
             setEvents((list) => [...list, event].slice(-1000));
+            if (event.type === "twitch_auth") {
+              ++authRevision.current;
+              setAuth(event.payload as unknown as TwitchAuthState);
+            }
             if (event.type === "status")
               setState((s) => (s ? { ...s, ...event.payload } : s));
             if (event.type === "config_changed") {
@@ -83,6 +108,7 @@ export default function App() {
     })();
     return () => {
       mounted = false;
+      ++authRevision.current;
       stop?.();
       controller.dispose();
     };
@@ -148,7 +174,7 @@ export default function App() {
       <main>
         <header>
           <div>
-            <span className="eyebrow">TIKTOK LIVE → TWOJA GRA</span>
+            <span className="eyebrow">CZAT → TWOJA GRA</span>
             <h1>{section}</h1>
             <p>Oddaj stery swojej społeczności.</p>
           </div>
@@ -232,6 +258,13 @@ export default function App() {
                         ? labels[state.status]
                         : "Łączenie z aplikacją…"}
                   </h2>
+                  {running && connected && state?.active_platform && (
+                    <p className="active-source">
+                      Aktywne źródło:{" "}
+                      {state.active_platform === "twitch" ? "Twitch" : "TikTok"}{" "}
+                      · @{state.active_channel}
+                    </p>
+                  )}
                   <p>
                     {!connected
                       ? "Brak aktualnego stanu. Otwórz TikoPlay z ikony lub poczekaj na ponowne połączenie."
@@ -250,7 +283,10 @@ export default function App() {
                   busy ||
                   state?.status === "stopping" ||
                   (!running &&
-                    (!editor.draft.streamer_id.trim() ||
+                    (!editor.draft[editor.draft.platform].channel.trim() ||
+                      (editor.draft.platform === "twitch" &&
+                        auth?.status !== "connected") ||
+                      editor.saveStatus === "error" ||
                       editor.conflict ||
                       editor.saveStatus === "invalid"))
                 }
@@ -274,42 +310,12 @@ export default function App() {
             {section === "Pulpit" && (
               <>
                 <div className="two-columns">
-                  <section className="card">
-                    <span className="eyebrow">POŁĄCZENIE</span>
-                    <h2>Twoja transmisja</h2>
-                    <label>
-                      Nick streamera
-                      <div className="with-prefix">
-                        <span>@</span>
-                        <input
-                          placeholder="nazwa_streamera"
-                          value={editor.draft.streamer_id}
-                          onChange={(e) =>
-                            edit({ streamer_id: e.target.value })
-                          }
-                        />
-                      </div>
-                    </label>
-                    <p className="hint">
-                      Wpisz nick konta prowadzącego TikTok LIVE.
-                    </p>
-                    <label>
-                      Dozwoleni użytkownicy{" "}
-                      <span className="optional">opcjonalnie</span>
-                      <textarea
-                        rows={3}
-                        aria-describedby="allowed-users-hint"
-                        placeholder="np. gracz1, gracz2"
-                        value={editor.draft.target_user}
-                        onChange={(e) => edit({ target_user: e.target.value })}
-                      />
-                    </label>
-                    <p className="hint" id="allowed-users-hint">
-                      Nicki oddziel przecinkami lub wpisz po jednym w wierszu.
-                      Możesz dodać @. Wielkość liter ma znaczenie. Puste pole
-                      dopuszcza wszystkich widzów.
-                    </p>
-                  </section>
+                  <ChatSourceSettings
+                    config={editor.draft}
+                    onChange={edit}
+                    auth={auth}
+                    onAuthChanged={refreshAuth}
+                  />
                   <section className="card how-it-works">
                     <span className="eyebrow">JAK TO DZIAŁA</span>
                     <h2>Od komentarza do ruchu</h2>
