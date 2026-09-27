@@ -20,7 +20,7 @@ class Keys:
 
 
 @pytest.fixture
-def api(tmp_path):
+def api(tmp_path, twitch_auth):
     static = tmp_path / "static"
     static.mkdir()
     (static / "index.html").write_text("<html>panel</html>")
@@ -29,7 +29,7 @@ def api(tmp_path):
     bus = EventBus("test")
     sessions = SessionManager("test", "http://127.0.0.1:8000")
     service = ListenerService(lambda _: None, Keys(), bus)
-    app = create_app(store, service, bus, sessions, static)
+    app = create_app(store, service, bus, sessions, static, twitch_auth=twitch_auth)
     with TestClient(app, base_url=sessions.origin) as c:
         yield c, sessions, store, bus
 
@@ -51,7 +51,7 @@ def test_auth_save_conflict_and_refresh(api):
     h = login(c, s)
     r = c.get("/api/config").json()
     assert c.get("/api/session").json()["csrf_token"] == h["X-CSRF-Token"]
-    r["config"]["streamer_id"] = "alice"
+    r["config"]["tiktok"]["channel"] = "alice"
     body = {"config": r["config"], "expected_revision": r["config_revision"]}
     assert (
         c.put(

@@ -14,7 +14,12 @@ from src.core.keyboard import KeyboardExecutor
 from src.core.listener_service import ListenerService
 from src.core.models import AppError
 from src.core.diagnostics import configure_diagnostics
-from src.adapters.tiktok import TikTokAdapter
+from src.adapters.chat import ChatAdapterFactory
+from src.adapters.twitch_auth import TwitchAuthService
+from src.adapters.twitch_credentials import NativeCredentialStore
+from src.twitch_settings import get_twitch_client_id
+from websockets.asyncio.client import connect as websocket_connect
+import httpx
 from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
 
 
@@ -64,6 +69,9 @@ class BackendHost(QObject):
         keyboard = None
         server_task = None
         watch_task = None
+        restore_task = None
+        auth = None
+        twitch_http = None
         try:
             sock.bind(("127.0.0.1", 0))
             sock.listen(128)
@@ -84,8 +92,12 @@ class BackendHost(QObject):
                     )
 
             keyboard = KeyboardExecutor(PyAutoGUIKeyboard(), report=report)
-            self.listener = ListenerService(TikTokAdapter, keyboard, bus)
-            app = create_app(store, self.listener, bus, self.sessions, self.static_dir)
+            twitch_http = httpx.AsyncClient(timeout=10, follow_redirects=False, trust_env=False)
+            auth = TwitchAuthService(get_twitch_client_id(), NativeCredentialStore(), twitch_http, bus)
+            self.listener = ListenerService(ChatAdapterFactory(auth, twitch_http, websocket_connect), keyboard, bus)
+            auth.subscribe_invalidated(self.listener.authorization_lost)
+            restore_task = asyncio.create_task(auth.restore())
+            app = create_app(store, self.listener, bus, self.sessions, self.static_dir, twitch_auth=auth)
             config = uvicorn.Config(
                 app,
                 host="127.0.0.1",
@@ -99,7 +111,6 @@ class BackendHost(QObject):
             self.server = uvicorn.Server(config)
             server_task = asyncio.create_task(self.server.serve(sockets=[sock]))
             deadline = time.monotonic() + 15
-            import httpx
 
             async with httpx.AsyncClient(trust_env=False) as client:
                 while True:
@@ -138,6 +149,13 @@ class BackendHost(QObject):
         finally:
             if self.listener:
                 await self.listener.stop()
+            if auth:
+                await auth.close()
+            if restore_task:
+                restore_task.cancel()
+                await asyncio.gather(restore_task, return_exceptions=True)
+            if twitch_http:
+                await twitch_http.aclose()
             if keyboard:
                 await keyboard.close(1)
             if self.server:

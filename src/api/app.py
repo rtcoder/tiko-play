@@ -10,6 +10,7 @@ from src.core.models import AppConfig, AppError
 from src.core.presets import get_presets
 from src.core.keys import get_keys
 from src.api.events import stream_events
+from src.api.twitch import create_twitch_router
 
 
 class ConfigWrite(BaseModel):
@@ -25,7 +26,7 @@ class Token(BaseModel):
     token: str = Field(max_length=256)
 
 
-def create_app(store, listener, events, sessions, static_dir: Path):
+def create_app(store, listener, events, sessions, static_dir: Path, *, twitch_auth):
     tasks = set()
 
     def spawn(coro):
@@ -39,6 +40,7 @@ def create_app(store, listener, events, sessions, static_dir: Path):
         for sub in tuple(events.subscribers):
             events.unsubscribe(sub)
         await listener.stop()
+        await twitch_auth.close()
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -166,6 +168,10 @@ def create_app(store, listener, events, sessions, static_dir: Path):
             raise AppError(
                 "revision_conflict", "Odśwież konfigurację przed startem.", status=409
             )
+        if not snap.config.active_source().channel:
+            raise AppError("streamer_required", "Podaj nick kanału", status=422)
+        if snap.config.platform == "twitch" and twitch_auth.state()["status"] != "connected":
+            raise AppError("twitch_auth_required", "Połącz konto Twitch przed rozpoczęciem nasłuchu.", status=409)
         listener.start(snap)
         return state()
 
@@ -189,6 +195,8 @@ def create_app(store, listener, events, sessions, static_dir: Path):
             await ws.close(code=1008)
             return
         await stream_events(ws, events, state)
+
+    app.include_router(create_twitch_router(twitch_auth))
 
     @app.api_route(
         "/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]

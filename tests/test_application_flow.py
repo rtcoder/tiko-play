@@ -14,7 +14,7 @@ from src.core.keyboard import KeyboardExecutor
 from src.core.listener_service import ListenerService
 
 
-async def test_network_flow_continues_without_browser(tmp_path):
+async def test_network_flow_continues_without_browser(tmp_path, twitch_auth):
     calls = []
 
     class Port:
@@ -47,7 +47,7 @@ async def test_network_flow_continues_without_browser(tmp_path):
     listener = ListenerService(lambda _: client, keyboard, bus)
     server = uvicorn.Server(
         uvicorn.Config(
-            create_app(store, listener, bus, sessions, static),
+            create_app(store, listener, bus, sessions, static, twitch_auth=twitch_auth),
             log_config=None,
             access_log=False,
             ws="websockets-sansio",
@@ -69,8 +69,8 @@ async def test_network_flow_continues_without_browser(tmp_path):
             ).json()
             headers = {"Origin": origin, "X-CSRF-Token": session["csrf_token"]}
             config = {
-                "version": 2,
-                "streamer_id": "test",
+                "version": 3,
+                "tiktok": {"channel": "test"},
                 "countdown_enabled": False,
                 "mappings": [
                     {"id": "1", "trigger": "x", "keys": ["ctrl", "a"]},
