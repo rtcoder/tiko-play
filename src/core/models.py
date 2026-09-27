@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from src.core.keys import get_keys
+from src.core.users import allowed_users
 
 
 class AppError(Exception):
@@ -50,6 +51,13 @@ class AppConfig(BaseModel):
     mappings: tuple[Mapping, ...] = ()
     show_logs: bool = False
     countdown_enabled: bool = True
+
+    @field_validator("target_user")
+    @classmethod
+    def users_valid(cls, value):
+        if value.strip() and not allowed_users(value):
+            raise ValueError("Wpisz nicki użytkowników lub wyczyść pole, aby dopuścić wszystkich")
+        return value
 
     @field_validator("streamer_id")
     @classmethod

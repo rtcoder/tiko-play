@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { configApi } from "./api/client";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { it, expect, vi } from "vitest";
 import App from "./App";
 const fixture = vi.hoisted(() => ({
@@ -52,4 +53,24 @@ it("does not present a stale connected state as currently active", async () => {
   expect(
     screen.queryByText("Wysyłanie klawiszy jest aktywne."),
   ).not.toBeInTheDocument();
+});
+
+it("saves multiple allowed users from the multiline field", async () => {
+  vi.mocked(configApi.save).mockImplementation(async (config, revision) => ({
+    config,
+    config_revision: revision + 1,
+  }));
+  render(<App />);
+  const field = await screen.findByRole("textbox", {
+    name: /Dozwoleni użytkownicy/,
+  });
+  const users = "@alice, bob\ncarol";
+  fireEvent.change(field, { target: { value: users } });
+  await waitFor(() =>
+    expect(configApi.save).toHaveBeenCalledWith(
+      expect.objectContaining({ target_user: users }),
+      1,
+    ),
+  );
+  expect(field).toHaveValue(users);
 });

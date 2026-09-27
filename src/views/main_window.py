@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QWidget,
     QVBoxLayout, QHBoxLayout, QPushButton,
     QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QStackedWidget
+    QStackedWidget, QButtonGroup
 )
 
 from src.config import load_config, save_config
@@ -16,7 +16,10 @@ from src.ui_logger import UILogger
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        """Initializes main window; configures UI and connects signals"""
         super().__init__()
+        self.list = None
+        self.input_streamer = None
         self.setWindowTitle("TikoPlay")
         self.resize(900, 550)
         self.config = load_config()
@@ -45,7 +48,12 @@ class MainWindow(QMainWindow):
 
         for b in (self.btn_streamer, self.btn_keys, self.btn_user):
             b.setCheckable(True)
+        self.nav_group = QButtonGroup(self)
+        self.nav_group.setExclusive(True)
 
+        self.nav_group.addButton(self.btn_streamer)
+        self.nav_group.addButton(self.btn_keys)
+        self.nav_group.addButton(self.btn_user)
         sidebar.addWidget(self.btn_streamer)
         sidebar.addWidget(self.btn_keys)
         sidebar.addWidget(self.btn_user)
@@ -135,11 +143,15 @@ class MainWindow(QMainWindow):
 
     def save_streamer(self):
         self.config["streamer_id"] = self.input_streamer.text()
-        save_config(self.config)
+        self.save_config()
 
     def save_user(self):
         self.config["target_user"] = self.input_user.text()
+        self.save_config()
+
+    def save_config(self):
         save_config(self.config)
+        self.logger.log("✓ Zapisano konfigurację")
 
     def toggle_listener(self):
         if self.listener and self.listener.running:

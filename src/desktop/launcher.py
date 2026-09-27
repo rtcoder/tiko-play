@@ -2,7 +2,7 @@ import argparse
 import sys
 import webbrowser
 from pathlib import Path
-from PySide6.QtCore import QObject, Signal, QTimer, QEvent
+from PySide6.QtCore import QObject, Signal, QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
 from src.desktop.resources import resource_path, user_data_dir
 from src.desktop.instance import InstanceGuard
@@ -15,7 +15,7 @@ class LauncherController(QObject):
     operation_error = Signal(str)
 
     def __init__(
-        self, host, open_browser=webbrowser.open, show_error=None, exit_app=None
+        self, host, open_browser=webbrowser.open_new_tab, show_error=None, exit_app=None
     ):
         super().__init__()
         self.host = host
@@ -28,7 +28,7 @@ class LauncherController(QObject):
         self.closing = False
         self.url_ready.connect(self._open_url)
         self.finished.connect(self._finish)
-        self.operation_error.connect(self.show_error)
+        self.operation_error.connect(self._open_failed)
         host.ready.connect(self._ready)
         host.failed.connect(self._failed)
         self.start_timer = QTimer(self)
@@ -67,7 +67,11 @@ class LauncherController(QObject):
 
             future.add_done_callback(complete)
         except Exception:
-            self.show_error("Panel nie jest jeszcze gotowy.")
+            self._open_failed("Panel nie jest jeszcze gotowy.")
+
+    def _open_failed(self, text):
+        if not self.closing:
+            self.show_error(text)
 
     def _open_url(self, url):
         if self.closing:
@@ -103,15 +107,8 @@ class LauncherController(QObject):
 class DesktopApplication(QApplication):
     controller = None
 
-    def event(self, event):
-        if (
-            sys.platform == "darwin"
-            and event.type() == QEvent.Type.ApplicationActivate
-            and self.controller
-            and self.controller.is_ready
-        ):
-            self.controller.open_panel()
-        return super().event(event)
+    # Activation also occurs while interacting with the tray/menu. It must
+    # not launch a browser. Explicit tray actions and InstanceGuard handle opens.
 
 
 def run_desktop():

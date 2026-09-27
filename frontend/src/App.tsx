@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { bootstrapSession, configApi, fetchState, request } from "./api/client";
 import { subscribeEvents } from "./api/events";
@@ -151,11 +152,14 @@ export default function App() {
             <h1>{section}</h1>
             <p>Oddaj stery swojej społeczności.</p>
           </div>
-          <div className="save-indicator">
-            <span
-              className={"dot " + (editor.saveStatus === "saved" ? "on" : "")}
-            />
-            {saves[editor.saveStatus]}
+          <div className="header-actions">
+            <ThemeSwitcher />
+            <div className="save-indicator">
+              <span
+                className={"dot " + (editor.saveStatus === "saved" ? "on" : "")}
+              />
+              {saves[editor.saveStatus]}
+            </div>
           </div>
         </header>
         {error && (
@@ -290,17 +294,20 @@ export default function App() {
                       Wpisz nick konta prowadzącego TikTok LIVE.
                     </p>
                     <label>
-                      Dozwolony użytkownik{" "}
+                      Dozwoleni użytkownicy{" "}
                       <span className="optional">opcjonalnie</span>
-                      <input
-                        placeholder="Wszyscy widzowie"
+                      <textarea
+                        rows={3}
+                        aria-describedby="allowed-users-hint"
+                        placeholder="np. gracz1, gracz2"
                         value={editor.draft.target_user}
                         onChange={(e) => edit({ target_user: e.target.value })}
                       />
                     </label>
-                    <p className="hint">
-                      Dokładny identyfikator użytkownika bez @. Puste pole
-                      dopuszcza wszystkich.
+                    <p className="hint" id="allowed-users-hint">
+                      Nicki oddziel przecinkami lub wpisz po jednym w wierszu.
+                      Możesz dodać @. Wielkość liter ma znaczenie. Puste pole
+                      dopuszcza wszystkich widzów.
                     </p>
                   </section>
                   <section className="card how-it-works">

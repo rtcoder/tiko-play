@@ -1,5 +1,25 @@
 # TikoPlay — kontekst techniczny
 
+## Wielu dozwolonych użytkowników
+
+Pole „Dozwoleni użytkownicy” obsługuje nicki po przecinku, średniku albo w osobnych wierszach, opcjonalnie z `@`. Puste pole (również same białe znaki) dopuszcza wszystkich; same separatory/znaki `@` są odrzucane. Zachowano tekstowe pole `target_user` w konfiguracji v2, więc pojedynczy wcześniej zapisany nick działa bez migracji. Matcher przygotowuje zbiór nicków, zachowuje dokładne dopasowanie z rozróżnianiem wielkości liter i wspólny cooldown 0,3 s na akcję. Zmiana listy w czasie nasłuchu, tak jak pozostałe ustawienia, wymaga Stop → Start.
+
+## Otwieranie panelu
+
+Każde jawne żądanie otwarcia panelu (kliknięcie traya, „Otwórz panel”, kolejne uruchomienie aplikacji) otwiera nową kartę domyślnej przeglądarki przez `webbrowser.open_new_tab`. Na życzenie użytkownika nie wykrywamy ani nie przywołujemy istniejących kart i nie łączymy równoległych żądań otwarcia.
+
+## Awaria po kolejnych kliknięciach traya (macOS 27)
+
+Raporty `TikoPlay-2026-09-27-114548.ips` i `TikoPlay-2026-09-27-114938.ips` potwierdziły SIGABRT w `libqcocoa.dylib` → `NSEvent.clickCount` podczas natywnego śledzenia menu (Qt 6.11.2, macOS 27.0). To ścieżka opisana w [QTBUG-147449](https://qt-project.atlassian.net/browse/QTBUG-147449). Na macOS `TrayController` nie przypina już QMenu przez `setContextMenu`; lewy klik otwiera panel, prawy pokazuje QMenu przez `popup`. Windows zachowuje natywne przypięte menu. Usunięto otwieranie przeglądarki na każde `ApplicationActivate`; jawne akcje traya i IPC kolejnego uruchomienia nadal otwierają panel. Test regresji sprawdza 20 aktywacji, osobne menu i jawne zakończenie; 46 testów przeszło. Paczka przebudowana. Fizyczne kliknięcia wymagają potwierdzenia użytkownika — narzędzie UI nie uzyskuje dostępu do aplikacji działającej wyłącznie w trayu.
+
+## Ikona traya macOS
+
+`src/desktop/tray_icon.py` tworzy przezroczysty, monochromatyczny kontur wielkiego, pochylonego „T”, zgodny ze znakiem głównej ikony w rozmiarach 18/36/54 px. `QIcon.setIsMask(True)` przekazuje macOS dobór białego/czarnego koloru do wyglądu paska menu, również przy zmianach motywu. Pozostałe platformy zachowują `tiko_play.ico`; ikona Docka/aplikacji pozostaje bez zmian.
+
+## Warianty wyglądu panelu
+
+Nagłówek zawiera przełącznik Klasyczny / Glass. Alternatywny styl jest izolowany w `frontend/src/styles-glass.css`, inspirowany dostarczonym przykładem CodePen Aysenur Turk (ZEpxeYm); tło to lokalne gradienty CSS. Przełączenie nie remontuje aplikacji i nie dotyka API ani listenera. Preferencja w localStorage jest przypisana do originu przeglądarki (zmiana portu po ponownym uruchomieniu może ją zresetować). Oba warianty pozostają do wyboru.
+
 ## Aktualizacja 2026-09-27: wdrożony panel webowy w worktree
 
 Nowy `main.py` uruchamia launcher Qt/tray, jeden backend FastAPI na loopback i panel React dołączony do paczki. Rdzeń znajduje się w `src/core`, integracje w `src/adapters`, API w `src/api`, powłoka systemowa w `src/desktop`, frontend w `frontend`. Zapis konfiguracji v2 jest atomowy z backupem v1; aktywny listener używa snapshotu ze Startu. Testy używają atrap i katalogów tymczasowych. Uruchomienie developerskie i paczki opisuje README.md; rzeczywisty stan odbioru, ograniczenia i wyniki opisuje [WEB_UI_ACCEPTANCE.md](WEB_UI_ACCEPTANCE.md).

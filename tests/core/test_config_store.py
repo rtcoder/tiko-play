@@ -59,3 +59,18 @@ async def test_invalid_data_never_silently_overwritten(tmp_path, raw):
     else:
         await s.repair(AppConfig())
         assert list(tmp_path.glob("config.recovery.*.json"))[0].read_bytes() == raw
+
+
+@pytest.mark.parametrize("version", [1, 2])
+async def test_existing_user_and_multiple_users_survive_reload(tmp_path, version):
+    from src.core.users import allowed_users
+    p = tmp_path / "config.json"
+    p.write_text(json.dumps({"version": version, "target_user": "alice"}))
+    store = ConfigStore(p)
+    initial = await store.load()
+    assert allowed_users(initial.config.target_user) == {"alice"}
+    users = "@alice, bob\ncarol"
+    await store.save(AppConfig(target_user=users), initial.revision)
+    restored = await ConfigStore(p).load()
+    assert restored.config.target_user == users
+    assert allowed_users(restored.config.target_user) == {"alice", "bob", "carol"}

@@ -59,3 +59,33 @@ def test_extra_fields_and_key_order():
     )
     assert c.model_dump()["custom"] == "kept"
     assert c.mappings[0].keys == ("ctrl", "a")
+
+
+@pytest.mark.parametrize("users", ["alice, bob", "@alice\n@bob", " alice ; bob ; alice "])
+def test_multiple_allowed_users_and_shared_cooldown(users):
+    now = [0.0]
+    matcher = Matcher(AppConfig(target_user=users, mappings=[
+        {"id": "1", "trigger": "lewo", "keys": ["left"]}
+    ]), lambda: now[0])
+    assert matcher.match("mallory", "lewo") is None
+    assert matcher.match("ali", "lewo") is None
+    assert matcher.match("alice", "lewo") == ("left",)
+    assert matcher.match("bob", "lewo") is None
+    now[0] = 0.3
+    assert matcher.match("bob", "lewo") == ("left",)
+    now[0] = 0.6
+    assert matcher.match("Bob", "lewo") is None
+
+
+@pytest.mark.parametrize("users", ["", "  \n  "])
+def test_empty_user_filter_allows_everyone(users):
+    matcher = Matcher(AppConfig(target_user=users, mappings=[
+        {"id": "1", "trigger": "go", "keys": ["up"]}
+    ]))
+    assert matcher.match("anyone", "go") == ("up",)
+
+
+@pytest.mark.parametrize("users", [",;\n", "@", " @ , @ "])
+def test_nonempty_invalid_user_list_does_not_disable_filter(users):
+    with pytest.raises(ValueError):
+        AppConfig(target_user=users)

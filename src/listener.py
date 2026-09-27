@@ -2,6 +2,7 @@ import asyncio
 import time
 import pyautogui
 from TikTokLive import TikTokLiveClient
+from TikTokLive.client.errors import UserOfflineError, UserNotFoundError, AlreadyConnectedError
 from TikTokLive.events import CommentEvent
 
 class TikTokListener:
@@ -18,6 +19,9 @@ class TikTokListener:
 
         self.running = True
         streamer = config["streamer_id"]
+        if '@' in streamer:
+            streamer = streamer.split('@')[1]
+
         target_user = config.get("target_user")
         mappings = {
             m["trigger"].lower(): m["keys"]
@@ -27,6 +31,7 @@ class TikTokListener:
         self.log(f"🔌 Łączenie z @{streamer}")
         self.client = TikTokLiveClient(unique_id=streamer)
 
+        # Handles comment events; triggers actions based on mappings
         @self.client.on(CommentEvent)
         async def on_comment(event: CommentEvent):
             if not self.running:
@@ -59,7 +64,20 @@ class TikTokListener:
             else:
                 pyautogui.hotkey(*keys)
 
-        await self.client.start()
+        try:
+            await self.client.start()
+        except UserOfflineError as e:
+            self.logger.log(f"Error user offline: {e}")
+            await self.client.disconnect()
+            return
+        except UserNotFoundError as e:
+            self.logger.log(f"Error user not found: {e}")
+            await self.client.disconnect()
+            return
+        except AlreadyConnectedError as e:
+            self.logger.log(f"Error already connected: {e}")
+            await self.client.disconnect()
+            return
 
         while self.running:
             await asyncio.sleep(0.1)

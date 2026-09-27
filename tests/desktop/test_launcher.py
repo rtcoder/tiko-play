@@ -91,3 +91,46 @@ def test_unwritable_data_directory_shows_native_error(monkeypatch, tmp_path):
     )
     assert module.run_desktop() == 1
     assert errors
+
+
+def test_each_click_opens_a_tab_even_while_launch_url_is_pending(qtbot):
+    class PendingHost(Host):
+        def __init__(self):
+            super().__init__()
+            self.pending = Future()
+
+        def open_url(self):
+            self.opened += 1
+            return self.pending
+
+    host = PendingHost()
+    urls = []
+    ctrl = LauncherController(host, urls.append, lambda text: None, lambda: None)
+    host.ready.emit("http://127.0.0.1:1234")
+    for _ in range(20):
+        ctrl.open_panel()
+    assert host.opened == 21
+    host.pending.set_result("http://127.0.0.1:1234/#token=test")
+    qtbot.waitUntil(lambda: len(urls) == 21)
+    ctrl.open_panel()
+    assert host.opened == 22
+    ctrl.quit()
+
+
+def test_failed_launch_url_allows_retry(qtbot):
+    class FailingHost(Host):
+        def open_url(self):
+            self.opened += 1
+            future = Future()
+            future.set_exception(RuntimeError("not ready"))
+            return future
+
+    host = FailingHost()
+    errors = []
+    ctrl = LauncherController(host, lambda url: True, errors.append, lambda: None)
+    host.ready.emit("http://127.0.0.1:1234")
+    qtbot.waitUntil(lambda: len(errors) == 1)
+    ctrl.open_panel()
+    qtbot.waitUntil(lambda: len(errors) == 2)
+    assert not host.closed
+    ctrl.quit()
