@@ -43,14 +43,13 @@ class Mapping(BaseModel):
         return value
 
 
-class AppConfig(BaseModel):
+Platform = Literal["tiktok", "twitch"]
+
+
+class ChannelConfig(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
-    version: Literal[2] = 2
-    streamer_id: str = ""
+    channel: str = ""
     target_user: str = ""
-    mappings: tuple[Mapping, ...] = ()
-    show_logs: bool = False
-    countdown_enabled: bool = True
 
     @field_validator("target_user")
     @classmethod
@@ -59,10 +58,35 @@ class AppConfig(BaseModel):
             raise ValueError("Wpisz nicki użytkowników lub wyczyść pole, aby dopuścić wszystkich")
         return value
 
-    @field_validator("streamer_id")
+    @field_validator("channel")
     @classmethod
     def streamer_valid(cls, value):
         return value.strip().removeprefix("@")
+
+
+class TwitchChannelConfig(ChannelConfig):
+    @field_validator("channel")
+    @classmethod
+    def twitch_channel(cls, value):
+        import re
+        value = value.lower()
+        if value and not re.fullmatch(r"[a-z0-9_]+", value):
+            raise ValueError("Podaj login kanału Twitch, bez adresu URL")
+        return value
+
+
+class AppConfig(BaseModel):
+    model_config = ConfigDict(extra="allow", frozen=True)
+    version: Literal[3] = 3
+    platform: Platform = "tiktok"
+    tiktok: ChannelConfig = Field(default_factory=ChannelConfig)
+    twitch: TwitchChannelConfig = Field(default_factory=TwitchChannelConfig)
+    mappings: tuple[Mapping, ...] = ()
+    show_logs: bool = False
+    countdown_enabled: bool = True
+
+    def active_source(self) -> ChannelConfig:
+        return self.tiktok if self.platform == "tiktok" else self.twitch
 
     @model_validator(mode="after")
     def unique(self):

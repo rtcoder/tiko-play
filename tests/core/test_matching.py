@@ -7,8 +7,7 @@ from src.core.presets import get_presets
 def test_whole_comment_filter_and_cooldown():
     now = [0.0]
     cfg = AppConfig(
-        streamer_id="alice",
-        target_user="bob",
+        tiktok={"channel": "alice", "target_user": "bob"},
         mappings=[{"id": "1", "trigger": " LEWO ", "keys": ["ctrl", "a"]}],
     )
     matcher = Matcher(cfg, lambda: now[0])
@@ -64,7 +63,7 @@ def test_extra_fields_and_key_order():
 @pytest.mark.parametrize("users", ["alice, bob", "@alice\n@bob", " alice ; bob ; alice "])
 def test_multiple_allowed_users_and_shared_cooldown(users):
     now = [0.0]
-    matcher = Matcher(AppConfig(target_user=users, mappings=[
+    matcher = Matcher(AppConfig(tiktok={"target_user":users}, mappings=[
         {"id": "1", "trigger": "lewo", "keys": ["left"]}
     ]), lambda: now[0])
     assert matcher.match("mallory", "lewo") is None
@@ -79,7 +78,7 @@ def test_multiple_allowed_users_and_shared_cooldown(users):
 
 @pytest.mark.parametrize("users", ["", "  \n  "])
 def test_empty_user_filter_allows_everyone(users):
-    matcher = Matcher(AppConfig(target_user=users, mappings=[
+    matcher = Matcher(AppConfig(tiktok={"target_user":users}, mappings=[
         {"id": "1", "trigger": "go", "keys": ["up"]}
     ]))
     assert matcher.match("anyone", "go") == ("up",)
@@ -88,4 +87,19 @@ def test_empty_user_filter_allows_everyone(users):
 @pytest.mark.parametrize("users", [",;\n", "@", " @ , @ "])
 def test_nonempty_invalid_user_list_does_not_disable_filter(users):
     with pytest.raises(ValueError):
-        AppConfig(target_user=users)
+        AppConfig(tiktok={"target_user":users})
+
+
+def test_twitch_user_matching_is_case_insensitive_and_uses_own_filter():
+    cfg = AppConfig(platform='twitch', tiktok={'channel':'old','target_user':'nobody'},
+                    twitch={'channel':' @ALICE ', 'target_user':'@BoB'},
+                    mappings=[{'id':'1','trigger':'left','keys':['left']}])
+    assert cfg.active_source().channel == 'alice'
+    assert Matcher(cfg).match('BOB', ' LEFT ') == ('left',)
+    assert Matcher(cfg).match('nobody', 'left') is None
+
+
+@pytest.mark.parametrize('channel', ['https://twitch.tv/alice','a b','alice/other'])
+def test_twitch_channel_rejects_non_login(channel):
+    with pytest.raises(ValueError):
+        AppConfig(twitch={'channel':channel})

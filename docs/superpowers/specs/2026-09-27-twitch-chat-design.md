@@ -1,6 +1,6 @@
 # Nasłuch Twitcha — projekt integracji
 
-Status: zakres zaakceptowany w rozmowie; specyfikacja do przeglądu przed planem wykonawczym. Funkcja nie jest jeszcze wdrożona.
+Status: specyfikacja zaakceptowana przez użytkownika 2026-09-27. Funkcja nie jest jeszcze wdrożona.
 
 ## Cel i zakres
 

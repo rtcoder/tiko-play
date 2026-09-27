@@ -34,23 +34,29 @@ class ConfigStore:
         self.recovery_data = data
         if not isinstance(data, dict):
             raise ValueError("Konfiguracja musi być obiektem JSON")
-        if data.get("version", 1) not in (1, 2):
+        if data.get("version", 1) not in (1, 2, 3):
             self._future = True
             raise AppError(
                 "future_version",
                 "Ta konfiguracja wymaga innej wersji TikoPlay",
                 status=409,
             )
-        legacy = data.get("version", 1) == 1
+        source_version = data.get("version", 1)
+        legacy = source_version in (1, 2)
         if legacy:
             data = {
                 **data,
-                "version": 2,
+                "version": 3,
+                "platform": "tiktok",
+                "tiktok": {"channel": data.get("streamer_id", ""), "target_user": data.get("target_user", "")},
+                "twitch": {},
                 "mappings": [
                     {**m, "id": m.get("id") or str(uuid4())}
                     for m in data.get("mappings", [])
                 ],
             }
+            data.pop("streamer_id", None)
+            data.pop("target_user", None)
         return AppConfig.model_validate(data), raw if legacy else None
 
     async def load(self):
@@ -83,7 +89,8 @@ class ConfigStore:
     def _write(self, config, backup=None, recovery=False):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if backup is not None:
-            target = self.path.with_name("config.v1.backup.json")
+            version = json.loads(backup).get("version", 1) if not recovery else None
+            target = self.path.with_name(f"config.v{version}.backup.json")
             if recovery:
                 target = self.path.with_name(f"config.recovery.{uuid4().hex}.json")
             try:
@@ -92,8 +99,11 @@ class ConfigStore:
                     f.flush()
                     os.fsync(f.fileno())
             except FileExistsError:
-                if recovery:
-                    raise
+                target = self.path.with_name(f"config.v{version}.backup.{uuid4().hex}.json")
+                with target.open("xb") as f:
+                    f.write(backup)
+                    f.flush()
+                    os.fsync(f.fileno())
         fd, name = tempfile.mkstemp(
             prefix=".config-", suffix=".tmp", dir=self.path.parent
         )
