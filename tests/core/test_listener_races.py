@@ -37,7 +37,7 @@ async def settle():
 async def test_repeated_stop_does_not_cancel_disconnect_cleanup():
     c = Client()
     s = ListenerService(lambda _: c, Keyboard(), EventBus("x"))
-    s.start(ConfigSnapshot(AppConfig(streamer_id="a", countdown_enabled=False), 1))
+    s.start(ConfigSnapshot(AppConfig(tiktok={"channel":"a"}, countdown_enabled=False), 1))
     await settle()
     s.request_stop()
     await c.disconnect_started.wait()
@@ -61,7 +61,7 @@ async def test_late_keyboard_error_cannot_stop_new_session():
         return c
 
     s = ListenerService(factory, Keyboard(), EventBus("x"))
-    snap = ConfigSnapshot(AppConfig(streamer_id="a", countdown_enabled=False), 1)
+    snap = ConfigSnapshot(AppConfig(tiktok={"channel":"a"}, countdown_enabled=False), 1)
     s.start(snap)
     await settle()
     old = s.state().generation

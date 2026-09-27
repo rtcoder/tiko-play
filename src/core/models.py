@@ -104,6 +104,8 @@ class ConfigSnapshot:
 
 
 class ListenerState(BaseModel):
+    active_platform: Platform | None = None
+    active_channel: str | None = None
     status: str = "stopped"
     output: str = "disabled"
     active_config_revision: int | None = None

@@ -56,7 +56,7 @@ async def test_single_start_stop_and_new_snapshot():
     s = ListenerService(factory, k, EventBus("x"))
     snap = ConfigSnapshot(
         AppConfig(
-            streamer_id="alice",
+            tiktok={"channel":"alice"},
             countdown_enabled=False,
             mappings=[{"id": "1", "trigger": "x", "keys": ["a"]}],
         ),
@@ -85,7 +85,7 @@ async def test_stop_during_connect():
     c.ready.clear()
     k = Keyboard()
     s = ListenerService(lambda _: c, k, EventBus("x"))
-    s.start(ConfigSnapshot(AppConfig(streamer_id="a"), 1))
+    s.start(ConfigSnapshot(AppConfig(tiktok={"channel":"a"}), 1))
     await settle()
     await s.stop()
     assert s.state().status == "stopped" and not k.enabled
@@ -101,7 +101,7 @@ async def test_countdown_does_not_queue_comments():
     s.start(
         ConfigSnapshot(
             AppConfig(
-                streamer_id="a", mappings=[{"id": "1", "trigger": "x", "keys": ["a"]}]
+                tiktok={"channel":"a"}, mappings=[{"id": "1", "trigger": "x", "keys": ["a"]}]
             ),
             1,
         )
@@ -117,3 +117,35 @@ async def test_countdown_does_not_queue_comments():
     await c.callback("u", "x")
     assert len(k.actions) == 1
     await s.stop()
+
+
+async def test_active_source_is_snapshot_and_old_callback_is_fenced():
+    clients=[]; configs=[]; events=EventBus('x'); k=Keyboard()
+    def factory(config):
+        configs.append(config); client=Client(); clients.append(client); return client
+    s=ListenerService(factory,k,events)
+    config=AppConfig(platform='twitch',twitch={'channel':'alice','target_user':'BOB'},countdown_enabled=False,mappings=[{'id':'1','trigger':'x','keys':['a']}])
+    s.start(ConfigSnapshot(config,1)); await settle()
+    try:
+        assert configs[0].platform=='twitch'
+        assert s.state().active_platform=='twitch' and s.state().active_channel=='alice'
+        await clients[0].callback('bob','x'); assert len(k.actions)==1
+        payload=next(e['payload'] for e in events.recent() if e['type']=='comment')
+        assert payload['platform']=='twitch' and payload['channel']=='alice'
+        await s.stop(); s.start(ConfigSnapshot(config.model_copy(update={'platform':'tiktok','tiktok':AppConfig(tiktok={'channel':'new'}).tiktok}),2)); await settle()
+        await clients[0].callback('bob','x'); assert len(k.actions)==1
+        assert s.state().active_channel=='new'
+        s.authorization_lost(); assert s.state().status=='connected'
+    finally: await s.stop()
+
+
+async def test_twitch_auth_loss_disables_before_cleanup_and_keeps_error():
+    c=Client(); k=Keyboard(); s=ListenerService(lambda _:c,k,EventBus('x'))
+    s.start(ConfigSnapshot(AppConfig(platform='twitch',twitch={'channel':'a'},countdown_enabled=False),1)); await settle()
+    try:
+        assert k.enabled
+        s.authorization_lost()
+        assert not k.enabled
+        await settle()
+        assert s.state().status=='error' and s.state().error['code']=='twitch_auth_required'
+    finally: await s.stop()

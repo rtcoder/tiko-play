@@ -36,7 +36,7 @@ class ListenerService:
             raise AppError(
                 "listener_busy", "Poczekaj na zatrzymanie nasłuchu", status=409
             )
-        if not snapshot.config.streamer_id:
+        if not snapshot.config.active_source().channel:
             raise AppError("streamer_required", "Podaj nick streamera", status=422)
         self._stop = False
         self._cancel_requested = False
@@ -47,9 +47,20 @@ class ListenerService:
             error=None,
             generation=self._state.generation + 1,
             active_config_revision=snapshot.revision,
+            active_platform=snapshot.config.platform,
+            active_channel=snapshot.config.active_source().channel,
         )
         self._task = asyncio.create_task(self._run(snapshot))
         return self.state()
+
+    def authorization_lost(self):
+        if self._state.active_platform != "twitch" or self._state.status not in ("connecting", "connected"):
+            return
+        self.keyboard.disable()
+        self._change(status="error", output="disabled", error={
+            "code": "twitch_auth_required", "message": "Sesja Twitcha nie jest dostępna. Połącz konto ponownie."})
+        if self._task and not self._task.done():
+            self._cancel_once()
 
     def request_stop(self):
         self._stop = True
@@ -92,14 +103,18 @@ class ListenerService:
             generation = self._state.generation
 
             async def comment(user, text):
-                self.events.publish("comment", {"user": user, "comment": text})
+                if generation != self._state.generation or self._stop or self._state.status not in ("connecting", "connected"):
+                    return
+                self.events.publish("comment", {"user": user, "comment": text,
+                    "platform": snapshot.config.platform, "channel": snapshot.config.active_source().channel,
+                    "generation": generation})
                 if self._stop or self._state.output != "enabled":
                     return
                 keys = matcher.match(user, text)
                 if keys:
                     self.keyboard.submit(KeyAction(keys, generation, self.clock()))
 
-            self._client = self.factory(snapshot.config.streamer_id)
+            self._client = self.factory(snapshot.config)
             child = await self._client.connect(comment)
             self._change(
                 status="connected",
@@ -113,7 +128,7 @@ class ListenerService:
                 if child in done:
                     await child
                     raise AppError(
-                        "connection_lost", "Połączenie z TikTokiem zostało zakończone"
+                        "connection_lost", "Połączenie z czatem zostało zakończone"
                     )
             if self._stop:
                 return
@@ -121,25 +136,27 @@ class ListenerService:
             self._change(output="enabled")
             await child
             raise AppError(
-                "connection_lost", "Połączenie z TikTokiem zostało zakończone"
+                "connection_lost", "Połączenie z czatem zostało zakończone"
             )
         except asyncio.CancelledError:
+            self.keyboard.disable()
             if not self._stop and self._state.status != "error":
                 self._change(
                     status="error",
                     output="disabled",
                     error={
                         "code": "connection_lost",
-                        "message": "Połączenie z TikTokiem zostało przerwane",
+                        "message": "Połączenie z czatem zostało przerwane",
                     },
                 )
         except Exception as exc:
+            self.keyboard.disable()
             error = (
                 exc
                 if isinstance(exc, AppError)
                 else AppError(
                     "connection_error",
-                    "Nie udało się połączyć z TikTokiem. Sprawdź nick i sieć.",
+                    "Nie udało się połączyć z czatem. Sprawdź kanał i sieć.",
                 )
             )
             self._change(status="error", output="disabled", error=error.as_dict())
