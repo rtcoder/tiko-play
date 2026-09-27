@@ -1,0 +1,31 @@
+import asyncio
+import threading
+from src.core.keyboard import KeyboardExecutor,KeyAction
+
+async def test_queue_generation_expiry_and_serial_execution():
+    entered=threading.Event();release=threading.Event();calls=[];now=[0.]
+    class Port:
+        def execute(self,keys):
+            calls.append(keys);entered.set();release.wait(2)
+    k=KeyboardExecutor(Port(),lambda:now[0],lambda *a:None);k.enable(1)
+    k.submit(KeyAction(('a',),1,0))
+    assert await asyncio.to_thread(entered.wait,1)
+    for _ in range(100): assert k.submit(KeyAction(('b',),1,0))
+    assert not k.submit(KeyAction(('c',),1,0))
+    k.disable();k.enable(2);now[0]=2
+    assert not k.submit(KeyAction(('old',),1,2))
+    k.submit(KeyAction(('expired',),2,0));release.set()
+    await k.close(2)
+    assert calls==[('a',)]
+
+async def test_fault_disables_pending_keys():
+    reports=[]
+    class Port:
+        def execute(self,keys): raise RuntimeError('denied')
+    k=KeyboardExecutor(Port(),report=lambda *a:reports.append(a));k.enable(1)
+    k.submit(KeyAction(('a',),1,k.clock()))
+    for _ in range(100):
+        if reports: break
+        await asyncio.sleep(.005)
+    assert reports and not k.submit(KeyAction(('b',),1,k.clock()))
+    await k.close(1)
