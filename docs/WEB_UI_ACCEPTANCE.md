@@ -35,3 +35,9 @@ To paczka testowa, nie potwierdzone wydanie produkcyjne na obu platformach. Back
 Review całej gałęzi wykonał osobny agent. Pięć usterek Important odtworzono i poprawiono: wspólne cookie/CSRF kilku kart, powtórzony Stop przerywający disconnect, spóźniony błąd klawiatury poprzedniej generacji, nieaktualny status po rozłączeniu panelu oraz niezamykanie sesji HTTP TikToka. Każda poprawka ma test RED→GREEN; dodano też regresję błędu uprawnień katalogu danych przed startem. Po poprawkach pełny zestaw: 42/42 Python, 9/9 frontend, build TypeScript/Vite PASS. Nie pozostały zgłoszone drobne uwagi review.
 
 Pozostałe decyzje: Python >=3.12, testy lokalne na 3.14.7, bez deklarowania sprawdzenia innych wersji. Zachowano historyczne pliki GUI; koszt to przejściowo nieużywany kod. Zadania łączono w większe commity; koszt to mniej szczegółowa historia niż pierwotne 14 osobnych commitów. Ścieżka komentarz→klawisz pozostaje w Pythonie.
+
+## Końcowa paczka
+
+Źródła po poprawkach: commit 7f77cb0. Końcowy build skryptem build-macos.sh utworzył .app i `dist/TikoPlay-2.0.0-test.dmg`. Paczkę ponownie uruchomiono: panel działa, druga instancja przekazuje otwarcie do pierwszej, a zapis z pierwszej karty po otwarciu drugiej przeszedł bez błędu CSRF. Przywrócono pusty filtr użytkownika; pozostawiony panel korzysta wyłącznie z osobnej konfiguracji testowej.
+
+Nie wykonano ręcznego kliknięcia Zakończ z traya: narzędzie kontroli natywnej aplikacji nie uzyskało stanu aplikacji działającej wyłącznie w pasku menu. Programowe zamknięcie backendu i ścieżka Quit launchera mają testy. Nie należy utożsamiać tego z pełnym ręcznym odbiorem traya.
