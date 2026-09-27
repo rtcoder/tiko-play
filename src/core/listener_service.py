@@ -21,6 +21,7 @@ class ListenerService:
         self._stop = False
         self._cancel_requested = False
         self._cleaning = False
+        self._stop_revision = 0
 
     def state(self):
         return self._state.model_copy(deep=True)
@@ -29,7 +30,20 @@ class ListenerService:
         self._state = self._state.model_copy(update=kwargs)
         self.events.publish("status", self._state.model_dump())
 
-    def start(self, snapshot):
+    @property
+    def stop_revision(self):
+        return self._stop_revision
+
+    def start(self, snapshot, *, expected_stop_revision=None):
+        if (
+            expected_stop_revision is not None
+            and expected_stop_revision != self._stop_revision
+        ):
+            raise AppError(
+                "start_cancelled",
+                "Uruchomienie nasłuchu anulowano przez Stop.",
+                status=409,
+            )
         if self._state.status in ("connecting", "connected"):
             return self.state()
         if self._state.status == "stopping" or (self._task and not self._task.done()):
@@ -72,6 +86,7 @@ class ListenerService:
             self._cancel_once()
 
     def request_stop(self):
+        self._stop_revision += 1
         self._stop = True
         self.keyboard.disable()
         if self._task and not self._task.done():

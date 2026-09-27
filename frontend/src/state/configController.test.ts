@@ -1,10 +1,12 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { ConfigController } from "./configController";
 const config = {
-  version: 3 as const,
+  version: 4 as const,
   platform: "tiktok" as const,
   tiktok: { channel: "a", target_user: "" },
   twitch: { channel: "", target_user: "" },
+  youtube: { channel: "", target_user: "" },
+  kick: { channel: "", target_user: "", chatroom_id: null },
   show_logs: false,
   countdown_enabled: true,
   mappings: [],

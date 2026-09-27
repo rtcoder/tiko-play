@@ -67,3 +67,10 @@ export const twitchAuthApi = {
   cancel: () => request<TwitchAuthState>("/api/twitch/auth/cancel", "POST"),
   disconnect: () => request<TwitchAuthState>("/api/twitch/auth", "DELETE"),
 };
+
+export const youtubeKeyApi = {
+  state: () => request<{ configured: boolean }>("/api/youtube/key"),
+  save: (key: string) =>
+    request<{ configured: boolean }>("/api/youtube/key", "PUT", { key }),
+  remove: () => request<{ configured: boolean }>("/api/youtube/key", "DELETE"),
+};

@@ -16,7 +16,7 @@ async def test_migration_backup_and_stable_ids(tmp_path):
     p.write_bytes(original)
     s = ConfigStore(p)
     a = await s.load()
-    assert a.config.version == 3 and a.config.mappings[0].keys == ("ctrl", "a")
+    assert a.config.version == 4 and a.config.mappings[0].keys == ("ctrl", "a")
     assert a.config.model_dump()["custom"] == "kept"
     assert p.with_name("config.v1.backup.json").read_bytes() == original
     b = await ConfigStore(p).load()
@@ -77,14 +77,14 @@ async def test_existing_user_and_multiple_users_survive_reload(tmp_path, version
 
 
 @pytest.mark.parametrize('version', [1, 2])
-async def test_v3_migration_preserves_source_and_backup_collision(tmp_path, version):
+async def test_v4_migration_preserves_source_and_backup_collision(tmp_path, version):
     p = tmp_path / 'config.json'
     raw = json.dumps({'version': version, 'streamer_id': '@Alice', 'target_user': 'Bob', 'custom': 42}).encode()
     p.write_bytes(raw)
     old = tmp_path / f'config.v{version}.backup.json'
     old.write_bytes(b'older backup')
     cfg = (await ConfigStore(p).load()).config
-    assert cfg.version == 3
+    assert cfg.version == 4
     assert cfg.platform == 'tiktok'
     assert cfg.tiktok.channel == 'Alice'
     assert cfg.tiktok.target_user == 'Bob'

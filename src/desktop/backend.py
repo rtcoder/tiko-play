@@ -17,6 +17,7 @@ from src.core.diagnostics import configure_diagnostics
 from src.adapters.chat import ChatAdapterFactory
 from src.adapters.twitch_auth import TwitchAuthService
 from src.adapters.twitch_credentials import NativeCredentialStore
+from src.adapters.youtube_key import YouTubeKeyStore
 from src.twitch_settings import get_twitch_client_id
 from websockets.asyncio.client import connect as websocket_connect
 import httpx
@@ -98,8 +99,13 @@ class BackendHost(QObject):
             auth = TwitchAuthService(
                 get_twitch_client_id(), NativeCredentialStore(), twitch_http, bus
             )
+            youtube_keys = YouTubeKeyStore()
             self.listener = ListenerService(
-                ChatAdapterFactory(auth, twitch_http, websocket_connect), keyboard, bus
+                ChatAdapterFactory(
+                    auth, twitch_http, websocket_connect, youtube_keys=youtube_keys
+                ),
+                keyboard,
+                bus,
             )
             auth.subscribe_invalidated(self.listener.authorization_lost)
             restore_task = asyncio.create_task(auth.restore())
@@ -110,6 +116,7 @@ class BackendHost(QObject):
                 self.sessions,
                 self.static_dir,
                 twitch_auth=auth,
+                youtube_keys=youtube_keys,
             )
             config = uvicorn.Config(
                 app,

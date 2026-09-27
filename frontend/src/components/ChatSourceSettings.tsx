@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { YouTubeKeySettings } from "./YouTubeKeySettings";
 import { twitchAuthApi } from "../api/client";
 import type {
   AppConfig,
@@ -66,18 +67,28 @@ export function ChatSourceSettings({
         >
           <option value="tiktok">TikTok LIVE</option>
           <option value="twitch">Twitch</option>
+          <option value="youtube">YouTube Live</option>
+          <option value="kick">Kick</option>
         </select>
       </label>
       <label>
-        Kanał
+        {config.platform === "youtube" ? "Transmisja YouTube" : "Kanał"}
         <div className="with-prefix">
-          <span aria-hidden="true">@</span>
+          {config.platform !== "youtube" && <span aria-hidden="true">@</span>}
           <input
             value={source.channel}
-            placeholder="nazwa_kanału"
+            placeholder={
+              config.platform === "youtube"
+                ? "https://www.youtube.com/watch?v=…"
+                : "nazwa_kanału"
+            }
             onChange={(e) =>
               onChange({
-                [config.platform]: { ...source, channel: e.target.value },
+                [config.platform]: {
+                  ...source,
+                  channel: e.target.value,
+                  ...(config.platform === "kick" ? { chatroom_id: null } : {}),
+                },
               })
             }
           />
@@ -86,14 +97,20 @@ export function ChatSourceSettings({
       <p className="hint">
         {config.platform === "tiktok"
           ? "Wpisz nick konta prowadzącego TikTok LIVE."
-          : "Wpisz login kanału Twitch, bez adresu URL. Kanał może być inny niż połączone konto."}
+          : config.platform === "twitch"
+            ? "Wpisz login kanału Twitch, bez adresu URL. Kanał może być inny niż połączone konto."
+            : config.platform === "youtube"
+              ? "Wklej link do trwającej transmisji lub jej ID. Wymagany jest włączony czat."
+              : "Wpisz login kanału Kick. Połączenie lokalne, bez logowania. Integracja nieoficjalna może wymagać aktualizacji po zmianach Kicka."}
       </p>
       <label>
         Dozwoleni użytkownicy <span className="optional">opcjonalnie</span>
         <textarea
           rows={3}
           aria-describedby="allowed-users-hint"
-          placeholder="np. gracz1, gracz2"
+          placeholder={
+            config.platform === "youtube" ? "np. UC…" : "np. gracz1, gracz2"
+          }
           value={source.target_user}
           onChange={(e) =>
             onChange({
@@ -103,12 +120,44 @@ export function ChatSourceSettings({
         />
       </label>
       <p className="hint" id="allowed-users-hint">
-        Nicki oddziel przecinkami lub wpisz po jednym w wierszu. Możesz dodać @.{" "}
-        {config.platform === "twitch"
-          ? "Wielkość liter nie ma znaczenia."
-          : "Wielkość liter ma znaczenie."}{" "}
+        {config.platform === "youtube"
+          ? "Wpisz ID kanałów użytkowników (UC…), nie nazwy wyświetlane. ID zobaczysz przy komentarzach w panelu aktywności. Oddziel je przecinkami lub wierszami. Wielkość liter ma znaczenie."
+          : `Nicki oddziel przecinkami lub wpisz po jednym w wierszu. Możesz dodać @. ${config.platform === "tiktok" ? "Wielkość liter ma znaczenie." : "Wielkość liter nie ma znaczenia."}`}{" "}
         Puste pole dopuszcza wszystkich widzów.
       </p>
+      {config.platform === "youtube" && <YouTubeKeySettings />}
+      {config.platform === "kick" && (
+        <details>
+          <summary>Zaawansowane: ID pokoju czatu</summary>
+          <label>
+            ID pokoju czatu Kick (opcjonalnie)
+            <input
+              type="number"
+              min="1"
+              step="1"
+              max="9007199254740991"
+              value={config.kick.chatroom_id ?? ""}
+              onChange={(e) =>
+                onChange({
+                  kick: {
+                    ...config.kick,
+                    chatroom_id: e.target.value ? Number(e.target.value) : null,
+                  },
+                })
+              }
+            />
+          </label>
+          <p className="hint">
+            Użyj, jeśli Kick blokuje rozpoznawanie kanału. ID określa faktyczny
+            czat — upewnij się, że należy do wpisanego kanału. Zmiana kanału
+            czyści ID.
+          </p>
+          <p className="hint">
+            W przeglądarce otwórz kick.com/api/v2/channels/LOGIN i odczytaj
+            chatroom.id. To ID pokoju, nie ID użytkownika.
+          </p>
+        </details>
+      )}
       {config.platform === "twitch" && (
         <div className="twitch-account">
           <h3>Konto Twitch</h3>

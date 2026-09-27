@@ -11,6 +11,7 @@ from src.core.presets import get_presets
 from src.core.keys import get_keys
 from src.api.events import stream_events
 from src.api.twitch import create_twitch_router
+from src.api.youtube import create_youtube_router
 
 
 class ConfigWrite(BaseModel):
@@ -26,7 +27,16 @@ class Token(BaseModel):
     token: str = Field(max_length=256)
 
 
-def create_app(store, listener, events, sessions, static_dir: Path, *, twitch_auth):
+def create_app(
+    store,
+    listener,
+    events,
+    sessions,
+    static_dir: Path,
+    *,
+    twitch_auth,
+    youtube_keys=None,
+):
     tasks = set()
 
     def spawn(coro):
@@ -163,6 +173,7 @@ def create_app(store, listener, events, sessions, static_dir: Path, *, twitch_au
 
     @app.post("/api/listener/start", status_code=202)
     async def start(body: Revision):
+        stop_revision = listener.stop_revision
         snap = store.snapshot()
         if body.expected_revision != snap.revision:
             raise AppError(
@@ -179,7 +190,21 @@ def create_app(store, listener, events, sessions, static_dir: Path, *, twitch_au
                 "Połącz konto Twitch przed rozpoczęciem nasłuchu.",
                 status=409,
             )
-        listener.start(snap)
+        if snap.config.platform == "youtube":
+            if youtube_keys is None:
+                raise AppError(
+                    "youtube_key_required", "Zapisz klucz YouTube Data API.", status=409
+                )
+            async with youtube_keys.lock:
+                if not await youtube_keys.load():
+                    raise AppError(
+                        "youtube_key_required",
+                        "Zapisz klucz YouTube Data API.",
+                        status=409,
+                    )
+                listener.start(snap, expected_stop_revision=stop_revision)
+        else:
+            listener.start(snap)
         return state()
 
     @app.post("/api/listener/stop", status_code=202)
@@ -204,6 +229,8 @@ def create_app(store, listener, events, sessions, static_dir: Path, *, twitch_au
         await stream_events(ws, events, state)
 
     app.include_router(create_twitch_router(twitch_auth))
+    if youtube_keys is not None:
+        app.include_router(create_youtube_router(youtube_keys, listener))
 
     @app.api_route(
         "/api/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"]

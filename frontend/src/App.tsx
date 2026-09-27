@@ -1,3 +1,4 @@
+import { sourceLabel } from "./api/platforms";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { useEffect, useState, useSyncExternalStore, useRef } from "react";
 import {
@@ -261,8 +262,10 @@ export default function App() {
                   {running && connected && state?.active_platform && (
                     <p className="active-source">
                       Aktywne źródło:{" "}
-                      {state.active_platform === "twitch" ? "Twitch" : "TikTok"}{" "}
-                      · @{state.active_channel}
+                      {sourceLabel(
+                        state.active_platform,
+                        state.active_channel ?? "",
+                      )}
                     </p>
                   )}
                   <p>

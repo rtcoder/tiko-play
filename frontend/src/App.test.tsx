@@ -4,10 +4,12 @@ import { it, expect, vi } from "vitest";
 import App from "./App";
 const fixture = vi.hoisted(() => ({
   config: {
-    version: 3,
+    version: 4,
     platform: "tiktok",
     tiktok: { channel: "a", target_user: "" },
     twitch: { channel: "b", target_user: "" },
+    youtube: { channel: "", target_user: "" },
+    kick: { channel: "", target_user: "", chatroom_id: null },
     mappings: [],
     show_logs: false,
     countdown_enabled: true,

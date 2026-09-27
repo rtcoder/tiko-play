@@ -4,17 +4,19 @@ export interface Mapping {
   keys: string[];
   [key: string]: unknown;
 }
-export type Platform = "tiktok" | "twitch";
+export type Platform = "tiktok" | "twitch" | "youtube" | "kick";
 export interface ChannelConfig {
   channel: string;
   target_user: string;
   [key: string]: unknown;
 }
 export interface AppConfig {
-  version: 3;
+  version: 4;
   platform: Platform;
   tiktok: ChannelConfig;
   twitch: ChannelConfig;
+  youtube: ChannelConfig;
+  kick: ChannelConfig & { chatroom_id: number | null };
   mappings: Mapping[];
   show_logs: boolean;
   countdown_enabled: boolean;

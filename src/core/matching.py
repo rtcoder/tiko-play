@@ -9,7 +9,7 @@ def normalize_trigger(text: str) -> str:
 
 class Matcher:
     def __init__(self, config: AppConfig, clock=time.monotonic):
-        self.fold_users = config.platform == "twitch"
+        self.fold_users = config.platform in ("twitch", "kick")
         self.targets = allowed_users(config.active_source().target_user)
         if self.fold_users:
             self.targets = frozenset(u.lower() for u in self.targets)

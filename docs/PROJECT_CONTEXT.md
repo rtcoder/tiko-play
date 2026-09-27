@@ -1,5 +1,19 @@
 # TikoPlay — kontekst techniczny
 
+## YouTube i Kick — 2026-09-27
+
+Dodano źródła `youtube` i `kick` do wspólnej fabryki/rdzenia oraz panelu. Nadal działa tylko jedno źródło naraz; mapowania są wspólne, kanały i filtry oddzielne. Konfiguracja v4 migruje v1/v2/v3 z kopią oryginału, zachowując aktywnego Twitcha w migracji v3. Historia notatek poniżej dotyczy wcześniejszych etapów.
+
+YouTube: link/ID konkretnej transmisji → oficjalne `videos.list` → bezpośredni `StreamList` przez gRPC. Wpisywany w panelu klucz API tylko w natywnym keyring (`TikoPlay.YouTube/api-key`), write-only `/api/youtube/key`, istniejące cookie/origin/CSRF. Mutacje klucza i Start są serializowane; klucza nie zmienia się podczas nasłuchu YT. Filtry używają stabilnych ID kanałów `UC…`, dokładne dopasowanie. Pierwsza paczka historii i wiadomości starsze niż rozpoczęcie połączenia są pomijane; deduplikacja; tylko zwykłe komentarze tekstowe. Protobuf to minimalny podzbiór schematu Google z zachowaniem numerów pól, wygenerowany plik w repo. Nowe runtime: grpcio/protobuf; generator grpcio-tools tylko dev.
+
+Kick: na życzenie użytkownika integracja nieoficjalna, anonimowa i lokalna — publiczny odczyt kanału i Pusher WSS, żadnego webhooka/serwera/tunelu. Obsługuje dwie wersje nazw kanałów/zdarzeń z deduplikacją; czeka na potwierdzenie subskrypcji, obsługuje heartbeat i sprząta po anulowaniu startu. Opcjonalne `kick.chatroom_id` omija zablokowany odczyt loginu; to ID jest autorytatywne, nie jest weryfikowane z loginem. Panel wyjaśnia to i czyści ID przy zmianie loginu. Filtr loginów ignoruje wielkość liter.
+
+Nieoczekiwana utrata połączenia zatrzymuje klawisze i wymaga ponownego Start. Testy izolują konfigurację, magazyn klucza i klawiaturę. Pełny wynik: 150 testów Python + 20 frontend, 2 natywne pominięte. Paczka macOS `dist/youtube-kick/TikoPlay.app` zbudowana i uruchomiona testowo na izolowanych danych; health i panel działają. Weryfikacja i ograniczenia: [YOUTUBE_KICK_ACCEPTANCE.md](YOUTUBE_KICK_ACCEPTANCE.md). Istniejące zmiany traya/Cocoa zostały zachowane.
+
+## Pierwsze kliknięcie menu traya (macOS)
+
+W paczce `LSUIElement` menu Qt mogło zostać otwarte przed aktywacją aplikacji. Użytkownik potwierdził, że pierwszy wybór „Zakończ” nie działał, a drugi zamykał program. Test natywny odtworzył otwieranie menu przy `NSApplication.isActive() == False`. Tray teraz żąda aktywacji Cocoa i czeka na `applicationStateChanged(ApplicationActive)` przed pokazaniem menu; aktywna aplikacja pokazuje je od razu. Zachowano odpięte menu chroniące przed QTBUG-147449. Jawna zależność macOS: `pyobjc-framework-Cocoa`. Test aktywnej i nieaktywnej aplikacji: `QT_QPA_PLATFORM=cocoa python -m pytest tests/desktop/test_tray_native.py -q`; w testach offscreen jest pomijany. Test natywny nie zastępuje odbioru fizycznego kliknięcia w zbudowanej paczce.
+
 ## Integracja Twitch — 2026-09-27
 
 W izolowanym checkoutcie wdrożono wybór TikTok/Twitch (jedno aktywne źródło), konfigurację v3 z migracją v1/v2, niezależne kanały/filtry i wspólne mapowania. Nowe adaptery `twitch.py`, `twitch_protocol.py`, `twitch_auth.py`, `twitch_credentials.py`; fabryka w `adapters/chat.py`. `ListenerService` otrzymuje fabrykę całej konfiguracji, a stan podaje aktywną platformę/kanał/generację. Filtr Twitcha jest case-insensitive, TikToka zachowuje wcześniejsze zasady.

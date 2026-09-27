@@ -11,10 +11,12 @@ export function ConfigRecovery({
   const [text, setText] = useState(
     JSON.stringify(
       state.recovery_data ?? {
-        version: 3,
+        version: 4,
         platform: "tiktok",
         tiktok: { channel: "", target_user: "" },
         twitch: { channel: "", target_user: "" },
+        youtube: { channel: "", target_user: "" },
+        kick: { channel: "", target_user: "", chatroom_id: null },
         mappings: [],
         show_logs: false,
         countdown_enabled: true,
@@ -50,9 +52,9 @@ export function ConfigRecovery({
             onClick={async () => {
               try {
                 const value = JSON.parse(text);
-                if (![undefined, 1, 2, 3].includes(value.version))
+                if (![undefined, 1, 2, 3, 4].includes(value.version))
                   throw new Error("Nieobsługiwana wersja konfiguracji.");
-                if (value.version !== 3) {
+                if ([undefined, 1, 2].includes(value.version)) {
                   value.version = 3;
                   value.platform = "tiktok";
                   value.tiktok = {
@@ -69,6 +71,13 @@ export function ConfigRecovery({
                     }),
                   );
                 }
+                value.version = 4;
+                value.youtube ??= { channel: "", target_user: "" };
+                value.kick ??= {
+                  channel: "",
+                  target_user: "",
+                  chatroom_id: null,
+                };
                 await request("/api/config/repair", "POST", value);
                 onRecovered();
               } catch (e) {

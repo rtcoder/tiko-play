@@ -43,7 +43,7 @@ class Mapping(BaseModel):
         return value
 
 
-Platform = Literal["tiktok", "twitch"]
+Platform = Literal["tiktok", "twitch", "youtube", "kick"]
 
 
 class ChannelConfig(BaseModel):
@@ -78,18 +78,43 @@ class TwitchChannelConfig(ChannelConfig):
         return value
 
 
+class YouTubeChannelConfig(ChannelConfig):
+    @field_validator("channel")
+    @classmethod
+    def video_id(cls, value):
+        from src.core.channel_ids import youtube_video_id
+
+        return youtube_video_id(value)
+
+
+class KickChannelConfig(ChannelConfig):
+    chatroom_id: int | None = Field(default=None, gt=0, le=9007199254740991)
+
+    @field_validator("channel")
+    @classmethod
+    def kick_channel(cls, value):
+        import re
+
+        value = value.lower()
+        if value and not re.fullmatch(r"[a-z0-9_-]+", value):
+            raise ValueError("Podaj login kanału Kick, bez adresu URL")
+        return value
+
+
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
-    version: Literal[3] = 3
+    version: Literal[4] = 4
     platform: Platform = "tiktok"
     tiktok: ChannelConfig = Field(default_factory=ChannelConfig)
     twitch: TwitchChannelConfig = Field(default_factory=TwitchChannelConfig)
+    youtube: YouTubeChannelConfig = Field(default_factory=YouTubeChannelConfig)
+    kick: KickChannelConfig = Field(default_factory=KickChannelConfig)
     mappings: tuple[Mapping, ...] = ()
     show_logs: bool = False
     countdown_enabled: bool = True
 
     def active_source(self) -> ChannelConfig:
-        return self.tiktok if self.platform == "tiktok" else self.twitch
+        return getattr(self, self.platform)
 
     @model_validator(mode="after")
     def unique(self):

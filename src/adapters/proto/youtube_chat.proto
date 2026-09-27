@@ -1,0 +1,33 @@
+// Wire-compatible read-only subset of the documented YouTube StreamList API.
+// Field numbers: https://developers.google.com/youtube/v3/live/streaming-live-chat
+// Unknown fields/events are deliberately left to protobuf's forward compatibility.
+syntax = "proto2";
+package youtube.api.v3;
+message LiveChatMessageListRequest {
+  optional string live_chat_id = 1;
+  repeated string part = 100;
+}
+message LiveChatMessageListResponse {
+  optional string offline_at = 2;
+  optional string next_page_token = 100602;
+  repeated LiveChatMessage items = 1007;
+}
+message LiveChatMessage {
+  optional string id = 101;
+  optional LiveChatMessageSnippet snippet = 2;
+  optional LiveChatMessageAuthorDetails author_details = 3;
+}
+message LiveChatMessageAuthorDetails {
+  optional string channel_id = 10101;
+  optional string display_name = 103;
+}
+message LiveChatMessageSnippet {
+  // Enum on the server: 1 = text, 4 = chat ended. Other values are ignored.
+  optional int32 type = 1;
+  optional string live_chat_id = 201;
+  optional string published_at = 4;
+  optional LiveChatTextMessageDetails text_message_details = 19;
+}
+message LiveChatTextMessageDetails {
+  optional string message_text = 1;
+}

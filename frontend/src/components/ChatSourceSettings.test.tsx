@@ -6,12 +6,15 @@ import { twitchAuthApi } from "../api/client";
 import type { AppConfig, TwitchAuthState } from "../api/types";
 vi.mock("../api/client", () => ({
   twitchAuthApi: { start: vi.fn(), cancel: vi.fn(), disconnect: vi.fn() },
+  youtubeKeyApi: { state: vi.fn(async () => ({ configured: false })) },
 }));
 const config: AppConfig = {
-  version: 3,
+  version: 4,
   platform: "tiktok",
   tiktok: { channel: "alice", target_user: "Bob" },
   twitch: { channel: "other", target_user: "carol" },
+  youtube: { channel: "", target_user: "" },
+  kick: { channel: "", target_user: "", chatroom_id: null },
   mappings: [],
   show_logs: false,
   countdown_enabled: true,
@@ -104,4 +107,34 @@ it("does not render foreign activation URLs", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Połącz konto Twitch" }));
   expect(await screen.findByRole("alert")).toHaveTextContent(/adres/);
   expect(screen.queryByRole("link")).not.toBeInTheDocument();
+});
+it("keeps YouTube and Kick settings separate and clears stale room ID when changing Kick channel", () => {
+  render(<Harness />);
+  const select = screen.getByRole("combobox", { name: "Źródło czatu" });
+  fireEvent.change(select, { target: { value: "kick" } });
+  fireEvent.change(screen.getByRole("textbox", { name: "Kanał" }), {
+    target: { value: "alice" },
+  });
+  fireEvent.change(screen.getByRole("spinbutton", { name: /ID pokoju/ }), {
+    target: { value: "42" },
+  });
+  fireEvent.change(select, { target: { value: "youtube" } });
+  fireEvent.change(
+    screen.getByRole("textbox", { name: /Transmisja YouTube/ }),
+    { target: { value: "https://youtu.be/abcdefghijk" } },
+  );
+  expect(screen.getByText(/ID kanałów użytkowników/)).toBeInTheDocument();
+  fireEvent.change(select, { target: { value: "kick" } });
+  expect(screen.getByRole("textbox", { name: "Kanał" })).toHaveValue("alice");
+  expect(screen.getByRole("spinbutton", { name: /ID pokoju/ })).toHaveValue(42);
+  fireEvent.change(screen.getByRole("textbox", { name: "Kanał" }), {
+    target: { value: "bob" },
+  });
+  expect(screen.getByRole("spinbutton", { name: /ID pokoju/ })).toHaveValue(
+    null,
+  );
+  fireEvent.change(select, { target: { value: "youtube" } });
+  expect(
+    screen.getByRole("textbox", { name: /Transmisja YouTube/ }),
+  ).toHaveValue("https://youtu.be/abcdefghijk");
 });
