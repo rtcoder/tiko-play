@@ -9,7 +9,7 @@ Implementacja w izolowanym checkoutcie `twitch-chat`, przed połączeniem z main
 | Dodatkowe testy speców pakowania | 3 — PASS |
 | Build frontend (TypeScript + Vite) | PASS |
 | Panel Klasyczny i Glass w przeglądarce | Sprawdzono z atrapą konta, kanału i klawiatury; nowe pola i przyciski widoczne, bez nakładania elementów |
-| Build macOS | PASS; finalna przebudowa po przeglądzie weryfikowana osobno |
+| Build macOS | PASS; finalna przebudowa po poprawkach z przeglądu i ponowny smoke test gotowej paczki |
 | Uruchomienie gotowej paczki macOS | PASS: osobny tymczasowy katalog, panel/API, konfiguracja v3, brak Client ID nie blokuje startu; bez fizycznych kliknięć traya i bez odczytu prawdziwych tokenów |
 | Windows | Niewykonane: brak hosta Windows |
 | Rzeczywisty OAuth/EventSub/sterowanie grą | Niewykonane: brak Client ID oraz autoryzacji konta Twitch |
@@ -19,7 +19,7 @@ Testy nie używają prawdziwego konta Twitch, nie czytają systemowych tokenów 
 
 Przed wydaniem: ustawić publiczny Client ID aplikacji typu Public; zalogować się poprzez DCF; potwierdzić odczyt komentarza i akcję w kontrolowanym oknie; sprawdzić Stop, restart aplikacji, utratę sieci, odświeżenie i cofnięcie autoryzacji. Powtórzyć odbiór z gotowej paczki na Windows. Paczka testowa jest podpisana ad-hoc, bez notaryzacji dystrybucyjnej.
 
-Decyzje wykonawcze: osobne środowiska zależności w worktree; dodatkowy publiczny numer próby logowania pozwala usuwać przestarzały kod aktywacji w wielu panelach. Pozostałe reguły zgodne ze specyfikacją. Ograniczony cache deduplikacji nie zapewnia globalnego exactly-once poza sesją/limitem cache.
+Decyzje wykonawcze: osobne środowiska zależności w worktree (poprzednie nie zawierały test runnerów), techniczne nagłówki Task w planie na potrzeby narzędzi (bez zmiany zakresu); dodatkowy publiczny numer próby logowania pozwala usuwać przestarzały kod aktywacji w wielu panelach. Pozostałe reguły zgodne ze specyfikacją. Ograniczony cache deduplikacji nie zapewnia globalnego exactly-once poza sesją/limitem cache.
 
 ## Końcowa regresja po przeglądzie
 
