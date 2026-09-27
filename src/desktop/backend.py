@@ -4,7 +4,7 @@ import socket
 import threading
 import time
 from uuid import uuid4
-from PySide6.QtCore import QObject,Signal
+from PySide6.QtCore import QObject, Signal
 import uvicorn
 from src.api.app import create_app
 from src.api.session import SessionManager
@@ -17,88 +17,162 @@ from src.core.diagnostics import configure_diagnostics
 from src.adapters.tiktok import TikTokAdapter
 from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
 
+
 class BackendHost(QObject):
-    ready=Signal(str)
-    failed=Signal(str)
-    state_changed=Signal(dict)
-    def __init__(self,data_dir,static_dir):
-        super().__init__();self.data_dir=data_dir;self.static_dir=static_dir
-        self.origin=None;self.loop=None;self.server=None;self.listener=None;self.sessions=None
-        self._closing=False;self._finished=concurrent.futures.Future()
-        self.thread=threading.Thread(target=self._thread_main,name='TikoPlay-backend',daemon=True)
-    def start(self):self.thread.start()
+    ready = Signal(str)
+    failed = Signal(str)
+    state_changed = Signal(dict)
+
+    def __init__(self, data_dir, static_dir):
+        super().__init__()
+        self.data_dir = data_dir
+        self.static_dir = static_dir
+        self.origin = None
+        self.loop = None
+        self.server = None
+        self.listener = None
+        self.sessions = None
+        self._closing = False
+        self._finished = concurrent.futures.Future()
+        self.thread = threading.Thread(
+            target=self._thread_main, name="TikoPlay-backend", daemon=True
+        )
+
+    def start(self):
+        self.thread.start()
+
     def _thread_main(self):
-        try:asyncio.run(self._run())
-        except Exception:
-            self.failed.emit('Nie udało się uruchomić lokalnego panelu. Sprawdź instalację i uprawnienia do katalogu danych.')
-            if hasattr(self,'logger'):self.logger.error('Backend startup/runtime failure',exc_info=True)
-        finally:
-            self.loop=None
-            if not self._finished.done():self._finished.set_result(None)
-    async def _run(self):
-        self.loop=asyncio.get_running_loop()
-        self.logger=configure_diagnostics(self.data_dir/'logs')
-        if not (self.static_dir/'index.html').is_file():raise RuntimeError('Missing frontend assets')
-        sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        keyboard=None;server_task=None;watch_task=None
         try:
-            sock.bind(('127.0.0.1',0));sock.listen(128);sock.setblocking(False)
-            self.origin=f'http://127.0.0.1:{sock.getsockname()[1]}'
-            bus=EventBus(uuid4().hex)
-            self.sessions=SessionManager(bus.instance_id,self.origin)
-            store=ConfigStore(self.data_dir/'config.json')
-            try:await store.load()
-            except AppError:pass
-            def report(kind,payload):
-                if self.loop and not self.loop.is_closed():self.loop.call_soon_threadsafe(self.listener.keyboard_result,kind,payload)
-            keyboard=KeyboardExecutor(PyAutoGUIKeyboard(),report=report)
-            self.listener=ListenerService(TikTokAdapter,keyboard,bus)
-            app=create_app(store,self.listener,bus,self.sessions,self.static_dir)
-            config=uvicorn.Config(app,host='127.0.0.1',port=sock.getsockname()[1],workers=1,log_config=None,access_log=False,timeout_graceful_shutdown=2,ws='websockets-sansio')
-            self.server=uvicorn.Server(config)
-            server_task=asyncio.create_task(self.server.serve(sockets=[sock]))
-            deadline=time.monotonic()+15
+            asyncio.run(self._run())
+        except Exception:
+            self.failed.emit(
+                "Nie udało się uruchomić lokalnego panelu. Sprawdź instalację i uprawnienia do katalogu danych."
+            )
+            if hasattr(self, "logger"):
+                self.logger.error("Backend startup/runtime failure", exc_info=True)
+        finally:
+            self.loop = None
+            if not self._finished.done():
+                self._finished.set_result(None)
+
+    async def _run(self):
+        self.loop = asyncio.get_running_loop()
+        self.logger = configure_diagnostics(self.data_dir / "logs")
+        if not (self.static_dir / "index.html").is_file():
+            raise RuntimeError("Missing frontend assets")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        keyboard = None
+        server_task = None
+        watch_task = None
+        try:
+            sock.bind(("127.0.0.1", 0))
+            sock.listen(128)
+            sock.setblocking(False)
+            self.origin = f"http://127.0.0.1:{sock.getsockname()[1]}"
+            bus = EventBus(uuid4().hex)
+            self.sessions = SessionManager(bus.instance_id, self.origin)
+            store = ConfigStore(self.data_dir / "config.json")
+            try:
+                await store.load()
+            except AppError:
+                pass
+
+            def report(kind, payload):
+                if self.loop and not self.loop.is_closed():
+                    self.loop.call_soon_threadsafe(
+                        self.listener.keyboard_result, kind, payload
+                    )
+
+            keyboard = KeyboardExecutor(PyAutoGUIKeyboard(), report=report)
+            self.listener = ListenerService(TikTokAdapter, keyboard, bus)
+            app = create_app(store, self.listener, bus, self.sessions, self.static_dir)
+            config = uvicorn.Config(
+                app,
+                host="127.0.0.1",
+                port=sock.getsockname()[1],
+                workers=1,
+                log_config=None,
+                access_log=False,
+                timeout_graceful_shutdown=2,
+                ws="websockets-sansio",
+            )
+            self.server = uvicorn.Server(config)
+            server_task = asyncio.create_task(self.server.serve(sockets=[sock]))
+            deadline = time.monotonic() + 15
             import httpx
+
             async with httpx.AsyncClient(trust_env=False) as client:
                 while True:
-                    if self._closing:self.server.should_exit=True;return
-                    if server_task.done():await server_task;raise RuntimeError('Server exited before ready')
-                    if time.monotonic()>deadline:raise TimeoutError('Readiness timeout')
+                    if self._closing:
+                        self.server.should_exit = True
+                        return
+                    if server_task.done():
+                        await server_task
+                        raise RuntimeError("Server exited before ready")
+                    if time.monotonic() > deadline:
+                        raise TimeoutError("Readiness timeout")
                     if self.server.started:
                         try:
-                            health=await client.get(self.origin+'/api/health',timeout=.5)
-                            page=await client.get(self.origin+'/',timeout=.5)
-                            if health.status_code==200 and page.status_code==200:break
-                        except httpx.HTTPError:pass
-                    await asyncio.sleep(.03)
+                            health = await client.get(
+                                self.origin + "/api/health", timeout=0.5
+                            )
+                            page = await client.get(self.origin + "/", timeout=0.5)
+                            if health.status_code == 200 and page.status_code == 200:
+                                break
+                        except httpx.HTTPError:
+                            pass
+                    await asyncio.sleep(0.03)
             self.ready.emit(self.origin)
-            sub=bus.subscribe()
+            sub = bus.subscribe()
+
             async def watch():
                 while not sub.closed:
-                    event=await sub.queue.get()
-                    if event['type']=='status':self.state_changed.emit(event['payload'])
-            watch_task=asyncio.create_task(watch())
+                    event = await sub.queue.get()
+                    if event["type"] == "status":
+                        self.state_changed.emit(event["payload"])
+
+            watch_task = asyncio.create_task(watch())
             await server_task
-            if not self._closing:raise RuntimeError('Server stopped unexpectedly')
+            if not self._closing:
+                raise RuntimeError("Server stopped unexpectedly")
         finally:
-            if self.listener:await self.listener.stop()
-            if keyboard:await keyboard.close(1)
-            if self.server:self.server.should_exit=True
+            if self.listener:
+                await self.listener.stop()
+            if keyboard:
+                await keyboard.close(1)
+            if self.server:
+                self.server.should_exit = True
             if server_task and not server_task.done():
-                try:await asyncio.wait_for(server_task,2)
-                except (TimeoutError,asyncio.CancelledError):pass
-            if watch_task:watch_task.cancel();await asyncio.gather(watch_task,return_exceptions=True)
+                try:
+                    await asyncio.wait_for(server_task, 2)
+                except (TimeoutError, asyncio.CancelledError):
+                    pass
+            if watch_task:
+                watch_task.cancel()
+                await asyncio.gather(watch_task, return_exceptions=True)
             sock.close()
+
     def open_url(self):
-        async def issue():return self.origin+'/#token='+self.sessions.issue_launch_token()
-        if not self.loop:raise RuntimeError('Backend nie jest gotowy')
-        return asyncio.run_coroutine_threadsafe(issue(),self.loop)
+        async def issue():
+            return self.origin + "/#token=" + self.sessions.issue_launch_token()
+
+        if not self.loop:
+            raise RuntimeError("Backend nie jest gotowy")
+        return asyncio.run_coroutine_threadsafe(issue(), self.loop)
+
     def request_stop(self):
-        if self.loop and self.listener:asyncio.run_coroutine_threadsafe(self.listener.stop(),self.loop)
+        if self.loop and self.listener:
+            asyncio.run_coroutine_threadsafe(self.listener.stop(), self.loop)
+
     def shutdown(self):
-        self._closing=True
+        self._closing = True
+
         def stop():
-            if self.listener:self.listener.request_stop()
-            if self.server:self.server.should_exit=True
-        if self.loop:self.loop.call_soon_threadsafe(stop)
+            if self.listener:
+                self.listener.request_stop()
+            if self.server:
+                self.server.should_exit = True
+
+        if self.loop:
+            self.loop.call_soon_threadsafe(stop)
         return self._finished

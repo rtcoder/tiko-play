@@ -1,68 +1,16 @@
-#!/bin/bash
-set -e
-
-echo "==============================="
-echo "  TikoPlay - macOS Build"
-echo "==============================="
-
-# ---- Python check ----
-if ! command -v python3 &> /dev/null; then
-  echo "[ERROR] python3 nie jest dostepny"
-  exit 1
-fi
-
-# ---- Virtualenv ----
-if [ ! -d "venv" ]; then
-  echo "[INFO] Tworzenie virtualenv"
-  python3 -m venv venv
-fi
-
-echo "[INFO] Aktywacja virtualenv"
-source venv/bin/activate
-
-# ---- Zaleznosci ----
-echo "[INFO] Instalacja zaleznosci"
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install pyinstaller
-
-# ---- Czyszczenie ----
-echo "[INFO] Czyszczenie poprzednich buildow"
-rm -rf build dist
-
-# ---- Build APP ----
-echo "[INFO] Budowanie aplikacji (.app)"
-pyinstaller build.spec
-
-APP_PATH="dist/TikoPlay.app"
-if [ ! -d "$APP_PATH" ]; then
-  echo "[ERROR] Nie znaleziono TikoPlay.app"
-  exit 1
-fi
-
-# ---- Usuniecie quarantine (lokalnie) ----
-echo "[INFO] Usuwanie atrybutu quarantine"
-xattr -rd com.apple.quarantine "$APP_PATH" || true
-
-# ---- Tworzenie DMG ----
-echo "[INFO] Tworzenie DMG"
-
-DMG_NAME="TikoPlay.dmg"
-TMP_DMG="TikoPlay-temp.dmg"
-
-hdiutil create "$TMP_DMG" \
-  -volname "TikoPlay" \
-  -srcfolder "$APP_PATH" \
-  -ov -format UDZO
-
-mv "$TMP_DMG" "$DMG_NAME"
-
-echo
-echo "==============================="
-echo "  BUILD ZAKONCZONY SUKCESEM"
-echo "==============================="
-echo
-echo "Wynik:"
-echo "  dist/TikoPlay.app"
-echo "  TikoPlay.dmg"
-echo
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"
+if [[ "$(uname -s)" != Darwin ]]; then echo 'Ten build wymaga macOS.' >&2; exit 1; fi
+if ! .venv/bin/python -c 'import sys' >/dev/null 2>&1; then python3 -m venv .venv; fi
+.venv/bin/python -m pip install -r requirements-dev.txt
+npm --prefix frontend ci
+npm --prefix frontend run build
+.venv/bin/python -m PyInstaller --noconfirm packaging/macos.spec
+staging=$(mktemp -d)
+trap 'rm -rf "$staging"' EXIT
+ditto dist/TikoPlay.app "$staging/TikoPlay.app"
+ln -s /Applications "$staging/Applications"
+cp docs/INSTALL_MACOS.txt "$staging/INSTALACJA.txt"
+hdiutil create -volname TikoPlay -srcfolder "$staging" -ov -format UDZO dist/TikoPlay-2.0.0-test.dmg
+echo 'Gotowe: dist/TikoPlay.app oraz dist/TikoPlay-2.0.0-test.dmg (paczka testowa bez podpisu dystrybucyjnego).'

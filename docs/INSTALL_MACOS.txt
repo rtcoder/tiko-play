@@ -1,0 +1,10 @@
+TikoPlay 2.0 — instalacja wersji testowej
+
+1. Przeciągnij TikoPlay.app do Applications (Aplikacje).
+2. W Finderze otwórz Applications, kliknij TikoPlay.app prawym przyciskiem i wybierz Utwórz alias.
+3. Przenieś alias na pulpit i nazwij go TikoPlay.
+4. Kliknięcie aliasu uruchamia program i automatycznie otwiera panel w przeglądarce.
+5. Gdy macOS poprosi, nadaj TikoPlay uprawnienia Dostępność w Ustawienia systemowe → Prywatność i ochrona.
+
+Zamknięcie karty przeglądarki nie zatrzymuje nasłuchu. Do zatrzymania i wyłączenia służy ikona TikoPlay na pasku menu.
+Ta paczka testowa nie ma podpisu Developer ID i notaryzacji. macOS może wymagać świadomego zezwolenia na otwarcie w Prywatność i ochrona.

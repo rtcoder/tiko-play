@@ -1,74 +1,20 @@
 @echo off
-setlocal ENABLEDELAYEDEXPANSION
-
-echo ===============================
-echo   TikoPlay - Windows Build
-echo ===============================
-
-REM ---- Sprawdzenie Pythona ----
-python --version >nul 2>&1
+setlocal
+cd /d "%~dp0"
+if not exist .venv\Scripts\python.exe python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+if errorlevel 1 exit /b 1
+call npm --prefix frontend ci
+if errorlevel 1 exit /b 1
+call npm --prefix frontend run build
+if errorlevel 1 exit /b 1
+.venv\Scripts\python.exe -m PyInstaller --noconfirm packaging\windows.spec
+if errorlevel 1 exit /b 1
+where ISCC.exe >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python nie jest dostepny w PATH
-    pause
-    exit /b 1
+ echo Zainstaluj Inno Setup 6 i dodaj ISCC.exe do PATH. Aplikacja jest w dist\TikoPlay.
+ exit /b 1
 )
-
-REM ---- Virtualenv ----
-if not exist venv (
-    echo [INFO] Tworzenie virtualenv...
-    python -m venv venv
-)
-
-echo [INFO] Aktywacja virtualenv
-call venv\Scripts\activate.bat
-
-if errorlevel 1 (
-    echo [ERROR] Nie mozna aktywowac virtualenv
-    pause
-    exit /b 1
-)
-
-REM ---- Instalacja zaleznosci ----
-echo [INFO] Instalacja zaleznosci
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install pyinstaller
-
-if errorlevel 1 (
-    echo [ERROR] Blad instalacji zaleznosci
-    pause
-    exit /b 1
-)
-
-REM ---- Czyszczenie poprzedniego builda ----
-if exist build (
-    echo [INFO] Usuwanie katalogu build
-    rmdir /s /q build
-)
-
-if exist dist (
-    echo [INFO] Usuwanie katalogu dist
-    rmdir /s /q dist
-)
-
-REM ---- Build ----
-echo [INFO] Budowanie aplikacji (PyInstaller)
-pyinstaller build.spec
-
-if errorlevel 1 (
-    echo [ERROR] Build nieudany
-    pause
-    exit /b 1
-)
-
-REM ---- Sukces ----
-echo.
-echo ===============================
-echo   BUILD ZAKONCZONY SUKCESEM
-echo ===============================
-echo.
-echo Wynik znajduje sie w katalogu:
-echo   dist\TikoPlay\
-echo.
-
-pause
+ISCC.exe packaging\windows.iss
+if errorlevel 1 exit /b 1
+echo Gotowe: dist\installer\TikoPlay-2.0.0-test-setup.exe
