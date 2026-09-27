@@ -54,6 +54,7 @@ class Socket:
 
     async def close(self):
         self.closed = True
+        self.queue.put_nowait(EOFError())
 
 
 class Auth:
@@ -231,3 +232,94 @@ async def test_watchdog_fails_and_stop_cleans_partial_connect():
         await task
     assert waiting.closed
     await adapter.http.aclose()
+
+
+async def test_handoff_drains_distinct_messages_buffered_on_old_socket():
+    class ClosingSocket(Socket):
+        async def close(self):
+            self.closed = True
+            self.queue.put_nowait(EOFError())
+
+    old = ClosingSocket(
+        [
+            welcome(),
+            frame(
+                "session_reconnect",
+                {
+                    "session": {
+                        "reconnect_url": "wss://eventsub.wss.twitch.tv/ws?reconnect=x"
+                    }
+                },
+            ),
+            *[comment(f"m{i}", f"e{i}") for i in range(10)],
+        ]
+    )
+    new = ClosingSocket([welcome()])
+    adapter, _ = setup([old, new])
+    seen = []
+
+    async def callback(*args):
+        seen.append(args)
+
+    try:
+        child = await adapter.connect(callback)
+        await drain_until(lambda: old.closed)
+        for _ in range(100):
+            await asyncio.sleep(0)
+        assert len(seen) == 10
+        assert not child.done()
+    finally:
+        await adapter.disconnect()
+        await adapter.http.aclose()
+
+
+async def test_real_websocket_handoff_does_not_drop_buffered_comments():
+    from websockets.asyncio.server import serve
+    from websockets.asyncio.client import connect
+
+    received = []
+    complete = asyncio.Event()
+
+    async def server(ws):
+        await ws.send(json.dumps(welcome()))
+        if ws.request.path == "/old":
+            await ws.send(
+                json.dumps(
+                    frame(
+                        "session_reconnect",
+                        {
+                            "session": {
+                                "reconnect_url": "wss://eventsub.wss.twitch.tv/new"
+                            }
+                        },
+                    )
+                )
+            )
+            for i in range(10):
+                await ws.send(json.dumps(comment(f"m{i}", f"e{i}")))
+        await ws.wait_closed()
+
+    async with serve(server, "127.0.0.1", 0) as host:
+        port = host.sockets[0].getsockname()[1]
+        adapter, calls = setup([])
+
+        async def local_connect(url, **kwargs):
+            path = "/new" if url.endswith("/new") else "/old"
+            return await connect(f"ws://127.0.0.1:{port}{path}", **kwargs)
+
+        adapter.ws_connect = local_connect
+
+        async def callback(*args):
+            received.append(args)
+            if len(received) == 10:
+                complete.set()
+
+        try:
+            child = await adapter.connect(callback)
+            await asyncio.wait_for(complete.wait(), 2)
+            assert len(received) == 10
+            assert not child.done()
+            assert sum(r.method == "POST" for r in calls) == 1
+        finally:
+            await adapter.disconnect()
+            await adapter.http.aclose()

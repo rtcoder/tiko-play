@@ -405,3 +405,183 @@ async def test_second_panel_invalidates_first_device_request():
     finally:
         await auth.close()
         await auth.http.aclose()
+
+
+async def test_refresh_then_validation_503_does_not_reuse_consumed_refresh():
+    refresh_values = []
+
+    def handler(req):
+        if req.url.path.endswith("/token"):
+            refresh_values.append(parse_qs(req.content.decode())["refresh_token"][0])
+            return httpx.Response(
+                200,
+                json={
+                    "access_token": "NEW",
+                    "refresh_token": "ROTATED",
+                    "expires_in": 4000,
+                },
+            )
+        return httpx.Response(503, json={})
+
+    auth = service(handler, Store(token(999)))
+    try:
+        await auth.restore()
+        for _ in range(2):
+            with pytest.raises(AppError):
+                await auth.credentials()
+        assert refresh_values == ["REFRESH_SECRET"]
+        assert (
+            await auth.store.load() is None
+            or (await auth.store.load()).refresh_token == "ROTATED"
+        )
+    finally:
+        await auth.close()
+        await auth.http.aclose()
+
+
+async def test_concurrent_starts_during_old_poll_cancellation_have_one_winner():
+    cancelling = asyncio.Event()
+    release = asyncio.Event()
+    calls = []
+
+    def handler(req):
+        calls.append(req.url.path)
+        return httpx.Response(
+            200,
+            json={
+                "device_code": str(len(calls)),
+                "user_code": str(len(calls)),
+                "verification_uri": "https://www.twitch.tv/activate",
+                "expires_in": 300,
+                "interval": 5,
+            },
+        )
+
+    auth = service(handler)
+
+    async def old_poll():
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            cancelling.set()
+            await release.wait()
+            raise
+
+    auth._poll = asyncio.create_task(old_poll())
+    await asyncio.sleep(0)
+    first = asyncio.create_task(auth.start())
+    await cancelling.wait()
+    second = await auth.start()
+    release.set()
+    try:
+        with pytest.raises(AppError):
+            await first
+        assert second["status"] == "pending"
+        assert len(calls) == 1
+    finally:
+        await auth.close()
+        await auth.http.aclose()
+
+
+async def test_cancelled_refresh_write_never_reuses_consumed_token():
+    entered = asyncio.Event()
+    release = asyncio.Event()
+    refresh_values = []
+
+    class SlowStore(Store):
+        async def save(self, v):
+            if v.access_token == "NEW":
+                entered.set()
+                await release.wait()
+            self.value = v
+
+    def handler(req):
+        if req.url.path.endswith("/token"):
+            refresh_values.append(parse_qs(req.content.decode())["refresh_token"][0])
+            return httpx.Response(
+                200,
+                json={
+                    "access_token": "NEW",
+                    "refresh_token": "ROTATED",
+                    "expires_in": 4000,
+                },
+            )
+        return httpx.Response(200, json=valid())
+
+    store = SlowStore(token(10000))
+    auth = service(handler, store)
+    try:
+        await auth.restore()
+        auth._credentials = replace_for_test(auth._credentials, expires_at=999)
+        task = asyncio.create_task(auth.credentials())
+        await entered.wait()
+        task.cancel()
+        release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        try:
+            await auth.credentials()
+        except AppError:
+            pass
+        assert refresh_values == ["REFRESH_SECRET"]
+    finally:
+        await auth.close()
+        await auth.http.aclose()
+
+
+def replace_for_test(value, **kwargs):
+    from dataclasses import replace
+
+    return replace(value, **kwargs)
+
+
+async def test_startup_validation_network_failure_recovers_without_new_login():
+    offline = [True]
+    calls = []
+
+    def handler(req):
+        calls.append(req.url.path)
+        return httpx.Response(
+            503 if offline[0] else 200, json={} if offline[0] else valid()
+        )
+
+    auth = service(handler, Store(token()))
+    try:
+        await auth.restore()
+        assert auth.state()["status"] == "error"
+        offline[0] = False
+        assert (await auth.credentials()).login == "alice"
+        assert auth.state()["status"] == "connected"
+        assert calls == ["/oauth2/validate", "/oauth2/validate"]
+    finally:
+        await auth.close()
+        await auth.http.aclose()
+
+
+async def test_cancel_during_refresh_request_invalidates_ambiguous_rotation():
+    entered = asyncio.Event()
+    calls = []
+
+    async def handler(req):
+        calls.append(req.url.path)
+        if req.url.path.endswith("/token"):
+            entered.set()
+            await asyncio.Event().wait()
+        return httpx.Response(200, json=valid())
+
+    auth = service(handler, Store(token()))
+    await auth.restore()
+    auth._credentials = replace_for_test(auth._credentials, expires_at=999)
+    task = asyncio.create_task(auth.credentials())
+    await entered.wait()
+    task.cancel()
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert await auth.store.load() is None
+        with pytest.raises(AppError):
+            await auth.credentials()
+        assert calls.count("/oauth2/token") == 1
+    finally:
+        await auth.close()
+        await auth.http.aclose()

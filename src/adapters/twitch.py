@@ -190,16 +190,14 @@ class TwitchAdapter:
                 if handoff and handoff in done:
                     new_ws, new_session = await handoff
                     handoff = None
-                    if read:
-                        read.cancel()
-                        await asyncio.gather(read, return_exceptions=True)
-                        read = None
-                    old_ws = ws
+                    # Closing a WebSocket doesn't imply that its received queue is
+                    # empty. Drain it before abandoning the old transport.
+                    await self._drain_old(ws, read, callback)
+                    read = None
+                    self._sockets.discard(ws)
                     ws, session = new_ws, new_session
                     timeout = float(session["keepalive_timeout_seconds"])
                     deadline = self.clock() + timeout
-                    await old_ws.close()
-                    self._sockets.discard(old_ws)
         except asyncio.CancelledError:
             raise
         except AppError:
@@ -217,6 +215,40 @@ class TwitchAdapter:
                     task.cancel()
             await asyncio.gather(
                 *(t for t in (read, handoff) if t), return_exceptions=True
+            )
+
+    async def _drain_old(self, ws, read, callback):
+        closing = asyncio.create_task(ws.close())
+        try:
+            async with asyncio.timeout(2):
+                while not self._stopped:
+                    try:
+                        if read is None:
+                            read = asyncio.create_task(self._receive(ws, 2))
+                        data = await read
+                        read = None
+                    except (EOFError, ConnectionError):
+                        break
+                    except Exception as exc:
+                        from websockets.exceptions import ConnectionClosed
+
+                        if isinstance(exc, ConnectionClosed):
+                            break
+                        raise
+                    kind = data["metadata"]["message_type"]
+                    if kind == "notification":
+                        await self._notification(data, callback)
+                    elif kind == "revocation":
+                        raise AppError(
+                            "twitch_auth_required",
+                            "Twitch cofnął dostęp do czatu. Połącz konto ponownie.",
+                        )
+        finally:
+            for task in (read, closing):
+                if task:
+                    task.cancel()
+            await asyncio.gather(
+                *(t for t in (read, closing) if t), return_exceptions=True
             )
 
     async def disconnect(self):

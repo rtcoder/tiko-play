@@ -157,6 +157,16 @@ class TwitchAuthService:
                     raise auth_error()
                 self._credentials, self._validated_at = value, self.clock()
             return value
+        except asyncio.CancelledError:
+            if refreshing:
+                # The server may already have consumed the one-use refresh token.
+                # A cancelled caller must never leave it eligible for another try.
+                if epoch == self._epoch:
+                    await self._invalidate_locked(auth_error())
+                else:
+                    self._credentials = None
+                    await self.store.delete()
+            raise
         except (httpx.HTTPError, ValueError, KeyError, TypeError):
             error = (
                 auth_error()
@@ -175,7 +185,7 @@ class TwitchAuthService:
             raise error from None
         except AppError as exc:
             if epoch == self._epoch:
-                if exc.code == "twitch_network_error":
+                if exc.code == "twitch_network_error" and not refreshing:
                     self._notify()
                     self._publish("error", exc)
                 else:
@@ -210,7 +220,8 @@ class TwitchAuthService:
                         self._publish("connected")
             except AppError as exc:
                 if epoch == self._epoch:
-                    self._credentials = None
+                    if exc.code != "twitch_network_error":
+                        self._credentials = None
                     self._publish("error", exc)
         self._start_monitor()
 
@@ -226,12 +237,14 @@ class TwitchAuthService:
 
     async def cancel(self):
         self._attempt += 1
+        attempt = self._attempt
         task, self._poll = self._poll, None
         if task and task is not asyncio.current_task():
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
-        if not self._closed:
+        if not self._closed and attempt == self._attempt:
             self._publish("connected" if self._credentials else "disconnected")
+        return attempt
 
     async def start(self):
         if not self.client_id or self._closed:
@@ -239,8 +252,10 @@ class TwitchAuthService:
                 "twitch_not_configured",
                 "Brak identyfikatora aplikacji Twitch. Ustaw TIKOPLAY_TWITCH_CLIENT_ID.",
             )
-        await self.cancel()
-        attempt, epoch = self._attempt, self._epoch
+        epoch = self._epoch
+        attempt = await self.cancel()
+        if attempt != self._attempt or epoch != self._epoch or self._closed:
+            raise auth_error("twitch_login_cancelled", "Logowanie anulowano.")
         try:
             response = await self.http.post(
                 OAUTH + "/device",
