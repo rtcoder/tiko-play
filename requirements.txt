@@ -1,3 +1,7 @@
-PySide6
-TikTokLive
-pyautogui
+PySide6==6.11.2
+TikTokLive==7.0.1
+pyautogui==0.9.54
+fastapi==0.141.1
+uvicorn==0.54.0
+websockets==17.1
+pydantic==2.13.5

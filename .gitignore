@@ -3,3 +3,9 @@
 /build
 venv
 /node_modules
+.superpowers/
+__pycache__/
+.pytest_cache/
+frontend/dist/
+frontend/node_modules/
+*.dmg
