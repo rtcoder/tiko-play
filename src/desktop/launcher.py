@@ -127,8 +127,8 @@ def run_desktop():
     app.setApplicationName("TikoPlay")
     app.setQuitOnLastWindowClosed(False)
     data = args.data_dir or user_data_dir()
-    guard = InstanceGuard(data)
     try:
+        guard = InstanceGuard(data)
         if not guard.acquire_or_notify():
             return 0
     except Exception as exc:

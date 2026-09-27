@@ -4,8 +4,8 @@ Data: 2026-09-27. Środowisko: macOS arm64, Python 3.14.7, Node 22.22.3. Impleme
 
 ## Wykonane
 
-- PASS: 35 testów Python, w tym rzeczywisty HTTP/WebSocket z atrapami TikTok/klawiatury, migracja/backup, konflikty rewizji, lifecycle, kolejka, sesje, IPC, launcher i zasoby.
-- PASS: 8 testów frontendowych: autosave, konflikt, zachowanie szkicu, kombinacji klawiszy, usuwanie wiersza, renderowanie komentarza jako tekst, sesja i reconnect.
+- PASS: 42 testy Python, w tym rzeczywisty HTTP/WebSocket z atrapami TikTok/klawiatury, migracja/backup, konflikty rewizji, lifecycle, kolejka, sesje, IPC, launcher i zasoby.
+- PASS: 9 testów frontendowych: autosave, konflikt, zachowanie szkicu, kombinacji klawiszy, usuwanie wiersza, renderowanie komentarza jako tekst, sesja i reconnect.
 - PASS: TypeScript i produkcyjny build Vite.
 - PASS: PyInstaller utworzył `dist/TikoPlay.app`; uruchomienie przez LaunchServices (`open`) z osobnymi danymi `/tmp/tikoplay-web-acceptance` automatycznie otworzyło panel Chrome.
 - PASS: zapis mapowania w gotowej aplikacji, odczyt wartości z pliku testowego, odświeżenie panelu bez utraty sesji.
@@ -29,3 +29,9 @@ To paczka testowa, nie potwierdzone wydanie produkcyjne na obu platformach. Back
 - Kontrakty HTTP i modele utrzymano w mniejszej liczbie modułów niż orientacyjna mapa planu, bez pustych warstw pośrednich.
 - Do API dodano GET session dla odświeżenia i POST config/repair dla jawnej naprawy z backupem, zgodnie z planem wykonawczym.
 - Wspólne etapy rdzenia commitowano grupami po przejściu testów. Nie oznacza to ręcznego odbioru niewykonanych platform.
+
+## Niezależny przegląd i poprawki
+
+Review całej gałęzi wykonał osobny agent. Pięć usterek Important odtworzono i poprawiono: wspólne cookie/CSRF kilku kart, powtórzony Stop przerywający disconnect, spóźniony błąd klawiatury poprzedniej generacji, nieaktualny status po rozłączeniu panelu oraz niezamykanie sesji HTTP TikToka. Każda poprawka ma test RED→GREEN; dodano też regresję błędu uprawnień katalogu danych przed startem. Po poprawkach pełny zestaw: 42/42 Python, 9/9 frontend, build TypeScript/Vite PASS. Nie pozostały zgłoszone drobne uwagi review.
+
+Pozostałe decyzje: Python >=3.12, testy lokalne na 3.14.7, bez deklarowania sprawdzenia innych wersji. Zachowano historyczne pliki GUI; koszt to przejściowo nieużywany kod. Zadania łączono w większe commity; koszt to mniej szczegółowa historia niż pierwotne 14 osobnych commitów. Ścieżka komentarz→klawisz pozostaje w Pythonie.

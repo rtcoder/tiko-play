@@ -1,6 +1,6 @@
 # TikoPlay — projekt przebudowy na lokalny panel webowy
 
-Data: 2026-09-26. Status: szczegółowy projekt i kolejność wdrożenia do przeglądu przez użytkownika; implementacja nie została rozpoczęta.
+Data: 2026-09-26. Status: kierunek zaakceptowany, implementacja wersji testowej wykonana 2026-09-27 w izolowanym worktree. Rzeczywisty zakres weryfikacji i pozostały odbiór opisuje ../../WEB_UI_ACCEPTANCE.md.
 
 ## 1. Cel i ustalenia
 
@@ -296,4 +296,4 @@ Dokumentacja użyta do potwierdzenia możliwości narzędzi:
 - [Uvicorn — ustawienia procesu i serwera](https://www.uvicorn.org/settings/)
 - [PyInstaller — działanie i pakowanie](https://pyinstaller.org/en/stable/operating-mode.html)
 
-To projekt docelowy, nie raport z wdrożenia. Nie naprawiono dotychczasowych błędów, nie zainstalowano zależności, nie uruchomiono integracji ani buildów.
+To projekt docelowy. Stan wdrożenia i dowody testów są w docs/WEB_UI_ACCEPTANCE.md; poniższych wymagań nie należy traktować jako automatycznie zaliczonego odbioru Windows lub rzeczywistego LIVE.

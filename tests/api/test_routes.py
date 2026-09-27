@@ -85,3 +85,11 @@ def test_websocket_snapshot_and_authorization(api):
             "ws://127.0.0.1:8000/api/events", headers={"Origin": "http://evil"}
         ):
             pass
+
+
+def test_second_launch_preserves_first_tab_csrf(api):
+    c, s, store, bus = api
+    first = login(c, s)
+    second = login(c, s)
+    assert second["X-CSRF-Token"] == first["X-CSRF-Token"]
+    assert c.post("/api/listener/stop", headers=first).status_code == 202

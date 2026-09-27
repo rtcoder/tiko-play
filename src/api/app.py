@@ -113,8 +113,10 @@ def create_app(store, listener, events, sessions, static_dir: Path):
         return {"ready": True}
 
     @app.post("/api/session")
-    async def exchange(body: Token):
-        session = sessions.exchange(body.token)
+    async def exchange(body: Token, request: Request):
+        session = sessions.exchange(
+            body.token, request.cookies.get(sessions.cookie_name)
+        )
         response = JSONResponse({"csrf_token": session.csrf_token})
         response.set_cookie(
             sessions.cookie_name,

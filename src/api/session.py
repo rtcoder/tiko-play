@@ -29,7 +29,7 @@ class SessionManager:
         self.tokens[token] = now + 60
         return token
 
-    def exchange(self, token):
+    def exchange(self, token, existing_cookie=None):
         expiry = self.tokens.pop(token, 0)
         if expiry <= self.clock():
             raise AppError(
@@ -37,6 +37,8 @@ class SessionManager:
                 "Link wygasł. Otwórz panel z ikony TikoPlay.",
                 status=401,
             )
+        if existing_cookie in self.sessions:
+            return self.sessions[existing_cookie]
         if len(self.sessions) >= 128:
             raise AppError(
                 "session_limit",

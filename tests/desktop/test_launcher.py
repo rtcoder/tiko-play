@@ -66,3 +66,28 @@ def test_resource_path_independent_of_working_directory(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "_MEIPASS", str(root), raising=False)
     monkeypatch.chdir(tmp_path)
     assert resource_path("asset").read_text() == "x"
+
+
+def test_unwritable_data_directory_shows_native_error(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    import src.desktop.launcher as module
+
+    errors = []
+    monkeypatch.setattr(module.sys, "argv", ["TikoPlay", "--data-dir", str(tmp_path)])
+    monkeypatch.setattr(
+        module,
+        "DesktopApplication",
+        lambda args: SimpleNamespace(
+            setApplicationName=lambda x: None, setQuitOnLastWindowClosed=lambda x: None
+        ),
+    )
+
+    def denied(path):
+        raise PermissionError("No permission")
+
+    monkeypatch.setattr(module, "InstanceGuard", denied)
+    monkeypatch.setattr(
+        module.QMessageBox, "critical", lambda *args: errors.append(args)
+    )
+    assert module.run_desktop() == 1
+    assert errors

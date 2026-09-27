@@ -40,5 +40,10 @@ class TikTokAdapter:
             raise AppError(code, message) from exc
 
     async def disconnect(self):
-        if self.client:
-            await self.client.disconnect()
+        client = self.client
+        self.client = None
+        if client:
+            try:
+                await client.disconnect()
+            finally:
+                await client.close()

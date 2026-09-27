@@ -75,7 +75,10 @@ class KeyboardExecutor:
                     {"keys": list(action.keys), "generation": action.generation},
                 )
             except Exception as exc:
-                self.disable()
+                with self._condition:
+                    if self._generation == action.generation:
+                        self._generation = None
+                        self._pending.clear()
                 code = (
                     "keyboard_failsafe"
                     if type(exc).__name__ == "FailSafeException"
@@ -84,6 +87,7 @@ class KeyboardExecutor:
                 self.report(
                     "error",
                     {
+                        "generation": action.generation,
                         "code": code,
                         "message": "Wysyłanie klawiszy zatrzymane. Sprawdź uprawnienia lub fail-safe PyAutoGUI.",
                     },

@@ -48,3 +48,32 @@ async def test_fault_disables_pending_keys():
         await asyncio.sleep(0.005)
     assert reports and not k.submit(KeyAction(("b",), 1, k.clock()))
     await k.close(1)
+
+
+async def test_old_inflight_error_does_not_clear_new_generation():
+    entered = threading.Event()
+    release = threading.Event()
+    calls = []
+
+    class Port:
+        def execute(self, keys):
+            if keys == ("a",):
+                entered.set()
+                release.wait(2)
+                raise RuntimeError("old error")
+            calls.append(keys)
+
+    k = KeyboardExecutor(Port())
+    k.enable(1)
+    k.submit(KeyAction(("a",), 1, k.clock()))
+    assert await asyncio.to_thread(entered.wait, 1)
+    k.disable()
+    k.enable(2)
+    k.submit(KeyAction(("b",), 2, k.clock()))
+    release.set()
+    for _ in range(100):
+        if calls:
+            break
+        await asyncio.sleep(0.005)
+    await k.close(1)
+    assert calls == [("b",)]

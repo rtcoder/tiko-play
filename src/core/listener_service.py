@@ -19,6 +19,8 @@ class ListenerService:
         self._task = None
         self._client = None
         self._stop = False
+        self._cancel_requested = False
+        self._cleaning = False
 
     def state(self):
         return self._state.model_copy(deep=True)
@@ -37,6 +39,8 @@ class ListenerService:
         if not snapshot.config.streamer_id:
             raise AppError("streamer_required", "Podaj nick streamera", status=422)
         self._stop = False
+        self._cancel_requested = False
+        self._cleaning = False
         self._change(
             status="connecting",
             output="disabled",
@@ -52,26 +56,33 @@ class ListenerService:
         self.keyboard.disable()
         if self._task and not self._task.done():
             self._change(status="stopping", output="disabled")
-            self._task.cancel()
+            self._cancel_once()
         else:
             self._change(status="stopped", output="disabled", error=None)
         return self.state()
+
+    def _cancel_once(self):
+        if not self._cancel_requested and not self._cleaning:
+            self._cancel_requested = True
+            self._task.cancel()
 
     async def stop(self):
         self.request_stop()
         if self._task:
             with suppress(asyncio.CancelledError):
-                await self._task
+                await asyncio.shield(self._task)
         self._change(status="stopped", output="disabled", error=None)
         return self.state()
 
     def keyboard_result(self, kind, payload):
+        if payload.get("generation", self._state.generation) != self._state.generation:
+            return
         self.events.publish("action" if kind == "executed" else kind, payload)
         if kind == "error":
             self.keyboard.disable()
             self._change(status="error", output="disabled", error=payload)
             if self._task and not self._task.done():
-                self._task.cancel()
+                self._cancel_once()
 
     async def _run(self, snapshot):
         child = None
@@ -133,6 +144,7 @@ class ListenerService:
             )
             self._change(status="error", output="disabled", error=error.as_dict())
         finally:
+            self._cleaning = True
             self.keyboard.disable()
             for task in (countdown, child):
                 if task:

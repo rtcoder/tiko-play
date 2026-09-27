@@ -8,7 +8,7 @@
 
 **Tech Stack:** Python, TikTokLive, PyAutoGUI, PySide6, FastAPI, Uvicorn, Pydantic; React, TypeScript, Vite; pytest, pytest-asyncio, httpx, pytest-qt, Vitest, Testing Library; PyInstaller, Inno Setup.
 
-**Spec:** [Zatwierdzony kierunek i szczegółowy projekt](../specs/2026-09-26-local-web-ui-design.md). Użytkownik zaakceptował przejście do następnego etapu słowem „odpalaj” 2026-09-27. Ten plan wykonawczy wymaga przeglądu przed implementacją.
+**Spec:** [Zatwierdzony kierunek i szczegółowy projekt](../specs/2026-09-26-local-web-ui-design.md). Użytkownik zaakceptował przejście do następnego etapu słowem „odpalaj” 2026-09-27. Plan został następnie zaakceptowany przez użytkownika poleceniem „plan jest ok, przejdz do dzialania”.
 
 ## Global Constraints
 
@@ -245,3 +245,7 @@ Puste pakiety __init__.py tworzyć wraz z pierwszym modułem. Nie wprowadzać ab
 Rekomendacja: wykonanie bezpośrednio w tej sesji, zadanie po zadaniu, z końcowym niezależnym przeglądem. Interfejsy są silnie powiązane, więc taki tryb ogranicza koszt przekazywania kontekstu. Alternatywa: osobny agent implementujący i osobny reviewer dla każdego zadania, z większą liczbą niezależnych kontroli i większym kosztem.
 
 Po przeglądzie planu i wyborze metody rozpocząć od zadania 1 w izolowanym worktree, zachowując istniejące zmiany użytkownika. Nie utożsamiać zatwierdzenia projektu architektury z wcześniejszym zatwierdzeniem jeszcze nieistniejącego planu wykonawczego.
+
+## Stan wykonania 2026-09-27
+
+Kod zadań 1–13 oraz lokalna integracja zadania 14 są wdrożone w worktree. Szczegółowe checkboxy pozostawiono niezaznaczone tam, gdzie obejmują także niezrealizowany odbiór Windows/prawdziwego LIVE; nie stanowią aktualnego rejestru testów. Aktualny rejestr: docs/WEB_UI_ACCEPTANCE.md, historia commitów i zapis niezależnego przeglądu. Zmieniono podział commitów i modułów na spójne grupy, bez zmiany kontraktu produktu. Testy po poprawkach review: 42 Python i 9 frontend, build Vite PASS; natywna .app macOS uruchomiona.

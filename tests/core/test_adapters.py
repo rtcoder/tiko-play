@@ -45,6 +45,9 @@ async def test_tiktok_errors_are_user_facing(monkeypatch, name, code):
         async def disconnect(self):
             pass
 
+        async def close(self):
+            pass
+
     monkeypatch.setitem(
         sys.modules, "TikTokLive", SimpleNamespace(TikTokLiveClient=Fake)
     )
@@ -56,3 +59,26 @@ async def test_tiktok_errors_are_user_facing(monkeypatch, name, code):
         await adapter.connect(lambda *a: None)
     assert e.value.code == code and "provider details" not in e.value.message
     await adapter.disconnect()
+
+
+@pytest.mark.parametrize("cancelled", [False, True])
+async def test_tiktok_disconnect_always_closes_http_sessions(cancelled):
+    import asyncio
+
+    closed = []
+
+    class Client:
+        async def disconnect(self):
+            if cancelled:
+                raise asyncio.CancelledError()
+
+        async def close(self):
+            closed.append(True)
+
+    adapter = TikTokAdapter("a")
+    adapter.client = Client()
+    try:
+        await adapter.disconnect()
+    except asyncio.CancelledError:
+        pass
+    assert closed == [True]

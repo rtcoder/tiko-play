@@ -215,21 +215,27 @@ export default function App() {
                 <span
                   className={
                     "status-orb " +
-                    (state?.status === "connected" ? "live" : "")
+                    (connected && state?.status === "connected" ? "live" : "")
                   }
                 >
                   ◉
                 </span>
                 <div>
                   <h2>
-                    {state ? labels[state.status] : "Łączenie z aplikacją…"}
+                    {!connected
+                      ? "Stan nasłuchu nieznany"
+                      : state
+                        ? labels[state.status]
+                        : "Łączenie z aplikacją…"}
                   </h2>
                   <p>
-                    {state?.output === "countdown"
-                      ? "Przełącz się do gry. Klawisze zostaną włączone po 3 sekundach."
-                      : state?.output === "enabled"
-                        ? "Wysyłanie klawiszy jest aktywne."
-                        : "Nasłuch gotowy do uruchomienia."}
+                    {!connected
+                      ? "Brak aktualnego stanu. Otwórz TikoPlay z ikony lub poczekaj na ponowne połączenie."
+                      : state?.output === "countdown"
+                        ? "Przełącz się do gry. Klawisze zostaną włączone po 3 sekundach."
+                        : state?.output === "enabled"
+                          ? "Wysyłanie klawiszy jest aktywne."
+                          : "Nasłuch gotowy do uruchomienia."}
                   </p>
                 </div>
               </div>
