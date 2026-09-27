@@ -1,5 +1,14 @@
 # TikoPlay — kontekst techniczny
 
+## Integracja Twitch — 2026-09-27
+
+W izolowanym checkoutcie wdrożono wybór TikTok/Twitch (jedno aktywne źródło), konfigurację v3 z migracją v1/v2, niezależne kanały/filtry i wspólne mapowania. Nowe adaptery `twitch.py`, `twitch_protocol.py`, `twitch_auth.py`, `twitch_credentials.py`; fabryka w `adapters/chat.py`. `ListenerService` otrzymuje fabrykę całej konfiguracji, a stan podaje aktywną platformę/kanał/generację. Filtr Twitcha jest case-insensitive, TikToka zachowuje wcześniejsze zasady.
+
+OAuth: publiczny Client ID z `src/twitch_settings.py` lub `TIKOPLAY_TWITCH_CLIENT_ID`, DCF i wyłącznie `user:read:chat`. Tokeny tylko w natywnym keyring; wszystkie endpointy `/api/twitch/auth` podlegają istniejącym zabezpieczeniom sesji. Brak Client ID nie blokuje TikToka. Żaden prywatny token nie został dostarczony ani użyty w implementacji.
+
+Stan odbioru i ograniczenia: [TWITCH_ACCEPTANCE.md](TWITCH_ACCEPTANCE.md). Testy na atrapach nie dowodzą rzeczywistego działania Twitcha. Specyfikacja i plan znajdują się w `docs/superpowers`, a kod pozostaje w checkoutcie funkcji do decyzji o integracji z main.
+
+
 ## Wielu dozwolonych użytkowników
 
 Pole „Dozwoleni użytkownicy” obsługuje nicki po przecinku, średniku albo w osobnych wierszach, opcjonalnie z `@`. Puste pole (również same białe znaki) dopuszcza wszystkich; same separatory/znaki `@` są odrzucane. Zachowano tekstowe pole `target_user` w konfiguracji v2, więc pojedynczy wcześniej zapisany nick działa bez migracji. Matcher przygotowuje zbiór nicków, zachowuje dokładne dopasowanie z rozróżnianiem wielkości liter i wspólny cooldown 0,3 s na akcję. Zmiana listy w czasie nasłuchu, tak jak pozostałe ustawienia, wymaga Stop → Start.
