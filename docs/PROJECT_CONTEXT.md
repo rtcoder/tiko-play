@@ -1,5 +1,13 @@
 # TikoPlay — kontekst techniczny
 
+## Automatyczne wydania i wspólna wersja — 2026-09-28
+
+`VERSION` jest jedynym źródłem wersji aplikacji (`major.minor`, obecnie 0.7). React osadza go przy buildzie w `.version` i Ustawieniach; macOS używa go w Info.plist, a skrypty w nazwach DMG i instalatora Windows. Usunięto historyczne stałe 2.0/2.0.0 z aktywnego UI i pakowania. Wersja schematu konfiguracji pozostaje niezależna.
+
+`.github/workflows/release.yml` reaguje na push tagu `v*`: `release_support.py` sprawdza zgodność z VERSION i niepusty opis w `releases/<tag>.md`; trzy runnery budują macOS arm64/Intel i Windows x64 oraz uruchamiają testy. Dopiero wszystkie poprawne buildy pozwalają opublikować release z opisem i sumami SHA-256. Opis musi być napisany przed tagowaniem; walidator sprawdza obecność treści, a jej jakość pozostaje obowiązkiem autora. Numery dobieramy do liczby i znaczenia zmian, z uzasadnieniem w opisie, zamiast mechanicznego +1. Szczegóły: `AGENTS.md` i `docs/PACKAGING.md`.
+
+Lokalna weryfikacja: 174 testy Python, 1 natywny pominięty offscreen; 23 testy frontend i build TypeScript/Vite poprawne. Testy HTTP/WebSocket wymagają dostępu do lokalnych portów. Zbudowano `dist/TikoPlay.app` i `dist/TikoPlay-0.7-macos-arm64.dmg`. Paczki nadal bez podpisu dystrybucyjnego/notaryzacji; Windows i Intel podlegają odrębnej weryfikacji workflow i odbiorowi na docelowym systemie.
+
 ## Systemowe menu traya — 2026-09-28
 
 Na macOS ikona używa bezpośrednio AppKit (`src/desktop/mac_tray.py`): `NSStatusItem` z przypiętym `NSMenu`. Lewy i prawy klik otwierają menu systemowe; przeglądarka otwiera się po wyborze „Otwórz panel”. Usunięto macOS-owy popup Qt i oczekiwanie na aktywację aplikacji. Qt nadal przechowuje model akcji i tłumaczeń, ale nie wyświetla ikony ani menu na Cocoa, więc natywne śledzenie menu omija ścieżkę Qt opisaną w QTBUG-147449. Ikona pozostaje szablonem 18 pt. Na pozostałych platformach lewy klik pokazuje istniejące menu kontekstowe Qt, prawy używa standardowej obsługi traya.

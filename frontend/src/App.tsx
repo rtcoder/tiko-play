@@ -1,3 +1,4 @@
+import buildVersion from "../../VERSION?raw";
 import {
   t,
   useLanguage,
@@ -177,7 +178,11 @@ export default function App() {
             </small>
           </div>
         </div>
-        <span className="version">{t("TikoPlay 2.0 · Web panel")}</span>
+        <span className="version">
+          {t("TikoPlay {version} · Web panel", {
+            version: buildVersion.trim(),
+          })}
+        </span>
       </aside>
       <main>
         <header>
@@ -431,7 +436,9 @@ export default function App() {
                   )}
                 </div>
                 <p className="hint">
-                  {t("Wersja 2.0.0 · Cooldown: 0,3 s na komentarz")}
+                  {t("Wersja {version} · Cooldown: 0,3 s na komentarz", {
+                    version: buildVersion.trim(),
+                  })}
                 </p>
               </section>
             )}

@@ -2,6 +2,7 @@ import { configApi } from "./api/client";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { it, expect, vi } from "vitest";
 import App from "./App";
+vi.mock("../../VERSION?raw", () => ({ default: "8.13\n" }));
 const fixture = vi.hoisted(() => ({
   config: {
     version: 4,
@@ -69,6 +70,16 @@ it("does not present a stale connected state as currently active", async () => {
   expect(
     screen.queryByText("Wysyłanie klawiszy jest aktywne."),
   ).not.toBeInTheDocument();
+});
+
+it("shows the build version in the badge and settings", async () => {
+  const { container } = render(<App />);
+  await screen.findByRole("heading", { name: "Stan nasłuchu nieznany" });
+  expect(container.querySelector(".version")).toHaveTextContent(
+    "TikoPlay 8.13",
+  );
+  fireEvent.click(screen.getByRole("button", { name: /Ustawienia/ }));
+  expect(screen.getByText(/Wersja 8.13 · Cooldown/)).toBeInTheDocument();
 });
 
 it("saves multiple allowed users from the multiline field", async () => {

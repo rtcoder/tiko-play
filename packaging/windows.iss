@@ -1,12 +1,15 @@
+#ifndef AppVersion
+  #error AppVersion must be supplied from VERSION by the build script
+#endif
 [Setup]
 AppId={{163C1D39-E804-433C-B0DB-5E43F8366D09}
 AppName=TikoPlay
-AppVersion=2.0.0
+AppVersion={#AppVersion}
 DefaultDirName={localappdata}\Programs\TikoPlay
 DefaultGroupName=TikoPlay
 PrivilegesRequired=lowest
 OutputDir=..\dist\installer
-OutputBaseFilename=TikoPlay-2.0.0-test-setup
+OutputBaseFilename=TikoPlay-{#AppVersion}-windows-x64-setup
 SetupIconFile=..\tiko_play.ico
 UninstallDisplayIcon={app}\TikoPlay.exe
 Compression=lzma2

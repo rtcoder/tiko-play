@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.14'
+      - name: Validate tag, version and release notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python release_support.py "$RELEASE_TAG"
+
+  build:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            artifact: macos-arm64
+          - os: macos-15-intel
+            artifact: macos-x86_64
+          - os: windows-2022
+            artifact: windows-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build macOS DMG
+        if: runner.os == 'macOS'
+        run: bash build-macos.sh
+      - name: Prepare Inno Setup
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $inno = "${env:ProgramFiles(x86)}\Inno Setup 6"
+          if (!(Test-Path "$inno\ISCC.exe")) {
+            choco install innosetup --version=6.4.3 --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $inno | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Build Windows installer
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: build-windows.bat
+      - name: Test Python
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            .venv/Scripts/python.exe -m pytest -q
+          else
+            .venv/bin/python -m pytest -q
+          fi
+      - name: Test frontend
+        run: npm --prefix frontend test -- --run
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/*.dmg
+            dist/installer/*-setup.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Publish release with installers and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          mkdir release-assets
+          find artifacts -type f \( -name '*.dmg' -o -name '*-setup.exe' \) -exec cp {} release-assets/ \;
+          test "$(find release-assets -type f | wc -l)" -eq 3
+          (cd release-assets && sha256sum * > SHA256SUMS.txt)
+          gh release create "$RELEASE_TAG" release-assets/* \
+            --verify-tag --title "TikoPlay $RELEASE_TAG" \
+            --notes-file "releases/$RELEASE_TAG.md"
