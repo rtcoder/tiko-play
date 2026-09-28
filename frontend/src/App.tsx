@@ -6,7 +6,6 @@ import {
   type Language,
 } from "./i18n";
 import { sourceLabel } from "./api/platforms";
-import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { useEffect, useState, useSyncExternalStore, useRef } from "react";
 import {
   bootstrapSession,
@@ -188,7 +187,6 @@ export default function App() {
             <p>{t("Oddaj stery swojej społeczności.")}</p>
           </div>
           <div className="header-actions">
-            <ThemeSwitcher />
             <div className="save-indicator">
               <span
                 className={"dot " + (editor.saveStatus === "saved" ? "on" : "")}

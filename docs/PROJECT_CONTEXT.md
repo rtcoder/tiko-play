@@ -53,9 +53,9 @@ Raporty `TikoPlay-2026-09-27-114548.ips` i `TikoPlay-2026-09-27-114938.ips` potw
 
 `src/desktop/tray_icon.py` tworzy przezroczysty, monochromatyczny kontur wielkiego, pochylonego „T”, zgodny ze znakiem głównej ikony w rozmiarach 18/36/54 px. `QIcon.setIsMask(True)` przekazuje macOS dobór białego/czarnego koloru do wyglądu paska menu, również przy zmianach motywu. Pozostałe platformy zachowują `tiko_play.ico`; ikona Docka/aplikacji pozostaje bez zmian.
 
-## Warianty wyglądu panelu
+## Wygląd panelu — tylko Glass (2026-09-28)
 
-Nagłówek zawiera przełącznik Klasyczny / Glass. Alternatywny styl jest izolowany w `frontend/src/styles-glass.css`, inspirowany dostarczonym przykładem CodePen Aysenur Turk (ZEpxeYm); tło to lokalne gradienty CSS. Przełączenie nie remontuje aplikacji i nie dotyka API ani listenera. Preferencja w localStorage jest przypisana do originu przeglądarki (zmiana portu po ponownym uruchomieniu może ją zresetować). Oba warianty pozostają do wyboru.
+Jedyny styl panelu to Glass, stosowany bezwarunkowo przez `frontend/src/styles-glass.css` na wspólnych stylach komponentów i układu z `frontend/src/styles.css`. Usunięto motyw klasyczny, komponent przełącznika i jego testy oraz odczyt/zapis preferencji `tikoplay-theme` w localStorage. Wcześniej zapisany wybór nie wpływa na wygląd. Glass zajmuje pełną szerokość okna: bez limitów szerokości kontenera i treści oraz bez zewnętrznych odstępów po bokach. Zachowano wewnętrzne odstępy i responsywność. Inspiracja: CodePen Aysenur Turk (ZEpxeYm); tło to lokalne gradienty CSS.
 
 ## Aktualizacja 2026-09-27: wdrożony panel webowy w worktree
 

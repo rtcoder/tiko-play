@@ -659,30 +659,11 @@ textarea {
   }
 }
 
-/* Theme selection is independent of listener and configuration state. */
 .header-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 14px;
-}
-.theme-switcher {
-  display: flex;
-  gap: 3px;
-  padding: 4px;
-  border: 1px solid #394355;
-  border-radius: 10px;
-  background: #10141e;
-}
-.theme-switcher button {
-  padding: 7px 12px;
-  font-size: 12px;
-  border: 0;
-  background: transparent;
-}
-.theme-switcher button[aria-pressed="true"] {
-  background: #2e3d4c;
-  color: #fff;
 }
 @media (max-width: 740px) {
   header {

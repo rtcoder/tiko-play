@@ -1,24 +1,24 @@
 /* Visual inspiration: Aysenur Turk, Glassmorphism Creative Cloud App Redesign.
    https://codepen.io/TurkAysenur/pen/ZEpxeYm
    Original CSS for TikoPlay; no remote fonts, wallpaper or video required. */
-:root[data-theme="glass"] {
+:root {
   background: #171b38;
   color: #f9fafb;
   --glass-border: rgb(225 230 255 / 17%);
   --glass-muted: #bdc2d8;
 }
-:root[data-theme="glass"] body {
+:root body {
   background:
     radial-gradient(ellipse at 5% 15%, #6954c1 0%, transparent 48%),
     radial-gradient(ellipse at 90% 8%, #317e9b 0%, transparent 43%),
     radial-gradient(ellipse at 80% 90%, #ad526f 0%, transparent 48%),
     radial-gradient(ellipse at 10% 100%, #3156ad 0%, transparent 48%), #171b38;
   background-attachment: fixed;
-  padding: 32px;
+  padding: 32px 0;
   min-height: 100vh;
 }
-:root[data-theme="glass"] .app-shell {
-  max-width: 1440px;
+:root .app-shell {
+  max-width: none;
   margin: 0 auto;
   min-height: calc(100vh - 64px);
   background: rgb(16 18 35 / 65%);
@@ -31,7 +31,7 @@
   -webkit-backdrop-filter: blur(28px);
   overflow: clip;
 }
-:root[data-theme="glass"] .sidebar {
+:root .sidebar {
   position: sticky;
   top: 32px;
   align-self: flex-start;
@@ -39,43 +39,44 @@
   background: transparent;
   border-color: var(--glass-border);
 }
-:root[data-theme="glass"] main {
+:root main {
   margin-left: 0;
   min-width: 0;
+  max-width: none;
   padding: 32px clamp(20px, 3vw, 44px);
 }
-:root[data-theme="glass"] header {
+:root header {
   border-bottom: 1px solid var(--glass-border);
   padding-bottom: 26px;
   gap: 20px;
 }
-:root[data-theme="glass"] .brand-icon {
+:root .brand-icon {
   background: linear-gradient(145deg, #a997ff, #5777ee);
   color: white;
   box-shadow: 3px 3px 0 #ffffff26;
 }
-:root[data-theme="glass"] nav button {
+:root nav button {
   color: #c9cce0;
 }
-:root[data-theme="glass"] nav button.active {
+:root nav button.active {
   background: #ffffff18;
   color: white;
   box-shadow: inset 3px 0 0 #9daaff;
 }
-:root[data-theme="glass"] nav button:hover {
+:root nav button:hover {
   background: #ffffff12;
 }
-:root[data-theme="glass"] .card {
+:root .card {
   background: rgb(194 198 230 / 7%);
   border-color: var(--glass-border);
   border-radius: 17px;
 }
-:root[data-theme="glass"] .connection-card {
+:root .connection-card {
   background: linear-gradient(115deg, #647be933, #be85c219);
   border-color: #b7b7ff40;
   border-radius: 17px;
 }
-:root[data-theme="glass"]
+:root
   :is(
     p,
     .hint,
@@ -93,122 +94,111 @@
   ) {
   color: var(--glass-muted);
 }
-:root[data-theme="glass"] :is(input, select, textarea, .with-prefix) {
+:root :is(input, select, textarea, .with-prefix) {
   background: #12172b66;
   border-color: #d9dcff33;
 }
-:root[data-theme="glass"] .with-prefix input {
+:root .with-prefix input {
   background: transparent;
 }
-:root[data-theme="glass"] input::placeholder {
+:root input::placeholder {
   color: #a2a9c3;
 }
-:root[data-theme="glass"] select option {
+:root select option {
   background: #24283f;
   color: white;
 }
-:root[data-theme="glass"] :is(button, .key-chip) {
+:root :is(button, .key-chip) {
   background: #ffffff0f;
   border-color: var(--glass-border);
 }
-:root[data-theme="glass"] button:hover {
+:root button:hover {
   background: #ffffff20;
 }
-:root[data-theme="glass"] .primary {
+:root .primary {
   background: #526ee6;
   border-color: #8b9df1;
   color: white;
   border-radius: 22px;
 }
-:root[data-theme="glass"] .primary:hover {
+:root .primary:hover {
   background: #637eee;
 }
-:root[data-theme="glass"] .stop-button {
+:root .stop-button {
   background: #672e4a;
   color: #ffd3dd;
   border-color: #df8ca5;
 }
-:root[data-theme="glass"] :is(input, select, textarea):focus,
-:root[data-theme="glass"] :is(button, a):focus-visible {
+:root :is(input, select, textarea):focus,
+:root :is(button, a):focus-visible {
   outline-color: #b2c3ff;
 }
-:root[data-theme="glass"] .check input {
+:root .check input {
   accent-color: #8397ff;
 }
-:root[data-theme="glass"] :is(.info-box, .flow-example > span) {
+:root :is(.info-box, .flow-example > span) {
   background: #ffffff0a;
   border-color: var(--glass-border);
   color: #d0d5e9;
 }
-:root[data-theme="glass"] .flow-example kbd {
+:root .flow-example kbd {
   background: #6078df2e;
   border-color: #9baaf077;
   color: #e0e6ff;
 }
-:root[data-theme="glass"]
+:root
   :is(.flow-example b, .with-prefix span, .summary-line button) {
   color: #b8c7ff;
 }
-:root[data-theme="glass"]
+:root
   :is(.mapping-row, .table-labels, .event, .card-foot, .version, footer) {
   border-color: var(--glass-border);
 }
-:root[data-theme="glass"] .theme-switcher {
-  background: #11182f66;
-  border-color: var(--glass-border);
-}
-:root[data-theme="glass"] .theme-switcher button {
-  background: transparent;
-}
-:root[data-theme="glass"] .theme-switcher button[aria-pressed="true"] {
-  background: #6179dd;
-  box-shadow: 0 2px 8px #090f3722;
-}
 @media (max-width: 1050px) {
-  :root[data-theme="glass"] body {
-    padding: 16px;
+  :root body {
+    padding: 16px 0;
   }
-  :root[data-theme="glass"] .app-shell {
+  :root .app-shell {
     min-height: calc(100vh - 32px);
   }
-  :root[data-theme="glass"] .sidebar {
+  :root .sidebar {
     top: 16px;
     height: calc(100vh - 32px);
   }
-  :root[data-theme="glass"] .two-columns {
+  :root .two-columns {
     grid-template-columns: 1fr;
   }
 }
 @media (max-width: 740px) {
-  :root[data-theme="glass"] body {
+  :root body {
     padding: 0;
   }
-  :root[data-theme="glass"] .app-shell {
+  :root .app-shell {
     border-radius: 0;
     min-height: 100vh;
     border: 0;
   }
-  :root[data-theme="glass"] .sidebar {
+  :root .sidebar {
     top: 0;
     height: 100vh;
   }
-  :root[data-theme="glass"] main {
+  :root main {
     padding: 24px 16px;
   }
 }
 
-:root[data-theme="glass"] .platform-tabs {
+:root .platform-tabs {
   background: #11172855;
   border-color: var(--glass-border);
 }
-:root[data-theme="glass"] .platform-tabs .platform-tab {
+:root .platform-tabs .platform-tab {
   background: transparent;
   border-color: transparent;
 }
-:root[data-theme="glass"] .platform-tabs .platform-tab:hover {
+:root .platform-tabs .platform-tab:hover {
   background: #ffffff12;
 }
-:root[data-theme="glass"] .platform-tabs .platform-tab[aria-selected="true"] {
+:root .platform-tabs .platform-tab[aria-selected="true"] {
   background: #ffffff1c;
   border-color: #c4cbff55;
   box-shadow: 0 2px 8px #080b1826;
