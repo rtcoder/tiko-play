@@ -9,5 +9,5 @@ Przed pracą przeczytaj [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md): opis
 - Przy testach izoluj konfigurację i zastępuj klienta TikTok oraz wywołania klawiatury atrapami, jeżeli test nie wymaga rzeczywistej integracji.
 - Po istotnych zmianach aktualizuj dokument kontekstu. Ustalenia z analizy nie oznaczają, że opisane błędy zostały naprawione.
 - Po każdym zakończonym zadaniu zapisz jego zmiany w commicie i wykonaj push na zdalne repozytorium. Nie dołączaj niezwiązanych zmian użytkownika.
-- Każdy zestaw zmian oznacz unikalnym tagiem Git i wypchnij ten tag na zdalne repozytorium.
+- Każdy zestaw zmian oznacz unikalnym tagiem Git w formacie `v<major>.<minor>`, np. `v0.1`, `v0.2`, `v0.3`, i wypchnij ten tag na zdalne repozytorium. Zwiększaj numer kolejnej wersji; nie używaj tagów opisowych ani dat w nazwach tagów.
 - Po każdych zmianach wykonaj build aplikacji i w odpowiedzi końcowej podaj klikalny link do gotowej aplikacji lub instalatora. Jeśli build się nie powiedzie, zgłoś błąd zamiast przedstawiać starszą paczkę jako aktualną.
