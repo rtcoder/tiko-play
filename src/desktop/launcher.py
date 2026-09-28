@@ -2,11 +2,16 @@ import argparse
 import sys
 import webbrowser
 from pathlib import Path
-from PySide6.QtCore import QObject, Signal, QTimer
+
+from PySide6.QtCore import QObject, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QMessageBox
-from src.desktop.resources import resource_path, user_data_dir
-from src.desktop.instance import InstanceGuard
+
+from src.core.i18n import translate
+from src.core.preferences import PreferencesStore
 from src.desktop.backend import BackendHost
+from src.desktop.instance import InstanceGuard
+from src.desktop.language import choose_language, system_language
+from src.desktop.resources import resource_path, user_data_dir
 
 
 class LauncherController(QObject):
@@ -20,7 +25,7 @@ class LauncherController(QObject):
         super().__init__()
         self.host = host
         self.open_browser = open_browser
-        self.show_error = show_error or (
+        self._show_error = show_error or (
             lambda text: QMessageBox.warning(None, "TikoPlay", text)
         )
         self.exit_app = exit_app or QApplication.instance().quit
@@ -38,6 +43,10 @@ class LauncherController(QObject):
         self.close_timer = QTimer(self)
         self.close_timer.setSingleShot(True)
         self.close_timer.timeout.connect(self._finish)
+
+    def show_error(self, text):
+        language = getattr(self.host, "language", "pl")
+        self._show_error(translate(text, language))
 
     def _timeout(self):
         self._failed(
@@ -124,14 +133,31 @@ def run_desktop():
     app.setApplicationName("TikoPlay")
     app.setQuitOnLastWindowClosed(False)
     data = args.data_dir or user_data_dir()
+    preferences = PreferencesStore(data / "preferences.json")
     try:
         guard = InstanceGuard(data)
         if not guard.acquire_or_notify():
             return 0
     except Exception as exc:
-        QMessageBox.critical(None, "TikoPlay", str(exc))
+        QMessageBox.critical(
+            None,
+            "TikoPlay",
+            translate(str(exc), preferences.language or system_language()),
+        )
         return 1
-    host = BackendHost(data, resource_path("frontend/dist"))
+    try:
+        if choose_language(preferences) is None:
+            guard.close()
+            return 0
+    except OSError:
+        QMessageBox.critical(
+            None,
+            "TikoPlay",
+            "Nie można zapisać języka. Sprawdź uprawnienia katalogu danych. / Cannot save language. Check data directory permissions.",
+        )
+        guard.close()
+        return 1
+    host = BackendHost(data, resource_path("frontend/dist"), preferences=preferences)
     controller = LauncherController(host)
     app.controller = controller
     from src.desktop.tray import TrayController

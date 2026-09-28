@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useState } from "react";
 
 type Theme = "classic" | "glass";
@@ -23,7 +24,11 @@ export function ThemeSwitcher() {
     };
   }, [theme]);
   return (
-    <div className="theme-switcher" role="group" aria-label="Wygląd panelu">
+    <div
+      className="theme-switcher"
+      role="group"
+      aria-label={t("Wygląd panelu")}
+    >
       {(["classic", "glass"] as const).map((value) => (
         <button
           key={value}
@@ -31,7 +36,7 @@ export function ThemeSwitcher() {
           aria-pressed={theme === value}
           onClick={() => setTheme(value)}
         >
-          {value === "classic" ? "Klasyczny" : "Glass"}
+          {value === "classic" ? t("Klasyczny") : "Glass"}
         </button>
       ))}
     </div>

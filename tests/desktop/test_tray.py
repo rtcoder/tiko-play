@@ -2,9 +2,9 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QSystemTrayIcon
-import pytest
 
 from src.desktop import tray as module
 
@@ -15,7 +15,9 @@ class Host(QObject):
 
 
 @pytest.mark.parametrize("platform", ["darwin", "win32"])
-def test_repeated_tray_clicks_preserve_process_and_menu_actions(qapp, monkeypatch, tmp_path, platform):
+def test_repeated_tray_clicks_preserve_process_and_menu_actions(
+    qapp, monkeypatch, tmp_path, platform
+):
     monkeypatch.setattr(sys, "platform", platform)
     monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda *args: True)
     monkeypatch.setattr(QSystemTrayIcon, "show", lambda self: None)
@@ -39,5 +41,33 @@ def test_repeated_tray_clicks_preserve_process_and_menu_actions(qapp, monkeypatc
         assert popup.call_count == (1 if platform == "darwin" else 0)
         next(a for a in tray.menu.actions() if a.text() == "Zakończ TikoPlay").trigger()
         controller.quit.assert_called_once()
+    finally:
+        tray.close()
+
+
+def test_language_change_updates_tray_without_changing_status(
+    qapp, monkeypatch, tmp_path
+):
+    class LocalizedHost(Host):
+        language_changed = Signal(str)
+        language = "en"
+
+    monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda *args: False)
+    host = LocalizedHost()
+    tray = module.TrayController(
+        host, SimpleNamespace(open_panel=Mock(), quit=Mock()), tmp_path
+    )
+    try:
+        assert "Open panel" in [a.text() for a in tray.menu.actions()]
+        host.state_changed.emit({"status": "connected"})
+        assert tray.tray.toolTip() == "TikoPlay · Connected"
+        host.language_changed.emit("pl")
+        assert "Otwórz panel" in [a.text() for a in tray.menu.actions()]
+        assert tray.tray.toolTip() == "TikoPlay · Połączony"
+        from PySide6.QtWidgets import QPushButton
+
+        assert "Zakończ TikoPlay" in [
+            b.text() for b in tray.fallback.findChildren(QPushButton)
+        ]
     finally:
         tray.close()

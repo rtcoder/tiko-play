@@ -98,3 +98,9 @@ python -m grpc_tools.protoc -I. --python_out=. src/adapters/proto/youtube_chat.p
 ```
 
 Opis sprawdzeń i ograniczeń: [YOUTUBE_KICK_ACCEPTANCE.md](docs/YOUTUBE_KICK_ACCEPTANCE.md).
+
+### Język aplikacji
+
+Przy pierwszym uruchomieniu wybierz **Polski** lub **English**. Domyślnie zaznaczony jest język interfejsu systemu: polski dla `pl`, angielski dla `en` i wszystkich pozostałych języków. Wybór jest zapamiętywany w `preferences.json` w katalogu danych użytkownika. Istniejąca instalacja zapyta raz po aktualizacji. Anulowanie okna kończy uruchomienie bez zapisu.
+
+Język można później zmienić w **Ustawienia → Język / Settings → Language**. Panel i tray aktualizują się bez restartu; komentarze i mapowania pozostają bez zmian.

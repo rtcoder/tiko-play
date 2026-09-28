@@ -12,6 +12,7 @@ def validate_assets(root: Path):
             raise RuntimeError(f"Brak ikony {icon}")
     return [
         (str(dist), "frontend/dist"),
+        (str(root / "src" / "locales"), "src/locales"),
         (str(root / "tiko_play.ico"), "."),
         (str(root / "tiko_play.icns"), "."),
     ]

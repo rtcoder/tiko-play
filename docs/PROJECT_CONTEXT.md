@@ -1,5 +1,15 @@
 # TikoPlay — kontekst techniczny
 
+## Język polski / angielski — 2026-09-28
+
+Aktualny panel React i powłoka desktopowa obsługują PL/EN. Pierwszy start bez poprawnego `preferences.json` pokazuje natywny dialog „Wybierz język / Choose language” przed backendem i przeglądarką. `QLocale.system().uiLanguages()` określa główny język interfejsu systemu: `pl` → Polski, `en` i pozostałe → English. Użytkownik zawsze zatwierdza wybór; anulowanie kończy uruchomienie bez zapisu. Dotyczy to również istniejących instalacji bez wybranego języka.
+
+Preferencja jest zapisywana atomowo w `preferences.json` w tym samym katalogu danych co konfiguracja (także z `--data-dir`), niezależnie od `config.json` v4 i przeglądarki. Zmiana przez Ustawienia → Język działa bez restartu, aktualizuje tray oraz inne otwarte karty przez `preferences_changed`; nie zmienia rewizji konfiguracji, mapowań ani aktywnego nasłuchu. Endpointy `/api/preferences` korzystają z istniejących zabezpieczeń sesji/origin/CSRF. Nieudany zapis zachowuje poprzedni wybór.
+
+Katalog `src/locales/en.json` jest wspólny dla Reacta i Qt; polskie teksty źródłowe są kluczami. Komunikaty rdzenia/API pozostają tekstami źródłowymi i są tłumaczone podczas wyświetlania, tak samo jak historia zdarzeń. Treść komentarzy, nicki, triggery, klawisze i identyfikatory presetów nie są tłumaczone. Tłumaczenie obejmuje aktywną aplikację, nie historyczne GUI w `src/views`. `packaging_support.py` dołącza katalog językowy do obu paczek. Dodając komunikat, należy uzupełnić katalog i tłumaczenie na granicy UI; nie podawać do tłumacza treści użytkownika.
+
+Weryfikacja: 165 testów Python przeszło, 2 natywne testy traya pominięte w trybie offscreen; 24 testy frontend i build TypeScript/Vite poprawne. Testy wykorzystują dane tymczasowe i atrapy integracji. W przeglądarce sprawdzono zmianę PL ↔ EN i oba motywy. Testy sprawdzają wybór według systemu, restart, anulowanie, błędny plik preferencji, błąd zapisu, synchronizację kart, tłumaczenie traya oraz niezmienione komentarze i presety. Paczka macOS `dist/i18n/TikoPlay.app` zbudowana i uruchomiona na danych tymczasowych: health, panel z `lang="en"` i dołączony katalog tłumaczeń potwierdzone. Paczki Windows nie uruchamiano.
+
 ## Zakładki platform — 2026-09-28
 
 Select źródła zastąpiony grupą czterech zakładek nad lewą kartą ustawień: ikona SVG + nazwa platformy. `PlatformTabs` obsługuje ARIA tablist/tab/tabpanel, pojedynczy punkt wejścia Tab, strzałki i Home/End. Aktywna ikona ma kolor platformy; układ dostosowuje się do szerokości i obu motywów. Zapis i przełączanie źródeł używają dotychczasowego onChange. Testy panelu: 21 passed; TypeScript/Vite build poprawny; wizualnie sprawdzono motywy Klasyczny i Glass.

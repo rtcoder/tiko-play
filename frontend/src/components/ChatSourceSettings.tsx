@@ -1,3 +1,4 @@
+import { t, getLanguage } from "../i18n";
 import { useEffect, useState, useId } from "react";
 import { PlatformTabs } from "./PlatformTabs";
 import { YouTubeKeySettings } from "./YouTubeKeySettings";
@@ -68,10 +69,10 @@ export function ChatSourceSettings({
         id={`${tabsId}-panel`}
         aria-labelledby={`${tabsId}-${config.platform}`}
       >
-        <span className="eyebrow">POŁĄCZENIE</span>
-        <h2>Twoja transmisja</h2>
+        <span className="eyebrow">{t("POŁĄCZENIE")}</span>
+        <h2>{t("Twoja transmisja")}</h2>
         <label>
-          {config.platform === "youtube" ? "Transmisja YouTube" : "Kanał"}
+          {config.platform === "youtube" ? t("Transmisja YouTube") : t("Kanał")}
           <div className="with-prefix">
             {config.platform !== "youtube" && <span aria-hidden="true">@</span>}
             <input
@@ -79,7 +80,7 @@ export function ChatSourceSettings({
               placeholder={
                 config.platform === "youtube"
                   ? "https://www.youtube.com/watch?v=…"
-                  : "nazwa_kanału"
+                  : t("nazwa_kanału")
               }
               onChange={(e) =>
                 onChange({
@@ -97,20 +98,29 @@ export function ChatSourceSettings({
         </label>
         <p className="hint">
           {config.platform === "tiktok"
-            ? "Wpisz nick konta prowadzącego TikTok LIVE."
+            ? t("Wpisz nick konta prowadzącego TikTok LIVE.")
             : config.platform === "twitch"
-              ? "Wpisz login kanału Twitch, bez adresu URL. Kanał może być inny niż połączone konto."
+              ? t(
+                  "Wpisz login kanału Twitch, bez adresu URL. Kanał może być inny niż połączone konto.",
+                )
               : config.platform === "youtube"
-                ? "Wklej link do trwającej transmisji lub jej ID. Wymagany jest włączony czat."
-                : "Wpisz login kanału Kick. Połączenie lokalne, bez logowania. Integracja nieoficjalna może wymagać aktualizacji po zmianach Kicka."}
+                ? t(
+                    "Wklej link do trwającej transmisji lub jej ID. Wymagany jest włączony czat.",
+                  )
+                : t(
+                    "Wpisz login kanału Kick. Połączenie lokalne, bez logowania. Integracja nieoficjalna może wymagać aktualizacji po zmianach Kicka.",
+                  )}
         </p>
         <label>
-          Dozwoleni użytkownicy <span className="optional">opcjonalnie</span>
+          {t("Dozwoleni użytkownicy")}{" "}
+          <span className="optional">{t("opcjonalnie")}</span>
           <textarea
             rows={3}
             aria-describedby="allowed-users-hint"
             placeholder={
-              config.platform === "youtube" ? "np. UC…" : "np. gracz1, gracz2"
+              config.platform === "youtube"
+                ? t("np. UC…")
+                : t("np. gracz1, gracz2")
             }
             value={source.target_user}
             onChange={(e) =>
@@ -122,16 +132,18 @@ export function ChatSourceSettings({
         </label>
         <p className="hint" id="allowed-users-hint">
           {config.platform === "youtube"
-            ? "Wpisz ID kanałów użytkowników (UC…), nie nazwy wyświetlane. ID zobaczysz przy komentarzach w panelu aktywności. Oddziel je przecinkami lub wierszami. Wielkość liter ma znaczenie."
-            : `Nicki oddziel przecinkami lub wpisz po jednym w wierszu. Możesz dodać @. ${config.platform === "tiktok" ? "Wielkość liter ma znaczenie." : "Wielkość liter nie ma znaczenia."}`}{" "}
-          Puste pole dopuszcza wszystkich widzów.
+            ? t(
+                "Wpisz ID kanałów użytkowników (UC…), nie nazwy wyświetlane. ID zobaczysz przy komentarzach w panelu aktywności. Oddziel je przecinkami lub wierszami. Wielkość liter ma znaczenie.",
+              )
+            : `${t("Nicki oddziel przecinkami lub wpisz po jednym w wierszu. Możesz dodać @.")} ${config.platform === "tiktok" ? t("Wielkość liter ma znaczenie.") : t("Wielkość liter nie ma znaczenia.")}`}{" "}
+          {t("Puste pole dopuszcza wszystkich widzów.")}
         </p>
         {config.platform === "youtube" && <YouTubeKeySettings />}
         {config.platform === "kick" && (
           <details>
-            <summary>Zaawansowane: ID pokoju czatu</summary>
+            <summary>{t("Zaawansowane: ID pokoju czatu")}</summary>
             <label>
-              ID pokoju czatu Kick (opcjonalnie)
+              {t("ID pokoju czatu Kick (opcjonalnie)")}
               <input
                 type="number"
                 min="1"
@@ -151,31 +163,33 @@ export function ChatSourceSettings({
               />
             </label>
             <p className="hint">
-              Użyj, jeśli Kick blokuje rozpoznawanie kanału. ID określa
-              faktyczny czat — upewnij się, że należy do wpisanego kanału.
-              Zmiana kanału czyści ID.
+              {t(
+                "Użyj, jeśli Kick blokuje rozpoznawanie kanału. ID określa faktyczny czat — upewnij się, że należy do wpisanego kanału. Zmiana kanału czyści ID.",
+              )}
             </p>
             <p className="hint">
-              W przeglądarce otwórz kick.com/api/v2/channels/LOGIN i odczytaj
-              chatroom.id. To ID pokoju, nie ID użytkownika.
+              {t(
+                "W przeglądarce otwórz kick.com/api/v2/channels/LOGIN i odczytaj chatroom.id. To ID pokoju, nie ID użytkownika.",
+              )}
             </p>
           </details>
         )}
         {config.platform === "twitch" && (
           <div className="twitch-account">
-            <h3>Konto Twitch</h3>
+            <h3>{t("Konto Twitch")}</h3>
             {!auth ? (
-              <p>Sprawdzanie konta…</p>
+              <p>{t("Sprawdzanie konta…")}</p>
             ) : !auth.configured ? (
               <p className="hint">
-                Integracja Twitch nie jest skonfigurowana. Ustaw identyfikator
-                aplikacji TIKOPLAY_TWITCH_CLIENT_ID i uruchom TikoPlay ponownie.
+                {t(
+                  "Integracja Twitch nie jest skonfigurowana. Ustaw identyfikator aplikacji TIKOPLAY_TWITCH_CLIENT_ID i uruchom TikoPlay ponownie.",
+                )}
               </p>
             ) : (
               <>
                 {auth.login && (
                   <p>
-                    Połączone konto: <strong>@{auth.login}</strong>
+                    {t("Połączone konto:")} <strong>@{auth.login}</strong>
                   </p>
                 )}
                 {auth.status === "pending" || activation ? (
@@ -183,7 +197,7 @@ export function ChatSourceSettings({
                     {activation ? (
                       <div className="info-box">
                         <p>
-                          Kod aktywacji:{" "}
+                          {t("Kod aktywacji:")}{" "}
                           <strong className="activation-code">
                             {activation.user_code}
                           </strong>
@@ -193,21 +207,25 @@ export function ChatSourceSettings({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Otwórz aktywację Twitcha
+                          {t("Otwórz aktywację Twitcha")}
                         </a>
                         <p>
-                          Zaloguj się w Twitchu i zatwierdź odczyt czatu. Kod
-                          jest ważny do{" "}
+                          {t(
+                            "Zaloguj się w Twitchu i zatwierdź odczyt czatu. Kod jest ważny do",
+                          )}{" "}
                           {new Date(
                             activation.expires_at * 1000,
-                          ).toLocaleTimeString("pl-PL")}
+                          ).toLocaleTimeString(
+                            getLanguage() === "pl" ? "pl-PL" : "en-GB",
+                          )}
                           .
                         </p>
                       </div>
                     ) : (
                       <p>
-                        Logowanie rozpoczęto w innym panelu. Dokończ je tam lub
-                        anuluj.
+                        {t(
+                          "Logowanie rozpoczęto w innym panelu. Dokończ je tam lub anuluj.",
+                        )}
                       </p>
                     )}
                     <button
@@ -219,7 +237,7 @@ export function ChatSourceSettings({
                         })
                       }
                     >
-                      Anuluj logowanie
+                      {t("Anuluj logowanie")}
                     </button>
                   </>
                 ) : (
@@ -245,7 +263,7 @@ export function ChatSourceSettings({
                       })
                     }
                   >
-                    Połącz konto Twitch
+                    {t("Połącz konto Twitch")}
                   </button>
                 )}
                 {auth.login && (
@@ -258,13 +276,13 @@ export function ChatSourceSettings({
                       })
                     }
                   >
-                    Odłącz konto
+                    {t("Odłącz konto")}
                   </button>
                 )}
-                {auth.error && <p role="alert">{auth.error.message}</p>}
+                {auth.error && <p role="alert">{t(auth.error.message)}</p>}
               </>
             )}
-            {error && <p role="alert">{error}</p>}
+            {error && <p role="alert">{t(error)}</p>}
           </div>
         )}
       </section>

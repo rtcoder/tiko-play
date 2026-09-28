@@ -1,3 +1,10 @@
+import {
+  t,
+  useLanguage,
+  setLanguage,
+  statusLabel,
+  type Language,
+} from "./i18n";
 import { sourceLabel } from "./api/platforms";
 import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { useEffect, useState, useSyncExternalStore, useRef } from "react";
@@ -20,13 +27,6 @@ import { MappingEditor } from "./components/MappingEditor";
 import { EventLog } from "./components/EventLog";
 import { ConfigRecovery } from "./components/ConfigRecovery";
 import { ChatSourceSettings } from "./components/ChatSourceSettings";
-const labels: Record<string, string> = {
-  stopped: "Zatrzymany",
-  connecting: "Łączenie…",
-  connected: "Połączony",
-  stopping: "Zatrzymywanie…",
-  error: "Błąd połączenia",
-};
 const saves: Record<string, string> = {
   saved: "Zapisano",
   dirty: "Niezapisane zmiany",
@@ -35,6 +35,7 @@ const saves: Record<string, string> = {
   error: "Błąd zapisu",
 };
 export default function App() {
+  const language = useLanguage();
   const [controller] = useState(() => new ConfigController(configApi));
   const editor = useSyncExternalStore(
     controller.subscribe,
@@ -66,6 +67,7 @@ export default function App() {
         await bootstrapSession();
         const s = await fetchState();
         if (!mounted) return;
+        setLanguage(s.language);
         setState(s);
         await refreshAuth();
         const [k, p] = await Promise.all([
@@ -79,6 +81,7 @@ export default function App() {
         if (!mounted) return;
         stop = subscribeEvents(
           (snap) => {
+            setLanguage(snap.state.language);
             setState(snap.state);
             void refreshAuth().catch(showError);
             setEvents(snap.events);
@@ -88,6 +91,9 @@ export default function App() {
                 .catch(showError);
           },
           (event) => {
+            if (event.type === "preferences_changed") {
+              setLanguage(event.payload.language as Language);
+            }
             setEvents((list) => [...list, event].slice(-1000));
             if (event.type === "twitch_auth") {
               ++authRevision.current;
@@ -144,7 +150,7 @@ export default function App() {
             Tiko<span className="brand-light">Play</span>
           </span>
         </a>
-        <div className="sidebar-caption">TWÓJ PANEL STEROWANIA</div>
+        <div className="sidebar-caption">{t("TWÓJ PANEL STEROWANIA")}</div>
         <nav>
           {[
             ["Pulpit", "◫"],
@@ -157,27 +163,29 @@ export default function App() {
               onClick={() => setSection(name)}
             >
               <span>{icon}</span>
-              {name}
+              {t(name)}
             </button>
           ))}
         </nav>
         <div className="sidebar-bottom">
           <span className={"dot " + (connected ? "on" : "")} />
           <div>
-            Lokalna aplikacja
+            {t("Lokalna aplikacja")}
             <small>
-              {connected ? "Działa na tym komputerze" : "Łączenie z TikoPlay…"}
+              {connected
+                ? t("Działa na tym komputerze")
+                : t("Łączenie z TikoPlay…")}
             </small>
           </div>
         </div>
-        <span className="version">TikoPlay 2.0 · Web panel</span>
+        <span className="version">{t("TikoPlay 2.0 · Web panel")}</span>
       </aside>
       <main>
         <header>
           <div>
-            <span className="eyebrow">CZAT → TWOJA GRA</span>
-            <h1>{section}</h1>
-            <p>Oddaj stery swojej społeczności.</p>
+            <span className="eyebrow">{t("CZAT → TWOJA GRA")}</span>
+            <h1>{t(section)}</h1>
+            <p>{t("Oddaj stery swojej społeczności.")}</p>
           </div>
           <div className="header-actions">
             <ThemeSwitcher />
@@ -185,29 +193,30 @@ export default function App() {
               <span
                 className={"dot " + (editor.saveStatus === "saved" ? "on" : "")}
               />
-              {saves[editor.saveStatus]}
+              {t(saves[editor.saveStatus])}
             </div>
           </div>
         </header>
         {error && (
           <div className="notice error" role="alert">
-            {error}
+            {t(error)}
           </div>
         )}
         {!connected && state && (
           <div className="notice">
-            Utracono połączenie z TikoPlay. Nasłuch może nadal działać. Jeśli
-            program został zamknięty, otwórz go ponownie z ikony.
+            {t(
+              "Utracono połączenie z TikoPlay. Nasłuch może nadal działać. Jeśli program został zamknięty, otwórz go ponownie z ikony.",
+            )}
           </div>
         )}
         {state?.error && (
           <div className="notice error" role="alert">
-            {state.error.message}
+            {t(state.error.message)}
           </div>
         )}
         {editor.error && (
           <div className="notice error" role="alert">
-            {editor.error}
+            {t(editor.error)}
             {editor.conflict && (
               <div className="conflict-actions">
                 <button
@@ -218,19 +227,21 @@ export default function App() {
                       .catch(showError)
                   }
                 >
-                  Porównaj z serwerem
+                  {t("Porównaj z serwerem")}
                 </button>
                 <button
                   onClick={() => {
                     if (
                       confirm(
-                        "Odrzucić lokalny szkic i wczytać zapisane ustawienia?",
+                        t(
+                          "Odrzucić lokalny szkic i wczytać zapisane ustawienia?",
+                        ),
                       )
                     )
                       void controller.reload().catch(showError);
                   }}
                 >
-                  Wczytaj zapisane ustawienia
+                  {t("Wczytaj zapisane ustawienia")}
                 </button>
               </div>
             )}
@@ -254,14 +265,14 @@ export default function App() {
                 <div>
                   <h2>
                     {!connected
-                      ? "Stan nasłuchu nieznany"
+                      ? t("Stan nasłuchu nieznany")
                       : state
-                        ? labels[state.status]
-                        : "Łączenie z aplikacją…"}
+                        ? statusLabel(state.status)
+                        : t("Łączenie z aplikacją…")}
                   </h2>
                   {running && connected && state?.active_platform && (
                     <p className="active-source">
-                      Aktywne źródło:{" "}
+                      {t("Aktywne źródło:")}{" "}
                       {sourceLabel(
                         state.active_platform,
                         state.active_channel ?? "",
@@ -270,12 +281,16 @@ export default function App() {
                   )}
                   <p>
                     {!connected
-                      ? "Brak aktualnego stanu. Otwórz TikoPlay z ikony lub poczekaj na ponowne połączenie."
+                      ? t(
+                          "Brak aktualnego stanu. Otwórz TikoPlay z ikony lub poczekaj na ponowne połączenie.",
+                        )
                       : state?.output === "countdown"
-                        ? "Przełącz się do gry. Klawisze zostaną włączone po 3 sekundach."
+                        ? t(
+                            "Przełącz się do gry. Klawisze zostaną włączone po 3 sekundach.",
+                          )
                         : state?.output === "enabled"
-                          ? "Wysyłanie klawiszy jest aktywne."
-                          : "Nasłuch gotowy do uruchomienia."}
+                          ? t("Wysyłanie klawiszy jest aktywne.")
+                          : t("Nasłuch gotowy do uruchomienia.")}
                   </p>
                 </div>
               </div>
@@ -301,13 +316,14 @@ export default function App() {
                   )
                 }
               >
-                {running ? "■ Zatrzymaj nasłuch" : "▶ Rozpocznij nasłuch"}
+                {running ? t("■ Zatrzymaj nasłuch") : t("▶ Rozpocznij nasłuch")}
               </button>
             </section>
             {pending && (
               <div className="notice">
-                Zapisano nowe ustawienia. Zatrzymaj i ponownie uruchom nasłuch,
-                aby je zastosować.
+                {t(
+                  "Zapisano nowe ustawienia. Zatrzymaj i ponownie uruchom nasłuch, aby je zastosować.",
+                )}
               </div>
             )}
             {section === "Pulpit" && (
@@ -320,16 +336,17 @@ export default function App() {
                     onAuthChanged={refreshAuth}
                   />
                   <section className="card how-it-works">
-                    <span className="eyebrow">JAK TO DZIAŁA</span>
-                    <h2>Od komentarza do ruchu</h2>
+                    <span className="eyebrow">{t("JAK TO DZIAŁA")}</span>
+                    <h2>{t("Od komentarza do ruchu")}</h2>
                     <div className="flow-example">
-                      <span>„lewo”</span>
+                      <span>{t("„lewo”")}</span>
                       <b>→</b>
                       <kbd>←</kbd>
                     </div>
                     <p>
-                      Ustaw mapowania, rozpocznij nasłuch i przełącz się do gry.
-                      Resztą zajmą się Twoi widzowie.
+                      {t(
+                        "Ustaw mapowania, rozpocznij nasłuch i przełącz się do gry. Resztą zajmą się Twoi widzowie.",
+                      )}
                     </p>
                     <label className="check">
                       <input
@@ -339,21 +356,22 @@ export default function App() {
                           edit({ countdown_enabled: e.target.checked })
                         }
                       />
-                      <span>3 sekundy na przełączenie do gry</span>
+                      <span>{t("3 sekundy na przełączenie do gry")}</span>
                     </label>
                     <div className="info-box">
-                      Klawisze trafiają do aktywnego okna. Zamknięcie tej karty
-                      nie zatrzymuje programu.
+                      {t(
+                        "Klawisze trafiają do aktywnego okna. Zamknięcie tej karty nie zatrzymuje programu.",
+                      )}
                     </div>
                   </section>
                 </div>
                 <div className="summary-line">
                   <span>
-                    <strong>{editor.draft.mappings.length}</strong> mapowań
-                    gotowych do gry
+                    <strong>{editor.draft.mappings.length}</strong>{" "}
+                    {t("mapowań gotowych do gry")}
                   </span>
                   <button onClick={() => setSection("Mapowania")}>
-                    Edytuj mapowania →
+                    {t("Edytuj mapowania →")}
                   </button>
                 </div>
               </>
@@ -368,15 +386,36 @@ export default function App() {
             )}
             {section === "Ustawienia" && (
               <section className="card">
-                <span className="eyebrow">PREFERENCJE</span>
-                <h2>Ustawienia aplikacji</h2>
+                <span className="eyebrow">{t("PREFERENCJE")}</span>
+                <h2>{t("Ustawienia aplikacji")}</h2>
+                <label className="language-setting">
+                  {t("Język")}
+                  <select
+                    value={language}
+                    disabled={busy || !connected}
+                    onChange={(e) => {
+                      const next = e.target.value as Language;
+                      void action(async () => {
+                        const result = await request<{ language: Language }>(
+                          "/api/preferences",
+                          "PUT",
+                          { language: next },
+                        );
+                        setLanguage(result.language);
+                      });
+                    }}
+                  >
+                    <option value="pl">Polski</option>
+                    <option value="en">English</option>
+                  </select>
+                </label>
                 <label className="check">
                   <input
                     type="checkbox"
                     checked={editor.draft.show_logs}
                     onChange={(e) => edit({ show_logs: e.target.checked })}
                   />
-                  Pokazuj panel aktywności
+                  {t("Pokazuj panel aktywności")}
                 </label>
                 <label className="check">
                   <input
@@ -386,15 +425,15 @@ export default function App() {
                       edit({ countdown_enabled: e.target.checked })
                     }
                   />
-                  Odliczanie przed wysyłaniem klawiszy
+                  {t("Odliczanie przed wysyłaniem klawiszy")}
                 </label>
                 <div className="info-box">
-                  TikoPlay działa lokalnie w tle. Aby zakończyć program, wybierz
-                  „Zakończ TikoPlay” z ikony w zasobniku systemowym. Ustawienia
-                  są zapisywane automatycznie.
+                  {t(
+                    "TikoPlay działa lokalnie w tle. Aby zakończyć program, wybierz „Zakończ TikoPlay” z ikony w zasobniku systemowym. Ustawienia są zapisywane automatycznie.",
+                  )}
                 </div>
                 <p className="hint">
-                  Wersja 2.0.0 · Cooldown: 0,3 s na komentarz
+                  {t("Wersja 2.0.0 · Cooldown: 0,3 s na komentarz")}
                 </p>
               </section>
             )}
@@ -402,20 +441,22 @@ export default function App() {
               <EventLog events={events} onClear={() => setEvents([])} />
             )}
             <footer>
-              <span>Ustawienia zapisują się automatycznie.</span>
+              <span>{t("Ustawienia zapisują się automatycznie.")}</span>
               <button
                 disabled={busy || !connected || editor.conflict}
                 onClick={() => void action(() => controller.flush())}
               >
-                Zapisz teraz
+                {t("Zapisz teraz")}
               </button>
             </footer>
           </>
         ) : (
           <section className="card">
-            <h2>Uruchamianie panelu…</h2>
+            <h2>{t("Uruchamianie panelu…")}</h2>
             <p>
-              Jeśli panel się nie połączy, otwórz go ponownie z ikony TikoPlay.
+              {t(
+                "Jeśli panel się nie połączy, otwórz go ponownie z ikony TikoPlay.",
+              )}
             </p>
           </section>
         )}

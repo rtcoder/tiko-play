@@ -23,6 +23,7 @@ const fixture = vi.hoisted(() => ({
     attempt_id: 0,
   },
   state: {
+    language: "pl",
     status: "connected",
     output: "enabled",
     generation: 1,
@@ -39,7 +40,8 @@ const fixture = vi.hoisted(() => ({
 vi.mock("./api/client", () => ({
   bootstrapSession: async () => {},
   fetchState: async () => fixture.state,
-  request: async (path: string) => (path === "/api/keys" ? [] : {}),
+  request: async (path: string, method?: string, body?: unknown) =>
+    path === "/api/preferences" ? body : path === "/api/keys" ? [] : {},
   twitchAuthApi: { state: async () => fixture.auth },
   configApi: {
     load: async () => ({ config: fixture.config, config_revision: 1 }),
@@ -116,4 +118,30 @@ it("shows active Twitch source while settings select TikTok", async () => {
   fixture.connected = false;
   fixture.state.active_platform = "tiktok";
   fixture.state.active_channel = "a";
+});
+
+it("uses the saved language and keeps mappings intact when changing it", async () => {
+  Object.assign(fixture.state, { language: "en" });
+  fixture.connected = true;
+  fixture.config.mappings = [
+    { id: "m1", trigger: "lewo", keys: ["left"] },
+  ] as never;
+  render(<App />);
+  expect(
+    await screen.findByRole("heading", { name: "Dashboard" }),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Settings/ }));
+  fireEvent.change(screen.getByRole("combobox", { name: "Language" }), {
+    target: { value: "pl" },
+  });
+  expect(
+    await screen.findByRole("heading", { name: "Ustawienia" }),
+  ).toBeInTheDocument();
+  expect(fixture.config.mappings[0]).toMatchObject({
+    trigger: "lewo",
+    keys: ["left"],
+  });
+  Object.assign(fixture.state, { language: "pl" });
+  fixture.config.mappings = [];
+  fixture.connected = false;
 });

@@ -1,17 +1,20 @@
 import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
+
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from src.core.models import AppConfig, AppError
-from src.core.presets import get_presets
-from src.core.keys import get_keys
+
 from src.api.events import stream_events
 from src.api.twitch import create_twitch_router
 from src.api.youtube import create_youtube_router
+from src.core.keys import get_keys
+from src.core.models import AppConfig, AppError
+from src.core.preferences import Preferences, PreferencesStore
+from src.core.presets import get_presets
 
 
 class ConfigWrite(BaseModel):
@@ -36,7 +39,12 @@ def create_app(
     *,
     twitch_auth,
     youtube_keys=None,
+    preferences=None,
+    on_language_changed=None,
 ):
+    preferences = preferences or PreferencesStore(
+        store.path.with_name("preferences.json")
+    )
     tasks = set()
 
     def spawn(coro):
@@ -60,6 +68,7 @@ def create_app(
         return {
             **listener.state().model_dump(),
             "instance_id": events.instance_id,
+            "language": preferences.effective_language,
             "config_revision": store._snapshot.revision if store._snapshot else None,
             "config_error": store.error.as_dict() if store.error else None,
             "recovery_data": store.recovery_data if store.error else None,
@@ -146,6 +155,26 @@ def create_app(
     @app.get("/api/state")
     async def get_state():
         return state()
+
+    @app.get("/api/preferences")
+    async def get_preferences():
+        return {"language": preferences.effective_language}
+
+    @app.put("/api/preferences")
+    async def put_preferences(body: Preferences):
+        try:
+            preferences.save(body.language)
+        except OSError as exc:
+            raise AppError(
+                "preferences_error",
+                "Nie można zapisać języka. Sprawdź uprawnienia katalogu danych.",
+                status=500,
+            ) from exc
+        if on_language_changed:
+            on_language_changed(body.language)
+        result = {"language": body.language}
+        events.publish("preferences_changed", result)
+        return result
 
     @app.get("/api/config")
     async def get_config():
@@ -240,5 +269,13 @@ def create_app(
 
     if not (static_dir / "index.html").is_file():
         raise RuntimeError("Brak panelu. Wykonaj build frontendu.")
+
+    @app.get("/", response_class=HTMLResponse)
+    async def index():
+        html = (static_dir / "index.html").read_text(encoding="utf-8")
+        return html.replace(
+            '<html lang="pl">', f'<html lang="{preferences.effective_language}">'
+        )
+
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="panel")
     return app

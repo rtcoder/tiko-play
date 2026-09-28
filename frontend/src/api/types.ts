@@ -32,6 +32,7 @@ export interface ApiError {
   field_errors?: Record<string, string>;
 }
 export interface AppState {
+  language: "pl" | "en";
   active_platform: Platform | null;
   active_channel: string | null;
   status: string;

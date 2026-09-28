@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import type { Mapping } from "../api/types";
 type Props = {
@@ -14,21 +15,27 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
     <section className="card mapping-card">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">KOMENTARZ → AKCJA</span>
-          <h2>Mapowania klawiszy</h2>
-          <p>Widz pisze komentarz. TikoPlay wykonuje Twoją kombinację.</p>
+          <span className="eyebrow">{t("KOMENTARZ → AKCJA")}</span>
+          <h2>{t("Mapowania klawiszy")}</h2>
+          <p>
+            {t("Widz pisze komentarz. TikoPlay wykonuje Twoją kombinację.")}
+          </p>
         </div>
-        <span className="count">{mappings.length} mapowań</span>
+        <span className="count">
+          {mappings.length} {t("mapowań")}
+        </span>
       </div>
       <div className="mapping-tools">
         <select
-          aria-label="Preset"
+          aria-label={t("Preset")}
           value={preset}
           onChange={(e) => setPreset(e.target.value)}
         >
-          <option value="">Wybierz preset…</option>
+          <option value="">{t("Wybierz preset…")}</option>
           {Object.keys(presets).map((p) => (
-            <option key={p}>{p}</option>
+            <option key={p} value={p}>
+              {t(p)}
+            </option>
           ))}
         </select>
         <button
@@ -36,14 +43,14 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
           onClick={() => {
             if (
               !mappings.length ||
-              confirm("Zastąpić obecne mapowania wybranym presetem?")
+              confirm(t("Zastąpić obecne mapowania wybranym presetem?"))
             )
               onChange(
                 presets[preset].map((m) => ({ ...m, id: crypto.randomUUID() })),
               );
           }}
         >
-          Zastosuj preset
+          {t("Zastosuj preset")}
         </button>
         <button
           className="primary push-right"
@@ -54,19 +61,21 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
             ])
           }
         >
-          + Dodaj mapowanie
+          {t("+ Dodaj mapowanie")}
         </button>
       </div>
       <div className="table-labels">
-        <span>Komentarz widza</span>
-        <span>Klawisz lub kombinacja</span>
+        <span>{t("Komentarz widza")}</span>
+        <span>{t("Klawisz lub kombinacja")}</span>
         <span />
       </div>
       {!mappings.length && (
         <div className="empty">
           <span className="empty-symbol">⌨</span>
-          <h3>Twoja gra, zasady widzów</h3>
-          <p>Dodaj pierwszy komentarz lub zacznij od gotowego presetu.</p>
+          <h3>{t("Twoja gra, zasady widzów")}</h3>
+          <p>
+            {t("Dodaj pierwszy komentarz lub zacznij od gotowego presetu.")}
+          </p>
         </div>
       )}
       {mappings.map((m, index) => (
@@ -74,8 +83,8 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
           <div className="trigger-input">
             <span>{String(index + 1).padStart(2, "0")}</span>
             <input
-              aria-label={`Komentarz ${index + 1}`}
-              placeholder="np. lewo"
+              aria-label={t("Komentarz {number}", { number: index + 1 })}
+              placeholder={t("np. lewo")}
               value={m.trigger}
               onChange={(e) => update(m.id, { trigger: e.target.value })}
             />
@@ -85,7 +94,7 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
               <button
                 className="key-chip"
                 key={i}
-                title="Usuń klawisz"
+                title={t("Usuń klawisz")}
                 onClick={() =>
                   update(m.id, { keys: m.keys.filter((_, n) => n !== i) })
                 }
@@ -95,24 +104,24 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
               </button>
             ))}
             <select
-              aria-label={`Dodaj klawisz ${index + 1}`}
+              aria-label={t("Dodaj klawisz {number}", { number: index + 1 })}
               value=""
               onChange={(e) => {
                 if (e.target.value)
                   update(m.id, { keys: [...m.keys, e.target.value] });
               }}
             >
-              <option value="">+ klawisz</option>
+              <option value="">{t("+ klawisz")}</option>
               {keys.map((k) => (
                 <option key={k} value={k}>
-                  {k === " " ? "spacja" : k}
+                  {k === " " ? t("spacja") : k}
                 </option>
               ))}
             </select>
           </div>
           <button
             className="icon-button danger"
-            aria-label="Usuń mapowanie"
+            aria-label={t("Usuń mapowanie")}
             onClick={() =>
               onChange(mappings.filter((item) => item.id !== m.id))
             }
@@ -122,8 +131,9 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
         </div>
       ))}
       <div className="card-foot">
-        Dopasowanie obejmuje cały komentarz. Kilka klawiszy tworzy jednoczesną
-        kombinację.
+        {t(
+          "Dopasowanie obejmuje cały komentarz. Kilka klawiszy tworzy jednoczesną kombinację.",
+        )}
       </div>
     </section>
   );

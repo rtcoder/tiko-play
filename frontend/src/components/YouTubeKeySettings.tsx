@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useEffect, useState } from "react";
 import { youtubeKeyApi } from "../api/client";
 
@@ -42,16 +43,16 @@ export function YouTubeKeySettings() {
   };
   return (
     <div className="twitch-account">
-      <h3>Dostęp do YouTube</h3>
+      <h3>{t("Dostęp do YouTube")}</h3>
       <p className="hint">
         {configured === null
-          ? "Sprawdzanie klucza…"
+          ? t("Sprawdzanie klucza…")
           : configured
-            ? "Klucz zapisany w systemowym magazynie poświadczeń."
-            : "Brak zapisanego klucza."}
+            ? t("Klucz zapisany w systemowym magazynie poświadczeń.")
+            : t("Brak zapisanego klucza.")}
       </p>
       <label>
-        Klucz YouTube Data API
+        {t("Klucz YouTube Data API")}
         <input
           type="password"
           autoComplete="off"
@@ -61,25 +62,26 @@ export function YouTubeKeySettings() {
         />
       </label>
       <button disabled={busy || !key.trim()} onClick={() => void update(false)}>
-        Zapisz klucz
+        {t("Zapisz klucz")}
       </button>
       {configured && (
         <button disabled={busy} onClick={() => void update(true)}>
-          Usuń klucz
+          {t("Usuń klucz")}
         </button>
       )}
       <p className="hint">
-        W projekcie Google Cloud włącz YouTube Data API v3 i utwórz klucz API.
-        Zmianę klucza wykonuj przy zatrzymanym nasłuchu.
+        {t(
+          "W projekcie Google Cloud włącz YouTube Data API v3 i utwórz klucz API. Zmianę klucza wykonuj przy zatrzymanym nasłuchu.",
+        )}
       </p>
       <a
         href="https://console.cloud.google.com/apis/library/youtube.googleapis.com"
         target="_blank"
         rel="noopener noreferrer"
       >
-        Otwórz YouTube Data API w Google Cloud
+        {t("Otwórz YouTube Data API w Google Cloud")}
       </a>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{t(error)}</p>}
     </div>
   );
 }

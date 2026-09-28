@@ -795,3 +795,10 @@ label > textarea {
     font-size: 11px;
   }
 }
+
+.language-setting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}

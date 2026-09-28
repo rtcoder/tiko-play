@@ -1,6 +1,8 @@
 import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
+
 from src.api.app import create_app
 from src.api.session import SessionManager
 from src.core.config_store import ConfigStore
@@ -93,3 +95,56 @@ def test_second_launch_preserves_first_tab_csrf(api):
     second = login(c, s)
     assert second["X-CSRF-Token"] == first["X-CSRF-Token"]
     assert c.post("/api/listener/stop", headers=first).status_code == 202
+
+
+def test_language_preferences_persist_without_touching_config(api):
+    c, s, store, bus = api
+    headers = login(c, s)
+    before = store.path.read_bytes()
+    response = c.put("/api/preferences", json={"language": "en"}, headers=headers)
+    assert response.status_code == 200
+    assert c.get("/api/state").json()["language"] == "en"
+    assert c.get("/api/preferences").json() == {"language": "en"}
+    assert store.path.read_bytes() == before
+    assert bus.recent()[-1]["type"] == "preferences_changed"
+    from src.core.preferences import PreferencesStore
+
+    assert PreferencesStore(store.path.with_name("preferences.json")).language == "en"
+    assert (
+        c.put("/api/preferences", json={"language": "de"}, headers=headers).status_code
+        == 422
+    )
+    assert (
+        c.put(
+            "/api/preferences", json={"language": "pl"}, headers={"Origin": s.origin}
+        ).status_code
+        == 403
+    )
+    assert c.get("/api/preferences").json() == {"language": "en"}
+
+
+def test_saved_language_is_present_before_frontend_bootstraps(api):
+    c, s, store, _bus = api
+    (store.path.parent / "static" / "index.html").write_text(
+        '<html lang="pl"><body>panel</body></html>'
+    )
+    h = login(c, s)
+    for language in ("en", "pl"):
+        c.put("/api/preferences", json={"language": language}, headers=h)
+        assert f'<html lang="{language}">' in c.get("/").text
+
+
+def test_language_change_is_broadcast_to_existing_tabs(api):
+    c, s, _store, _bus = api
+    h = login(c, s)
+    with c.websocket_connect(
+        "ws://127.0.0.1:8000/api/events", headers={"Origin": s.origin}
+    ) as ws:
+        assert ws.receive_json()["state"]["language"] == "en"
+        assert (
+            c.put("/api/preferences", json={"language": "pl"}, headers=h).status_code
+            == 200
+        )
+        event = ws.receive_json()
+        assert event["type"] == "preferences_changed"
+        assert event["payload"] == {"language": "pl"}

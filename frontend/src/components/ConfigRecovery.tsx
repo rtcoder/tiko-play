@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useState } from "react";
 import { request } from "../api/client";
 import type { AppState } from "../api/types";
@@ -28,21 +29,23 @@ export function ConfigRecovery({
   const [error, setError] = useState("");
   return (
     <section className="card">
-      <h2>Konfiguracja wymaga uwagi</h2>
-      <p>{state.config_error?.message}</p>
+      <h2>{t("Konfiguracja wymaga uwagi")}</h2>
+      <p>{state.config_error && t(state.config_error.message)}</p>
       {state.config_error?.code === "future_version" ? (
         <p>
-          Zainstaluj wersję TikoPlay obsługującą ten plik. Oryginalne dane
-          pozostały nienaruszone.
+          {t(
+            "Zainstaluj wersję TikoPlay obsługującą ten plik. Oryginalne dane pozostały nienaruszone.",
+          )}
         </p>
       ) : (
         <>
           <p>
-            Popraw ustawienia poniżej. Przed naprawą TikoPlay zachowa kopię
-            oryginalnego pliku.
+            {t(
+              "Popraw ustawienia poniżej. Przed naprawą TikoPlay zachowa kopię oryginalnego pliku.",
+            )}
           </p>
           <textarea
-            aria-label="Konfiguracja do naprawy"
+            aria-label={t("Konfiguracja do naprawy")}
             rows={14}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -85,11 +88,11 @@ export function ConfigRecovery({
               }
             }}
           >
-            Zachowaj kopię i napraw
+            {t("Zachowaj kopię i napraw")}
           </button>
         </>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{t(error)}</p>}
     </section>
   );
 }

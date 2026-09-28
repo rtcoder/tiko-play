@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { useRef } from "react";
 import type { Platform } from "../api/types";
 
@@ -35,7 +36,11 @@ export function PlatformTabs({
 }) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   return (
-    <div className="platform-tabs" role="tablist" aria-label="Źródło czatu">
+    <div
+      className="platform-tabs"
+      role="tablist"
+      aria-label={t("Źródło czatu")}
+    >
       {platforms.map((platform, index) => (
         <button
           key={platform.id}

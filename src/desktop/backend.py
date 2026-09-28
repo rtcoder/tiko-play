@@ -4,33 +4,40 @@ import socket
 import threading
 import time
 from uuid import uuid4
-from PySide6.QtCore import QObject, Signal
+
+import httpx
 import uvicorn
+from PySide6.QtCore import QObject, Signal
+from websockets.asyncio.client import connect as websocket_connect
+
+from src.adapters.chat import ChatAdapterFactory
+from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
+from src.adapters.twitch_auth import TwitchAuthService
+from src.adapters.twitch_credentials import NativeCredentialStore
+from src.adapters.youtube_key import YouTubeKeyStore
 from src.api.app import create_app
 from src.api.session import SessionManager
 from src.core.config_store import ConfigStore
+from src.core.diagnostics import configure_diagnostics
 from src.core.events import EventBus
 from src.core.keyboard import KeyboardExecutor
 from src.core.listener_service import ListenerService
 from src.core.models import AppError
-from src.core.diagnostics import configure_diagnostics
-from src.adapters.chat import ChatAdapterFactory
-from src.adapters.twitch_auth import TwitchAuthService
-from src.adapters.twitch_credentials import NativeCredentialStore
-from src.adapters.youtube_key import YouTubeKeyStore
+from src.core.preferences import PreferencesStore
 from src.twitch_settings import get_twitch_client_id
-from websockets.asyncio.client import connect as websocket_connect
-import httpx
-from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
 
 
 class BackendHost(QObject):
     ready = Signal(str)
     failed = Signal(str)
     state_changed = Signal(dict)
+    language_changed = Signal(str)
 
-    def __init__(self, data_dir, static_dir):
+    def __init__(self, data_dir, static_dir, *, preferences=None):
         super().__init__()
+        self.preferences = preferences or PreferencesStore(
+            data_dir / "preferences.json"
+        )
         self.data_dir = data_dir
         self.static_dir = static_dir
         self.origin = None
@@ -43,6 +50,10 @@ class BackendHost(QObject):
         self.thread = threading.Thread(
             target=self._thread_main, name="TikoPlay-backend", daemon=True
         )
+
+    @property
+    def language(self):
+        return self.preferences.effective_language
 
     def start(self):
         self.thread.start()
@@ -117,6 +128,8 @@ class BackendHost(QObject):
                 self.static_dir,
                 twitch_auth=auth,
                 youtube_keys=youtube_keys,
+                preferences=self.preferences,
+                on_language_changed=self.language_changed.emit,
             )
             config = uvicorn.Config(
                 app,
