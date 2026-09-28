@@ -109,8 +109,9 @@ it("shows active Twitch source while settings select TikTok", async () => {
   expect(
     await screen.findByText("Aktywne źródło: Twitch · @live_channel"),
   ).toBeInTheDocument();
-  expect(screen.getByRole("combobox", { name: "Źródło czatu" })).toHaveValue(
-    "tiktok",
+  expect(screen.getByRole("tab", { name: "TikTok" })).toHaveAttribute(
+    "aria-selected",
+    "true",
   );
   fixture.connected = false;
   fixture.state.active_platform = "tiktok";

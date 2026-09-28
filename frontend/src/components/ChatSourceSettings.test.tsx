@@ -40,21 +40,15 @@ function Harness() {
 it("keeps separate channel and user settings while switching sources", () => {
   render(<Harness />);
   expect(screen.getByRole("textbox", { name: "Kanał" })).toHaveValue("alice");
-  fireEvent.change(screen.getByRole("combobox", { name: "Źródło czatu" }), {
-    target: { value: "twitch" },
-  });
+  fireEvent.click(screen.getByRole("tab", { name: "Twitch" }));
   expect(screen.getByRole("textbox", { name: "Kanał" })).toHaveValue("other");
   fireEvent.change(screen.getByRole("textbox", { name: "Kanał" }), {
     target: { value: "new" },
   });
-  fireEvent.change(screen.getByRole("combobox", { name: "Źródło czatu" }), {
-    target: { value: "tiktok" },
-  });
+  fireEvent.click(screen.getByRole("tab", { name: "TikTok" }));
   expect(screen.getByRole("textbox", { name: "Kanał" })).toHaveValue("alice");
   expect(screen.getByRole("textbox", { name: /Dozwoleni/ })).toHaveValue("Bob");
-  fireEvent.change(screen.getByRole("combobox", { name: "Źródło czatu" }), {
-    target: { value: "twitch" },
-  });
+  fireEvent.click(screen.getByRole("tab", { name: "Twitch" }));
   expect(screen.getByRole("textbox", { name: "Kanał" })).toHaveValue("new");
 });
 it("shows a safe activation link then removes the code when auth completes", async () => {
@@ -110,21 +104,23 @@ it("does not render foreign activation URLs", async () => {
 });
 it("keeps YouTube and Kick settings separate and clears stale room ID when changing Kick channel", () => {
   render(<Harness />);
-  const select = screen.getByRole("combobox", { name: "Źródło czatu" });
-  fireEvent.change(select, { target: { value: "kick" } });
+  expect(
+    screen.queryByRole("combobox", { name: "Źródło czatu" }),
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Kick" }));
   fireEvent.change(screen.getByRole("textbox", { name: "Kanał" }), {
     target: { value: "alice" },
   });
   fireEvent.change(screen.getByRole("spinbutton", { name: /ID pokoju/ }), {
     target: { value: "42" },
   });
-  fireEvent.change(select, { target: { value: "youtube" } });
+  fireEvent.click(screen.getByRole("tab", { name: "YouTube" }));
   fireEvent.change(
     screen.getByRole("textbox", { name: /Transmisja YouTube/ }),
     { target: { value: "https://youtu.be/abcdefghijk" } },
   );
   expect(screen.getByText(/ID kanałów użytkowników/)).toBeInTheDocument();
-  fireEvent.change(select, { target: { value: "kick" } });
+  fireEvent.click(screen.getByRole("tab", { name: "Kick" }));
   expect(screen.getByRole("textbox", { name: "Kanał" })).toHaveValue("alice");
   expect(screen.getByRole("spinbutton", { name: /ID pokoju/ })).toHaveValue(42);
   fireEvent.change(screen.getByRole("textbox", { name: "Kanał" }), {
@@ -133,8 +129,28 @@ it("keeps YouTube and Kick settings separate and clears stale room ID when chang
   expect(screen.getByRole("spinbutton", { name: /ID pokoju/ })).toHaveValue(
     null,
   );
-  fireEvent.change(select, { target: { value: "youtube" } });
+  fireEvent.click(screen.getByRole("tab", { name: "YouTube" }));
   expect(
     screen.getByRole("textbox", { name: /Transmisja YouTube/ }),
   ).toHaveValue("https://youtu.be/abcdefghijk");
+});
+
+it("supports arrow, Home and End navigation between platform tabs", () => {
+  render(<Harness />);
+  const first = screen.getByRole("tab", { name: "TikTok" });
+  expect(first).toHaveAttribute("aria-selected", "true");
+  fireEvent.keyDown(first, { key: "ArrowRight" });
+  const twitch = screen.getByRole("tab", { name: "Twitch" });
+  expect(twitch).toHaveFocus();
+  expect(twitch).toHaveAttribute("aria-selected", "true");
+  expect(screen.getByRole("tabpanel")).toHaveAccessibleName("Twitch");
+  fireEvent.keyDown(twitch, { key: "End" });
+  const kick = screen.getByRole("tab", { name: "Kick" });
+  expect(kick).toHaveFocus();
+  fireEvent.keyDown(kick, { key: "ArrowRight" });
+  expect(first).toHaveFocus();
+  fireEvent.keyDown(first, { key: "ArrowLeft" });
+  expect(kick).toHaveFocus();
+  fireEvent.keyDown(kick, { key: "Home" });
+  expect(first).toHaveAttribute("aria-selected", "true");
 });

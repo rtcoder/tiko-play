@@ -1,5 +1,9 @@
 # TikoPlay — kontekst techniczny
 
+## Zakładki platform — 2026-09-28
+
+Select źródła zastąpiony grupą czterech zakładek nad lewą kartą ustawień: ikona SVG + nazwa platformy. `PlatformTabs` obsługuje ARIA tablist/tab/tabpanel, pojedynczy punkt wejścia Tab, strzałki i Home/End. Aktywna ikona ma kolor platformy; układ dostosowuje się do szerokości i obu motywów. Zapis i przełączanie źródeł używają dotychczasowego onChange. Testy panelu: 21 passed; TypeScript/Vite build poprawny; wizualnie sprawdzono motywy Klasyczny i Glass.
+
 ## YouTube i Kick — 2026-09-27
 
 Dodano źródła `youtube` i `kick` do wspólnej fabryki/rdzenia oraz panelu. Nadal działa tylko jedno źródło naraz; mapowania są wspólne, kanały i filtry oddzielne. Konfiguracja v4 migruje v1/v2/v3 z kopią oryginału, zachowując aktywnego Twitcha w migracji v3. Historia notatek poniżej dotyczy wcześniejszych etapów.

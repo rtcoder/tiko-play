@@ -196,3 +196,20 @@
     padding: 24px 16px;
   }
 }
+
+:root[data-theme="glass"] .platform-tabs {
+  background: #11172855;
+  border-color: var(--glass-border);
+}
+:root[data-theme="glass"] .platform-tabs .platform-tab {
+  background: transparent;
+  border-color: transparent;
+}
+:root[data-theme="glass"] .platform-tabs .platform-tab:hover {
+  background: #ffffff12;
+}
+:root[data-theme="glass"] .platform-tabs .platform-tab[aria-selected="true"] {
+  background: #ffffff1c;
+  border-color: #c4cbff55;
+  box-shadow: 0 2px 8px #080b1826;
+}
