@@ -69,13 +69,14 @@ async def test_network_flow_continues_without_browser(tmp_path, twitch_auth):
             ).json()
             headers = {"Origin": origin, "X-CSRF-Token": session["csrf_token"]}
             config = {
-                "version": 4,
+                "version": 5,
+                "active_profile_id": "game",
                 "tiktok": {"channel": "test"},
                 "countdown_enabled": False,
-                "mappings": [
+                "profiles": [{"id": "game", "name": "Integration", "mappings": [
                     {"id": "1", "trigger": "x", "keys": ["ctrl", "a"]},
                     {"id": "2", "trigger": "y", "keys": ["left"]},
-                ],
+                ]}],
             }
             response = await http.put(
                 "/api/config",

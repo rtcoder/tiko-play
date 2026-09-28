@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from src.api.events import stream_events
 from src.api.twitch import create_twitch_router
 from src.api.youtube import create_youtube_router
+from src.api.profiles import create_profiles_router
 from src.core.keys import get_keys
 from src.core.models import AppConfig, AppError
 from src.core.preferences import Preferences, PreferencesStore
@@ -46,6 +47,7 @@ def create_app(
         store.path.with_name("preferences.json")
     )
     tasks = set()
+    configuration_action = asyncio.Lock()
 
     def spawn(coro):
         task = asyncio.create_task(coro)
@@ -182,7 +184,19 @@ def create_app(
 
     @app.put("/api/config")
     async def put_config(body: ConfigWrite):
-        snap = await store.save(body.config, body.expected_revision)
+        async with configuration_action:
+            current = store.snapshot().config
+            if listener.state().status in ("connecting", "connected", "stopping") and (
+                current.active_profile_id != body.config.active_profile_id
+                or {p.id for p in current.profiles}
+                != {p.id for p in body.config.profiles}
+            ):
+                raise AppError(
+                    "profiles_busy",
+                    "Zatrzymaj nasłuch przed zmianą profilu.",
+                    status=409,
+                )
+            snap = await store.save(body.config, body.expected_revision)
         events.publish("config_changed", {"config_revision": snap.revision})
         return config_result(snap)
 
@@ -203,6 +217,10 @@ def create_app(
     @app.post("/api/listener/start", status_code=202)
     async def start(body: Revision):
         stop_revision = listener.stop_revision
+        async with configuration_action:
+            return await start_locked(body, stop_revision)
+
+    async def start_locked(body, stop_revision):
         snap = store.snapshot()
         if body.expected_revision != snap.revision:
             raise AppError(
@@ -233,7 +251,7 @@ def create_app(
                     )
                 listener.start(snap, expected_stop_revision=stop_revision)
         else:
-            listener.start(snap)
+            listener.start(snap, expected_stop_revision=stop_revision)
         return state()
 
     @app.post("/api/listener/stop", status_code=202)
@@ -258,6 +276,7 @@ def create_app(
         await stream_events(ws, events, state)
 
     app.include_router(create_twitch_router(twitch_auth))
+    app.include_router(create_profiles_router(store))
     if youtube_keys is not None:
         app.include_router(create_youtube_router(youtube_keys, listener))
 

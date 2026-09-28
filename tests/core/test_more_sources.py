@@ -60,7 +60,7 @@ async def test_upgrade_keeps_old_sources_and_backup(tmp_path, version):
     original = json.dumps(data).encode()
     path.write_bytes(original)
     cfg = (await ConfigStore(path).load()).config
-    assert cfg.version == 4
+    assert cfg.version == 5
     assert cfg.youtube.channel == cfg.kick.channel == ""
     assert cfg.mappings[0].id == "m" and cfg.model_dump()["custom"] == "kept"
     assert path.with_name(f"config.v{version}.backup.json").read_bytes() == original

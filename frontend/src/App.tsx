@@ -21,9 +21,12 @@ import type {
   AppEvent,
   AppState,
   TwitchAuthState,
+  ProfileTemplate,
 } from "./api/types";
 import { ConfigController } from "./state/configController";
 import { MappingEditor } from "./components/MappingEditor";
+import { ProfileManager } from "./components/ProfileManager";
+import { activeProfile, updateProfile } from "./state/profiles";
 import { EventLog } from "./components/EventLog";
 import { ConfigRecovery } from "./components/ConfigRecovery";
 import { ChatSourceSettings } from "./components/ChatSourceSettings";
@@ -58,6 +61,7 @@ export default function App() {
     Record<string, { trigger: string; keys: string[] }[]>
   >({});
   const [busy, setBusy] = useState(false);
+  const [templates, setTemplates] = useState<ProfileTemplate[]>([]);
   const [serverConfig, setServerConfig] = useState<AppConfig | null>(null);
   useEffect(() => {
     let stop: undefined | (() => void);
@@ -70,13 +74,15 @@ export default function App() {
         setLanguage(s.language);
         setState(s);
         await refreshAuth();
-        const [k, p] = await Promise.all([
+        const [k, p, templates] = await Promise.all([
           request<string[]>("/api/keys"),
           request<typeof presets>("/api/presets"),
+          request<ProfileTemplate[]>("/api/profile-templates"),
         ]);
         if (!mounted) return;
         setKeys(k);
         setPresets(p);
+        setTemplates(templates);
         if (!s.config_error) await controller.reload();
         if (!mounted) return;
         stop = subscribeEvents(
@@ -145,7 +151,13 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
-          <img className="brand-icon" src="/tikoplay-logo.png" alt="" width="40" height="40" />
+          <img
+            className="brand-icon"
+            src="/tikoplay-logo.png"
+            alt=""
+            width="40"
+            height="40"
+          />
           <span>
             Tiko<span className="brand-light">Play</span>
           </span>
@@ -282,6 +294,11 @@ export default function App() {
                       )}
                     </p>
                   )}
+                  {running && connected && state?.active_profile_name && (
+                    <p className="active-source">
+                      {t("Profil sesji:")} {state.active_profile_name}
+                    </p>
+                  )}
                   <p>
                     {!connected
                       ? t(
@@ -329,122 +346,143 @@ export default function App() {
                 )}
               </div>
             )}
-            {section === "Pulpit" && (
-              <>
-                <div className="two-columns">
-                  <ChatSourceSettings
-                    config={editor.draft}
-                    onChange={edit}
-                    auth={auth}
-                    onAuthChanged={refreshAuth}
-                  />
-                  <section className="card how-it-works">
-                    <span className="eyebrow">{t("JAK TO DZIAŁA")}</span>
-                    <h2>{t("Od komentarza do ruchu")}</h2>
-                    <div className="flow-example">
-                      <span>{t("„lewo”")}</span>
-                      <b>→</b>
-                      <kbd>←</kbd>
-                    </div>
-                    <p>
-                      {t(
-                        "Ustaw mapowania, rozpocznij nasłuch i przełącz się do gry. Resztą zajmą się Twoi widzowie.",
-                      )}
-                    </p>
-                    <label className="check">
-                      <input
-                        type="checkbox"
-                        checked={editor.draft.countdown_enabled}
-                        onChange={(e) =>
-                          edit({ countdown_enabled: e.target.checked })
-                        }
-                      />
-                      <span>{t("3 sekundy na przełączenie do gry")}</span>
-                    </label>
-                    <div className="info-box">
-                      {t(
-                        "Klawisze trafiają do aktywnego okna. Zamknięcie tej karty nie zatrzymuje programu.",
-                      )}
-                    </div>
-                  </section>
-                </div>
-                <div className="summary-line">
-                  <span>
-                    <strong>{editor.draft.mappings.length}</strong>{" "}
-                    {t("mapowań gotowych do gry")}
-                  </span>
-                  <button onClick={() => setSection("Mapowania")}>
-                    {t("Edytuj mapowania →")}
-                  </button>
-                </div>
-              </>
-            )}
-            {section === "Mapowania" && (
-              <MappingEditor
-                mappings={editor.draft.mappings}
-                onChange={(mappings) => edit({ mappings })}
-                presets={presets}
-                keys={keys}
-              />
-            )}
-            {section === "Ustawienia" && (
-              <section className="card">
-                <span className="eyebrow">{t("PREFERENCJE")}</span>
-                <h2>{t("Ustawienia aplikacji")}</h2>
-                <label className="language-setting">
-                  {t("Język")}
-                  <select
-                    value={language}
-                    disabled={busy || !connected}
-                    onChange={(e) => {
-                      const next = e.target.value as Language;
-                      void action(async () => {
-                        const result = await request<{ language: Language }>(
-                          "/api/preferences",
-                          "PUT",
-                          { language: next },
-                        );
-                        setLanguage(result.language);
-                      });
-                    }}
-                  >
-                    <option value="pl">Polski</option>
-                    <option value="en">English</option>
-                  </select>
-                </label>
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={editor.draft.show_logs}
-                    onChange={(e) => edit({ show_logs: e.target.checked })}
-                  />
-                  {t("Pokazuj panel aktywności")}
-                </label>
-                <label className="check">
-                  <input
-                    type="checkbox"
-                    checked={editor.draft.countdown_enabled}
-                    onChange={(e) =>
-                      edit({ countdown_enabled: e.target.checked })
-                    }
-                  />
-                  {t("Odliczanie przed wysyłaniem klawiszy")}
-                </label>
-                <div className="info-box">
-                  {t(
-                    "TikoPlay działa lokalnie w tle. Aby zakończyć program, wybierz „Zakończ TikoPlay” z ikony w zasobniku systemowym. Ustawienia są zapisywane automatycznie.",
-                  )}
-                </div>
-                <p className="hint">
-                  {t("Wersja {version} · Cooldown: 0,3 s na komentarz", {
-                    version: buildVersion.trim(),
-                  })}
-                </p>
-              </section>
-            )}
-            {editor.draft.show_logs && (
-              <EventLog events={events} onClear={() => setEvents([])} />
-            )}
+            <ProfileManager
+              config={editor.draft}
+              templates={templates}
+              disabled={!!running || busy || !connected || editor.conflict}
+              dirty={editor.saveStatus !== "saved"}
+              onReload={() => controller.reload()}
+              onMutate={async (transform) => {
+                setBusy(true);
+                try {
+                  await controller.mutate(transform);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
+            <fieldset className="editor-fields" disabled={busy}>
+              {section === "Pulpit" && (
+                <>
+                  <div className="two-columns">
+                    <ChatSourceSettings
+                      config={editor.draft}
+                      onChange={edit}
+                      auth={auth}
+                      onAuthChanged={refreshAuth}
+                    />
+                    <section className="card how-it-works">
+                      <span className="eyebrow">{t("JAK TO DZIAŁA")}</span>
+                      <h2>{t("Od komentarza do ruchu")}</h2>
+                      <div className="flow-example">
+                        <span>{t("„lewo”")}</span>
+                        <b>→</b>
+                        <kbd>←</kbd>
+                      </div>
+                      <p>
+                        {t(
+                          "Ustaw mapowania, rozpocznij nasłuch i przełącz się do gry. Resztą zajmą się Twoi widzowie.",
+                        )}
+                      </p>
+                      <label className="check">
+                        <input
+                          type="checkbox"
+                          checked={editor.draft.countdown_enabled}
+                          onChange={(e) =>
+                            edit({ countdown_enabled: e.target.checked })
+                          }
+                        />
+                        <span>{t("3 sekundy na przełączenie do gry")}</span>
+                      </label>
+                      <div className="info-box">
+                        {t(
+                          "Klawisze trafiają do aktywnego okna. Zamknięcie tej karty nie zatrzymuje programu.",
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                  <div className="summary-line">
+                    <span>
+                      <strong>
+                        {activeProfile(editor.draft).mappings.length}
+                      </strong>{" "}
+                      {t("mapowań gotowych do gry")}
+                    </span>
+                    <button onClick={() => setSection("Mapowania")}>
+                      {t("Edytuj mapowania →")}
+                    </button>
+                  </div>
+                </>
+              )}
+              {section === "Mapowania" && (
+                <MappingEditor
+                  mappings={activeProfile(editor.draft).mappings}
+                  onChange={(mappings) =>
+                    controller.edit(updateProfile(editor.draft!, { mappings }))
+                  }
+                  presets={presets}
+                  keys={keys}
+                />
+              )}
+              {section === "Ustawienia" && (
+                <section className="card">
+                  <span className="eyebrow">{t("PREFERENCJE")}</span>
+                  <h2>{t("Ustawienia aplikacji")}</h2>
+                  <label className="language-setting">
+                    {t("Język")}
+                    <select
+                      value={language}
+                      disabled={busy || !connected}
+                      onChange={(e) => {
+                        const next = e.target.value as Language;
+                        void action(async () => {
+                          const result = await request<{ language: Language }>(
+                            "/api/preferences",
+                            "PUT",
+                            { language: next },
+                          );
+                          setLanguage(result.language);
+                        });
+                      }}
+                    >
+                      <option value="pl">Polski</option>
+                      <option value="en">English</option>
+                    </select>
+                  </label>
+                  <label className="check">
+                    <input
+                      type="checkbox"
+                      checked={editor.draft.show_logs}
+                      onChange={(e) => edit({ show_logs: e.target.checked })}
+                    />
+                    {t("Pokazuj panel aktywności")}
+                  </label>
+                  <label className="check">
+                    <input
+                      type="checkbox"
+                      checked={editor.draft.countdown_enabled}
+                      onChange={(e) =>
+                        edit({ countdown_enabled: e.target.checked })
+                      }
+                    />
+                    {t("Odliczanie przed wysyłaniem klawiszy")}
+                  </label>
+                  <div className="info-box">
+                    {t(
+                      "TikoPlay działa lokalnie w tle. Aby zakończyć program, wybierz „Zakończ TikoPlay” z ikony w zasobniku systemowym. Ustawienia są zapisywane automatycznie.",
+                    )}
+                  </div>
+                  <p className="hint">
+                    {t("Wersja {version} · Cooldown: 0,3 s na komentarz", {
+                      version: buildVersion.trim(),
+                    })}
+                  </p>
+                </section>
+              )}
+              {editor.draft.show_logs && (
+                <EventLog events={events} onClear={() => setEvents([])} />
+              )}
+            </fieldset>
             <footer>
               <span>{t("Ustawienia zapisują się automatycznie.")}</span>
               <button

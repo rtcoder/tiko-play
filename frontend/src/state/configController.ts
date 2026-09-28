@@ -89,12 +89,17 @@ export class ConfigController {
       throw new Error("Najpierw rozwiąż konflikt konfiguracji.");
     while (this.state.draft && this.state.draft !== this.state.saved) {
       const draft = this.state.draft;
-      const triggers = draft.mappings.map((m) =>
-        m.trigger.trim().toLowerCase(),
-      );
       if (
-        draft.mappings.some((m) => !m.trigger.trim() || !m.keys.length) ||
-        new Set(triggers).size !== triggers.length
+        draft.profiles.some((p) => {
+          const triggers = p.mappings.map((m) =>
+            m.trigger.trim().toLowerCase(),
+          );
+          return (
+            !p.name.trim() ||
+            p.mappings.some((m) => !m.trigger.trim() || !m.keys.length) ||
+            new Set(triggers).size !== triggers.length
+          );
+        })
       ) {
         this.update({
           saveStatus: "invalid",
@@ -126,6 +131,38 @@ export class ConfigController {
   async start() {
     await this.flush();
     return this.api.start(this.state.revision);
+  }
+  async mutate(transform: (config: AppConfig) => AppConfig): Promise<void> {
+    await this.flush();
+    if (!this.state.saved) throw new Error("Konfiguracja nie jest gotowa");
+    const next = transform(this.state.saved);
+    this.generation++;
+    const operation = async () => {
+      try {
+        const result = await this.api.save(next, this.state.revision);
+        this.update({
+          draft: result.config,
+          saved: result.config,
+          revision: result.config_revision,
+          saveStatus: "saved",
+          error: "",
+          conflict: false,
+        });
+      } catch (e) {
+        if ((e as { status?: number }).status === 409)
+          this.update({
+            conflict: true,
+            error: e instanceof Error ? e.message : "Błąd zapisu",
+          });
+        throw e;
+      }
+    };
+    this.running = operation().finally(() => {
+      this.running = null;
+      if (this.remoteRevision > this.state.revision)
+        void this.remoteChanged(this.remoteRevision).catch(() => {});
+    });
+    return this.running;
   }
   dispose() {
     this.disposed = true;

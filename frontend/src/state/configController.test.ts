@@ -1,7 +1,7 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { ConfigController } from "./configController";
 const config = {
-  version: 4 as const,
+  version: 5 as const,
   platform: "tiktok" as const,
   tiktok: { channel: "a", target_user: "" },
   twitch: { channel: "", target_user: "" },
@@ -9,9 +9,34 @@ const config = {
   kick: { channel: "", target_user: "", chatroom_id: null },
   show_logs: false,
   countdown_enabled: true,
-  mappings: [],
+  active_profile_id: "default",
+  profiles: [
+    {
+      id: "default",
+      name: "Domyślny",
+      filters: { tiktok: "", twitch: "", youtube: "", kick: "" },
+      mappings: [],
+    },
+  ],
 };
 afterEach(() => vi.useRealTimers());
+it("keeps saved configuration on failed profile transaction", async () => {
+  const api = {
+    load: async () => ({ config, config_revision: 1 }),
+    save: vi.fn(async () => {
+      throw new Error("disk full");
+    }),
+    start: vi.fn(),
+  };
+  const ctrl = new ConfigController(api);
+  await ctrl.reload();
+  await expect(ctrl.mutate((c) => ({ ...c, show_logs: true }))).rejects.toThrow(
+    "disk full",
+  );
+  expect(ctrl.state.draft).toEqual(config);
+  expect(ctrl.state.revision).toBe(1);
+  ctrl.dispose();
+});
 it("serializes saves and never overwrites newest draft with old response", async () => {
   const writes: any[] = [];
   let resolve!: (x: any) => void;
@@ -71,9 +96,14 @@ it("retains incomplete row locally without replacing saved mappings", async () =
   };
   const ctrl = new ConfigController(api);
   await ctrl.reload();
-  ctrl.edit({ ...config, mappings: [{ id: "x", trigger: "", keys: [] }] });
+  ctrl.edit({
+    ...config,
+    profiles: [
+      { ...config.profiles[0], mappings: [{ id: "x", trigger: "", keys: [] }] },
+    ],
+  });
   await expect(ctrl.flush()).rejects.toThrow();
   expect(api.save).not.toHaveBeenCalled();
-  expect(ctrl.state.draft?.mappings).toHaveLength(1);
+  expect(ctrl.state.draft?.profiles[0].mappings).toHaveLength(1);
   ctrl.dispose();
 });

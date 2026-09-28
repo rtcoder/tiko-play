@@ -63,6 +63,8 @@ class ListenerService:
             active_config_revision=snapshot.revision,
             active_platform=snapshot.config.platform,
             active_channel=snapshot.config.active_source().channel,
+            active_profile_id=snapshot.config.active_profile.id,
+            active_profile_name=snapshot.config.active_profile.name,
         )
         self._task = asyncio.create_task(self._run(snapshot))
         return self.state()

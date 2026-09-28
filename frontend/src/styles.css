@@ -779,3 +779,13 @@ label > textarea {
   gap: 12px;
   margin: 20px 0;
 }
+/* Game profiles share the existing card system. */
+.editor-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.profile-card { margin-bottom: 24px; }
+.profile-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.profile-form { border-top: 1px solid rgba(255,255,255,.15); padding-top: 16px; margin-top: 16px; }
+.profile-form label, .profile-card > label { display: grid; gap: 8px; margin-bottom: 12px; }
+.profile-card select, .profile-card input { width: 100%; min-width: 0; }
+.profile-preview { overflow-wrap: anywhere; line-height: 1.8; }
+.profile-import-list { max-height: 220px; overflow: auto; overflow-wrap: anywhere; }
+.profile-file-input { display: none; }

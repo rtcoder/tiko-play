@@ -13,7 +13,7 @@ PRESETS = {
         {"trigger": "left", "keys": ["left"]},
         {"trigger": "right", "keys": ["right"]},
     ],
-    "NumPad": [
+    "NumPad 2468": [
         {"trigger": "8", "keys": ["up"]},
         {"trigger": "2", "keys": ["down"]},
         {"trigger": "4", "keys": ["left"]},

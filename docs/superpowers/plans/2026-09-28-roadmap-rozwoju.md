@@ -56,6 +56,8 @@ Złożoność jest porównawcza, nie jest estymacją dni. Pierwszy sensowny paki
 
 ## Zadanie 1. Profile gier
 
+**Stan: wdrożone w v0.12**, wraz z presetem NumPad 2468 i katalogiem szablonów. Szczegóły realizacji i sprawdzeń: [plan wykonawczy](2026-09-28-profiles-implementation.md). Poniższy opis zachowuje założenia projektu; kolejne zadania nadal nie są wdrożone.
+
 ### Opis i zakres
 
 Użytkownik tworzy profil, np. „Hugo” lub „Wyścigi”, i wybiera go przed Startem. Profil przechowuje mapowania, filtry widzów dla poszczególnych platform oraz późniejsze ustawienia trybu i limitów. Konta, klucze API, kanały transmisji i język pozostają ustawieniami aplikacji. Profil można duplikować, przemianować, eksportować i importować.

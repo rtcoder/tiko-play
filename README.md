@@ -2,7 +2,17 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
-[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem proponowanych rozszerzeń, zależności, etapy wdrożenia i kryteria odbioru. Funkcje z tego dokumentu nie są jeszcze wdrożone.
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12; pozostałe zadania są propozycjami.
+
+## Profile gier
+
+Od wersji 0.12 sekcja **Twoje gry** pozwala tworzyć, przełączać, przemianowywać, duplikować i usuwać profile. Każdy ma własne mapowania i osobne filtry widzów dla czterech platform. Kanały transmisji, konta, klucze API i język są wspólne. Zmiana aktywnego profilu wymaga zatrzymania nasłuchu; edycja mapowań podczas pracy nadal wymaga Stop → Start, aby zastosować zapisane zmiany.
+
+**Nowy profil**: zacznij od pustego albo wybierz szablon. Ogólne: WASD, Strzałki i **NumPad 2468** (`2` → dół, `4` → lewo, `6` → prawo, `8` → góra). Cyfry są komentarzami czatu; aplikacja wysyła strzałki, nie klawisze numpada. Retro: Hugo, Tetris, Pac-Man i Sokoban. Nowsze: Baba Is You. Szablony są edytowalnymi propozycjami przypisań klawiatury, nie potwierdzeniem integracji z konkretną wersją gry. Nie dodają przytrzymywania klawiszy.
+
+**Importuj plik** pokazuje podgląd przed utworzeniem nowego profilu. Format JSON v1: maksymalnie 1 MiB i 500 mapowań. Import nie nadpisuje poprzedniego profilu. Eksport zawiera nazwę i mapowania, ale pomija filtry widzów, kanały, konta i klucze. Limit importu nie ogranicza liczby mapowań w migrowanej konfiguracji; plik eksportowany z większego profilu wymaga podziału przed importem. Maksymalnie można zapisać 100 profili. Przy usuwaniu aktywnego wybierz profil zastępczy; ostatniego profilu nie można usunąć.
+
+Dotychczasowa konfiguracja v1–v4 jest migrowana do v5 z zachowaniem oryginalnej kopii `config.v<N>.backup.json`. Mapowania i filtry trafiają do profilu „Domyślny”. Starsza aplikacja nie odczyta formatu v5; powrót wymaga zachowanej kopii starej konfiguracji.
 
 ## Uruchamianie dla użytkownika
 
@@ -28,7 +38,7 @@ Klawisze trafiają do aktywnego okna. Uprawnienia systemowe i ograniczenia PyAut
 - Windows: `%APPDATA%/TikoPlay/`
 - Pozostałe systemy (tryb źródłowy): `~/.config/TikoPlay/`
 
-Konfiguracja v1/v2/v3 jest migrowana do v4 z kopią `config.v1.backup.json` `config.v2.backup.json` lub `config.v3.backup.json`; przy kolizji nazwa dostaje UUID. TikTok pozostaje domyślnym źródłem, a każda platforma zapamiętuje własny kanał i filtr. Mapowania pozostają wspólne. Uszkodzone dane wymagają jawnej naprawy w panelu; oryginał jest zachowany. Nieznana nowsza wersja schematu nie jest nadpisywana. Repozytoryjny `config.json` nie jest wczytywany ani pakowany.
+Konfiguracja v1/v2/v3/v4 jest migrowana do v5 z kopią `config.v<N>.backup.json`; przy kolizji nazwa dostaje UUID. TikTok pozostaje domyślnym źródłem, a każda platforma zapamiętuje własny kanał. Mapowania należą do profilu i są wspólne dla jego platform; filtr każdej platformy jest osobny w każdym profilu. Uszkodzone dane wymagają jawnej naprawy w panelu; oryginał jest zachowany. Nieznana nowsza wersja schematu nie jest nadpisywana. Repozytoryjny `config.json` nie jest wczytywany ani pakowany.
 
 ## Development
 

@@ -5,13 +5,21 @@ import App from "./App";
 vi.mock("../../VERSION?raw", () => ({ default: "8.13\n" }));
 const fixture = vi.hoisted(() => ({
   config: {
-    version: 4,
+    version: 5,
     platform: "tiktok",
     tiktok: { channel: "a", target_user: "" },
     twitch: { channel: "b", target_user: "" },
     youtube: { channel: "", target_user: "" },
     kick: { channel: "", target_user: "", chatroom_id: null },
-    mappings: [],
+    active_profile_id: "default",
+    profiles: [
+      {
+        id: "default",
+        name: "Domyślny",
+        filters: { tiktok: "", twitch: "", youtube: "", kick: "" },
+        mappings: [],
+      },
+    ],
     show_logs: false,
     countdown_enabled: true,
   },
@@ -42,7 +50,11 @@ vi.mock("./api/client", () => ({
   bootstrapSession: async () => {},
   fetchState: async () => fixture.state,
   request: async (path: string, method?: string, body?: unknown) =>
-    path === "/api/preferences" ? body : path === "/api/keys" ? [] : {},
+    path === "/api/preferences"
+      ? body
+      : ["/api/keys", "/api/profile-templates"].includes(path)
+        ? []
+        : {},
   twitchAuthApi: { state: async () => fixture.auth },
   configApi: {
     load: async () => ({ config: fixture.config, config_revision: 1 }),
@@ -95,7 +107,13 @@ it("saves multiple allowed users from the multiline field", async () => {
   fireEvent.change(field, { target: { value: users } });
   await waitFor(() =>
     expect(configApi.save).toHaveBeenCalledWith(
-      expect.objectContaining({ tiktok: { channel: "a", target_user: users } }),
+      expect.objectContaining({
+        profiles: [
+          expect.objectContaining({
+            filters: expect.objectContaining({ tiktok: users }),
+          }),
+        ],
+      }),
       1,
     ),
   );
@@ -134,7 +152,7 @@ it("shows active Twitch source while settings select TikTok", async () => {
 it("uses the saved language and keeps mappings intact when changing it", async () => {
   Object.assign(fixture.state, { language: "en" });
   fixture.connected = true;
-  fixture.config.mappings = [
+  fixture.config.profiles[0].mappings = [
     { id: "m1", trigger: "lewo", keys: ["left"] },
   ] as never;
   render(<App />);
@@ -148,11 +166,11 @@ it("uses the saved language and keeps mappings intact when changing it", async (
   expect(
     await screen.findByRole("heading", { name: "Ustawienia" }),
   ).toBeInTheDocument();
-  expect(fixture.config.mappings[0]).toMatchObject({
+  expect(fixture.config.profiles[0].mappings[0]).toMatchObject({
     trigger: "lewo",
     keys: ["left"],
   });
   Object.assign(fixture.state, { language: "pl" });
-  fixture.config.mappings = [];
+  fixture.config.profiles[0].mappings = [];
   fixture.connected = false;
 });

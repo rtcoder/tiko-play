@@ -1,5 +1,17 @@
 # TikoPlay — kontekst techniczny
 
+## Profile gier — v0.12, 2026-09-28
+
+Wdrożono zadanie 1 z roadmapy wraz z dodatkowym presetem **NumPad 2468**. Schemat konfiguracji v5 zapisuje `profiles` i `active_profile_id`; mapowania i filtry widzów należą do profilu. `AppConfig.mappings` oraz `active_source()` rozwiązują aktywny profil dla istniejącego rdzenia. Pole kanału `target_user` jest wyłącznie wewnętrznym widokiem zgodności, wyłączonym z serializacji; nie jest drugim źródłem danych. Kanały, konta i klucze pozostają globalne. Migracje v1–v4 zachowują bajty oryginału i wszystkie stare mapowania, także ponad 500 wpisów.
+
+`ProfileManager` udostępnia wybór, pusty profil, szablony, zmianę nazwy, duplikowanie z nowymi ID, usuwanie z wyborem zastępcy oraz import z podglądem i eksport. CRUD korzysta z istniejącego PUT konfiguracji i kontroli rewizji; transakcja frontendu najpierw zapisuje szkic i nie podmienia profilu po nieudanym zapisie. Niepełny szkic można odrzucić jawnie. API blokuje zmianę aktywnego profilu i zbioru ID profili przy connecting/connected/stopping. Wspólna blokada serializuje Start i zapis; STOP pozostaje niezależny. Stan sesji podaje nazwę i ID profilu ze Startu.
+
+Szablony: WASD, Strzałki, NumPad 2468, Hugo, Tetris, Pac-Man, Sokoban i Baba Is You. Komentarze `2/4/6/8` wysyłają odpowiednio `down/left/right/up`. Szablony gier wymagają dopasowania ustawień konkretnej wersji; nie są integracją z grą ani obsługą hold.
+
+Format wymiany profilu v1 ma allowlistę nazwy i mapowań bez ID, filtrów i dodatkowych pól. Podgląd importu jest chroniony sesją/origin/CSRF, limituje strumień żądania do 1 MiB oraz 500 mapowań; nadaje nowe identyfikatory i niczego nie zapisuje. Konfiguracja pozwala na 100 profili i wymaga co najmniej jednego. Eksport większego istniejącego profilu trzeba podzielić przed ponownym importem.
+
+Weryfikacja: 191 testów Python poprawnych, 1 natywny pominięty; 31 testów frontend i build TypeScript/Vite poprawne. Przegląd niezależny odtworzył i skorygowano dwa przypadki: blokadę UI po zmianie profilu w drugiej karcie w trakcie importu oraz limit 500 błędnie obejmujący migrację. Oba mają testy RED → GREEN. W przeglądarce na danych tymczasowych i atrapach sprawdzono tworzenie NumPada, mapowania, trwałość po odświeżeniu, PL/EN oraz blokadę profili po Start i odblokowanie po Stop; konsola bez błędów. Build macOS utworzył `TikoPlay.app` i `TikoPlay-0.12-macos-arm64.dmg`; metadane 0.12 i `codesign --verify --deep --strict` poprawne (podpis ad-hoc, bez notaryzacji). Rzeczywistych gier i czatów LIVE nie uruchamiano. Szczegóły decyzji: [plan wykonania](superpowers/plans/2026-09-28-profiles-implementation.md). Pozostałe zadania roadmapy nie zostały wdrożone.
+
 ## Roadmapa rozwoju — 2026-09-28
 
 Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. To propozycja do wyboru i zatwierdzenia; nie wdrożono żadnej z tych funkcji. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.

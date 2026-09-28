@@ -12,13 +12,21 @@ export function ConfigRecovery({
   const [text, setText] = useState(
     JSON.stringify(
       state.recovery_data ?? {
-        version: 4,
+        version: 5,
+        active_profile_id: "default",
+        profiles: [
+          {
+            id: "default",
+            name: "Domyślny",
+            mappings: [],
+            filters: { tiktok: "", twitch: "", youtube: "", kick: "" },
+          },
+        ],
         platform: "tiktok",
         tiktok: { channel: "", target_user: "" },
         twitch: { channel: "", target_user: "" },
         youtube: { channel: "", target_user: "" },
         kick: { channel: "", target_user: "", chatroom_id: null },
-        mappings: [],
         show_logs: false,
         countdown_enabled: true,
       },
@@ -55,7 +63,7 @@ export function ConfigRecovery({
             onClick={async () => {
               try {
                 const value = JSON.parse(text);
-                if (![undefined, 1, 2, 3, 4].includes(value.version))
+                if (![undefined, 1, 2, 3, 4, 5].includes(value.version))
                   throw new Error("Nieobsługiwana wersja konfiguracji.");
                 if ([undefined, 1, 2].includes(value.version)) {
                   value.version = 3;
@@ -74,7 +82,25 @@ export function ConfigRecovery({
                     }),
                   );
                 }
-                value.version = 4;
+                if (value.version !== 5) {
+                  const id = crypto.randomUUID();
+                  value.profiles = [
+                    {
+                      id,
+                      name: "Domyślny",
+                      mappings: value.mappings ?? [],
+                      filters: {
+                        tiktok: value.tiktok?.target_user ?? "",
+                        twitch: value.twitch?.target_user ?? "",
+                        youtube: value.youtube?.target_user ?? "",
+                        kick: value.kick?.target_user ?? "",
+                      },
+                    },
+                  ];
+                  value.active_profile_id = id;
+                  delete value.mappings;
+                }
+                value.version = 5;
                 value.youtube ??= { channel: "", target_user: "" };
                 value.kick ??= {
                   channel: "",

@@ -9,13 +9,21 @@ vi.mock("../api/client", () => ({
   youtubeKeyApi: { state: vi.fn(async () => ({ configured: false })) },
 }));
 const config: AppConfig = {
-  version: 4,
+  version: 5,
   platform: "tiktok",
   tiktok: { channel: "alice", target_user: "Bob" },
   twitch: { channel: "other", target_user: "carol" },
   youtube: { channel: "", target_user: "" },
   kick: { channel: "", target_user: "", chatroom_id: null },
-  mappings: [],
+  active_profile_id: "default",
+  profiles: [
+    {
+      id: "default",
+      name: "Domyślny",
+      filters: { tiktok: "Bob", twitch: "carol", youtube: "", kick: "" },
+      mappings: [],
+    },
+  ],
   show_logs: false,
   countdown_enabled: true,
 };

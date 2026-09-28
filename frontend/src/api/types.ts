@@ -7,20 +7,34 @@ export interface Mapping {
 export type Platform = "tiktok" | "twitch" | "youtube" | "kick";
 export interface ChannelConfig {
   channel: string;
-  target_user: string;
   [key: string]: unknown;
 }
 export interface AppConfig {
-  version: 4;
+  version: 5;
   platform: Platform;
   tiktok: ChannelConfig;
   twitch: ChannelConfig;
   youtube: ChannelConfig;
   kick: ChannelConfig & { chatroom_id: number | null };
-  mappings: Mapping[];
+  active_profile_id: string;
+  profiles: GameProfile[];
   show_logs: boolean;
   countdown_enabled: boolean;
   [key: string]: unknown;
+}
+export interface GameProfile {
+  id: string;
+  name: string;
+  mappings: Mapping[];
+  filters: Record<Platform, string>;
+  [key: string]: unknown;
+}
+export interface ProfileTemplate {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  mappings: { trigger: string; keys: string[] }[];
 }
 export interface ConfigSnapshot {
   config: AppConfig;
@@ -32,6 +46,8 @@ export interface ApiError {
   field_errors?: Record<string, string>;
 }
 export interface AppState {
+  active_profile_id?: string | null;
+  active_profile_name?: string | null;
   language: "pl" | "en";
   active_platform: Platform | null;
   active_channel: string | null;

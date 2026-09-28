@@ -1,4 +1,5 @@
 import { t, getLanguage } from "../i18n";
+import { activeProfile, updateProfile } from "../state/profiles";
 import { useEffect, useState, useId } from "react";
 import { PlatformTabs } from "./PlatformTabs";
 import { YouTubeKeySettings } from "./YouTubeKeySettings";
@@ -122,11 +123,16 @@ export function ChatSourceSettings({
                 ? t("np. UC…")
                 : t("np. gracz1, gracz2")
             }
-            value={source.target_user}
+            value={activeProfile(config).filters[config.platform]}
             onChange={(e) =>
-              onChange({
-                [config.platform]: { ...source, target_user: e.target.value },
-              })
+              onChange(
+                updateProfile(config, {
+                  filters: {
+                    ...activeProfile(config).filters,
+                    [config.platform]: e.target.value,
+                  },
+                }),
+              )
             }
           />
         </label>
