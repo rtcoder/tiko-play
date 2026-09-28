@@ -8,3 +8,6 @@ Przed pracą przeczytaj [docs/PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md): opis
 - Przed zmianami sprawdź `git status` i `git diff`. Nie nadpisuj istniejących zmian użytkownika.
 - Przy testach izoluj konfigurację i zastępuj klienta TikTok oraz wywołania klawiatury atrapami, jeżeli test nie wymaga rzeczywistej integracji.
 - Po istotnych zmianach aktualizuj dokument kontekstu. Ustalenia z analizy nie oznaczają, że opisane błędy zostały naprawione.
+- Po każdym zakończonym zadaniu zapisz jego zmiany w commicie i wykonaj push na zdalne repozytorium. Nie dołączaj niezwiązanych zmian użytkownika.
+- Każdy zestaw zmian oznacz unikalnym tagiem Git i wypchnij ten tag na zdalne repozytorium.
+- Po każdych zmianach wykonaj build aplikacji i w odpowiedzi końcowej podaj klikalny link do gotowej aplikacji lub instalatora. Jeśli build się nie powiedzie, zgłoś błąd zamiast przedstawiać starszą paczkę jako aktualną.
