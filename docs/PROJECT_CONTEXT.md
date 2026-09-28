@@ -61,7 +61,7 @@ Raporty `TikoPlay-2026-09-27-114548.ips` i `TikoPlay-2026-09-27-114938.ips` potw
 
 ## Wygląd panelu — tylko Glass (2026-09-28)
 
-Jedyny styl panelu to Glass, stosowany bezwarunkowo przez `frontend/src/styles-glass.css` na wspólnych stylach komponentów i układu z `frontend/src/styles.css`. Usunięto motyw klasyczny, komponent przełącznika i jego testy oraz odczyt/zapis preferencji `tikoplay-theme` w localStorage. Wcześniej zapisany wybór nie wpływa na wygląd. Glass zajmuje pełną szerokość okna: bez limitów szerokości kontenera i treści oraz bez zewnętrznych odstępów po bokach. Zachowano wewnętrzne odstępy i responsywność. Inspiracja: CodePen Aysenur Turk (ZEpxeYm); tło to lokalne gradienty CSS.
+Jedyny styl panelu to Glass, stosowany bezwarunkowo przez `frontend/src/styles-glass.css` na wspólnych stylach komponentów i układu z `frontend/src/styles.css`. Usunięto motyw klasyczny, komponent przełącznika i jego testy oraz odczyt/zapis preferencji `tikoplay-theme` w localStorage. Wcześniej zapisany wybór nie wpływa na wygląd. Glass nie ma limitów szerokości kontenera i treści; bazowy padding `:root body` wynosi `32px` z każdej strony. Zachowano wewnętrzne odstępy i responsywność. Inspiracja: CodePen Aysenur Turk (ZEpxeYm); tło to lokalne gradienty CSS.
 
 ## Aktualizacja 2026-09-27: wdrożony panel webowy w worktree
 

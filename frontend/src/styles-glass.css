@@ -14,7 +14,7 @@
     radial-gradient(ellipse at 80% 90%, #ad526f 0%, transparent 48%),
     radial-gradient(ellipse at 10% 100%, #3156ad 0%, transparent 48%), #171b38;
   background-attachment: fixed;
-  padding: 32px 0;
+  padding: 32px;
   min-height: 100vh;
 }
 :root .app-shell {
