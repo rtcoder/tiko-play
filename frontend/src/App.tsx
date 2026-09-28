@@ -144,7 +144,7 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <a className="brand" href="#" onClick={(e) => e.preventDefault()}>
-          <span className="brand-icon">t</span>
+          <img className="brand-icon" src="/tikoplay-logo.png" alt="" width="40" height="40" />
           <span>
             Tiko<span className="brand-light">Play</span>
           </span>

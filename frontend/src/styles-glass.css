@@ -50,11 +50,6 @@
   padding-bottom: 26px;
   gap: 20px;
 }
-:root .brand-icon {
-  background: linear-gradient(145deg, #a997ff, #5777ee);
-  color: white;
-  box-shadow: 3px 3px 0 #ffffff26;
-}
 :root nav button {
   color: #c9cce0;
 }

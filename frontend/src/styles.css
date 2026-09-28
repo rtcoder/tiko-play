@@ -124,15 +124,11 @@ label > textarea {
   letter-spacing: -1px;
 }
 .brand-icon {
-  display: grid;
-  place-items: center;
-  background: #32d5b4;
-  color: #09231f;
-  border-radius: 12px;
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
   width: 40px;
   height: 40px;
-  font-size: 34px;
-  box-shadow: 3px 3px 0 #e96183;
 }
 .brand-light {
   font-weight: 400;
