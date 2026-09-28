@@ -1,5 +1,13 @@
 # TikoPlay — kontekst techniczny
 
+## Roadmapa rozwoju — 2026-09-28
+
+Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. To propozycja do wyboru i zatwierdzenia; nie wdrożono żadnej z tych funkcji. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
+
+Wersja 0.9 obejmuje dokumentację roadmapy i aktualizację numeru wymaganą przez zasady tagowania każdego zestawu zmian. Nie zmienia zachowania aplikacji; wcześniejsze sekcje opisują stan odpowiednich historycznych wydań.
+
+Weryfikacja tego zestawu: 12 testów wersjonowania/pakowania i 23 testy frontend przeszły; walidator wydania i build macOS zakończyły się poprawnie. Powstały `dist/TikoPlay.app` i `dist/TikoPlay-0.9-macos-arm64.dmg`. Nie wykonywano odbioru LIVE ani testów nowych funkcji, ponieważ dokument ich nie implementuje.
+
 ## Automatyczne wydania i wspólna wersja — 2026-09-28
 
 Pierwszy workflow v0.7 zbudował instalator Windows i obie paczki macOS, ale zablokował publikację na `test_second_instance_notifies_owner` w Windows. Test uruchamiał dwa obiekty w jednym wątku i blokował pętlę zdarzeń serwera; teraz uruchamia rzeczywistą drugą instancję w osobnym procesie i sprawdza sygnał oraz kod zakończenia. Poprawka testu jest częścią v0.8; nie zmienia produkcyjnego IPC.

@@ -2,6 +2,8 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem proponowanych rozszerzeń, zależności, etapy wdrożenia i kryteria odbioru. Funkcje z tego dokumentu nie są jeszcze wdrożone.
+
 ## Uruchamianie dla użytkownika
 
 - **Windows:** zainstaluj paczkę, kliknij skrót **TikoPlay** na pulpicie. Program sam uruchamia serwer i panel.
