@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import QUrl
 from PySide6.QtGui import QCursor, QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
@@ -35,29 +35,21 @@ class TrayController:
         )
         self.menu.addSeparator()
         self._action("Zakończ TikoPlay", controller.quit)
-        # QTBUG-147449: native NSMenu tracking on macOS 27 calls clickCount
-        # on a non-mouse event and aborts in Qt, before Python can handle it.
-        # Keep the menu detached there; show a Qt popup on right click.
-        if sys.platform != "darwin":
+        self._native_tray = None
+        self.controller = controller
+        if sys.platform == "darwin" and QApplication.platformName() == "cocoa":
+            from src.desktop.mac_tray import MacTray
+
+            self._native_tray = MacTray(self.tray.icon(), self.menu.actions())
+        elif sys.platform != "darwin":
             self.tray.setContextMenu(self.menu)
         self._state({"status": self._status})
-        self.controller = controller
-        self._menu_position = None
-        self._mac_app = (
-            QApplication.instance()
-            if sys.platform == "darwin" and QApplication.platformName() == "cocoa"
-            else None
-        )
-        if self._mac_app:
-            self._mac_app.applicationStateChanged.connect(
-                self._application_state_changed
-            )
         self.tray.activated.connect(self._activated)
         host.state_changed.connect(self._state)
         self.fallback = None
-        if self.tray.isSystemTrayAvailable():
+        if self._native_tray is None and self.tray.isSystemTrayAvailable():
             self.tray.show()
-        else:
+        elif self._native_tray is None:
             self.fallback = QWidget()
             self.fallback.setWindowTitle("TikoPlay")
             layout = QVBoxLayout(self.fallback)
@@ -91,35 +83,8 @@ class TrayController:
         self._state({"status": self._status})
 
     def _activated(self, reason):
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            self.controller.open_panel()
-        elif (
-            sys.platform == "darwin"
-            and reason == QSystemTrayIcon.ActivationReason.Context
-        ):
-            # LSUIElement apps may be inactive when the status item is clicked.
-            # Activate before creating the popup: otherwise Cocoa can consume
-            # the first menu click as activation instead of triggering its action.
-            if self._mac_app:
-                from AppKit import NSApplication
-
-                self._menu_position = QCursor.pos()
-                native = NSApplication.sharedApplication()
-                if native.isActive():
-                    self._show_pending_menu()
-                else:
-                    native.activateIgnoringOtherApps_(True)
-            else:
-                self.menu.popup(QCursor.pos())
-
-    def _application_state_changed(self, state):
-        if state == Qt.ApplicationState.ApplicationActive:
-            self._show_pending_menu()
-
-    def _show_pending_menu(self):
-        if self._menu_position is not None:
-            position, self._menu_position = self._menu_position, None
-            self.menu.popup(position)
+        if reason == QSystemTrayIcon.ActivationReason.Trigger and sys.platform != "darwin":
+            self.menu.popup(QCursor.pos())
 
     def _state(self, state):
         labels = {
@@ -135,17 +100,15 @@ class TrayController:
         )
         self.status.setText(text)
         self.tray.setToolTip(text)
+        if self._native_tray is not None:
+            self._native_tray.set_tooltip(text)
 
     def close(self):
         if self._language_signal is not None:
             self._language_signal.disconnect(self._retranslate)
             self._language_signal = None
-        self._menu_position = None
-        if self._mac_app:
-            self._mac_app.applicationStateChanged.disconnect(
-                self._application_state_changed
-            )
-            self._mac_app = None
+        if self._native_tray is not None:
+            self._native_tray.close()
         self.menu.hide()
         self.tray.hide()
         if self.fallback:

@@ -1,5 +1,11 @@
 # TikoPlay — kontekst techniczny
 
+## Systemowe menu traya — 2026-09-28
+
+Na macOS ikona używa bezpośrednio AppKit (`src/desktop/mac_tray.py`): `NSStatusItem` z przypiętym `NSMenu`. Lewy i prawy klik otwierają menu systemowe; przeglądarka otwiera się po wyborze „Otwórz panel”. Usunięto macOS-owy popup Qt i oczekiwanie na aktywację aplikacji. Qt nadal przechowuje model akcji i tłumaczeń, ale nie wyświetla ikony ani menu na Cocoa, więc natywne śledzenie menu omija ścieżkę Qt opisaną w QTBUG-147449. Ikona pozostaje szablonem 18 pt. Na pozostałych platformach lewy klik pokazuje istniejące menu kontekstowe Qt, prawy używa standardowej obsługi traya.
+
+Weryfikacja: 165 testów Python przeszło (1 natywny pominięty offscreen). Osobno wykonano bezpośrednio funkcję testową prawdziwego AppKit (runner pytest-qt zawieszał się w przygotowaniu pętli Cocoa): przypięcie menu, ikona template, akcje panel/stop/quit, aktualizacja PL/EN i statusu oraz usunięcie ikony. Zbudowano aktualną `dist/TikoPlay.app` i `dist/TikoPlay-2.0.0-test.dmg`; weryfikacja podpisu ad-hoc aplikacji przeszła. Fizyczne kliknięcia w paczce nie zostały zweryfikowane. Poniższe opisy popupu i otwierania panelu kliknięciem ikony są historyczne.
+
 ## Język polski / angielski — 2026-09-28
 
 Aktualny panel React i powłoka desktopowa obsługują PL/EN. Pierwszy start bez poprawnego `preferences.json` pokazuje natywny dialog „Wybierz język / Choose language” przed backendem i przeglądarką. `QLocale.system().uiLanguages()` określa główny język interfejsu systemu: `pl` → Polski, `en` i pozostałe → English. Użytkownik zawsze zatwierdza wybór; anulowanie kończy uruchomienie bez zapisu. Dotyczy to również istniejących instalacji bez wybranego języka.

@@ -34,11 +34,11 @@ def test_repeated_tray_clicks_preserve_process_and_menu_actions(
         monkeypatch.setattr(tray.menu, "popup", popup)
         for _ in range(20):
             tray.tray.activated.emit(QSystemTrayIcon.ActivationReason.Trigger)
-        assert controller.open_panel.call_count == 20
+        controller.open_panel.assert_not_called()
         controller.quit.assert_not_called()
         tray.tray.activated.emit(QSystemTrayIcon.ActivationReason.Context)
-        assert controller.open_panel.call_count == 20
-        assert popup.call_count == (1 if platform == "darwin" else 0)
+        controller.open_panel.assert_not_called()
+        assert popup.call_count == (0 if platform == "darwin" else 20)
         next(a for a in tray.menu.actions() if a.text() == "Zakończ TikoPlay").trigger()
         controller.quit.assert_called_once()
     finally:

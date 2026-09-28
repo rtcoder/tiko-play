@@ -1,60 +1,46 @@
-"""Run on macOS with QT_QPA_PLATFORM=cocoa to exercise native activation."""
-
+"""Run with QT_QPA_PLATFORM=cocoa to verify the real AppKit menu."""
 import sys
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QObject, Signal, Qt
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QSystemTrayIcon
+from PySide6.QtCore import QObject, Signal
 
 from src.desktop.tray import TrayController
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="macOS activation regression")
-@pytest.mark.parametrize("background", [True, False])
-def test_background_tray_activates_before_first_menu_click(qapp, qtbot, tmp_path, background):
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS native menu")
+def test_native_menu_actions_translation_and_cleanup(qapp, tmp_path):
     if qapp.platformName() != "cocoa":
         pytest.skip("Requires QT_QPA_PLATFORM=cocoa and a desktop session")
-    from AppKit import NSApplication
 
     class Host(QObject):
         state_changed = Signal(dict)
+        language_changed = Signal(str)
+        language = "pl"
+        request_stop = Mock()
 
-        def request_stop(self):
-            pass
-
-    native = NSApplication.sharedApplication()
-    old_policy = native.activationPolicy()
-    native.setActivationPolicy_(1)  # Accessory: the shipped LSUIElement app.
     host = Host()
-    closed = []
-    controller = SimpleNamespace(open_panel=lambda: None, quit=lambda: closed.append(True))
+    controller = SimpleNamespace(open_panel=Mock(), quit=Mock())
     tray = TrayController(host, controller, tmp_path)
-    active_when_opened = []
-    tray.menu.aboutToShow.connect(
-        lambda: active_when_opened.append(bool(native.isActive()))
-    )
     try:
-        qtbot.wait(300)  # Finish the initial Cocoa application activation.
-        if background:
-            native.deactivate()
-            qtbot.waitUntil(lambda: not native.isActive())
-            qtbot.wait(300)
-            assert not native.isActive()
-        else:
-            native.activateIgnoringOtherApps_(True)
-            qtbot.waitUntil(lambda: bool(native.isActive()))
-        tray.tray.activated.emit(QSystemTrayIcon.ActivationReason.Context)
-        qtbot.waitUntil(lambda: tray.menu.isVisible())
-        assert active_when_opened == [True]
-        action = next(a for a in tray.menu.actions() if a.text() == "Zakończ TikoPlay")
-        QTest.mouseClick(
-            tray.menu, Qt.MouseButton.LeftButton,
-            pos=tray.menu.actionGeometry(action).center(),
-        )
-        assert closed == [True]
+        native = tray._native_tray
+        assert native.item.menu() == native.menu
+        assert native.item.button().image().isTemplate()
+        assert tray.tray.contextMenu() is None
+        assert not tray.tray.isVisible()
+        controller.open_panel.assert_not_called()
+        native.menu.performActionForItemAtIndex_(2)
+        controller.open_panel.assert_called_once()
+        native.menu.performActionForItemAtIndex_(3)
+        host.request_stop.assert_called_once()
+        host.state_changed.emit({"status": "connected"})
+        host.language_changed.emit("en")
+        assert native.menu.itemAtIndex_(0).title() == "TikoPlay · Connected"
+        assert not native.menu.itemAtIndex_(0).isEnabled()
+        assert native.menu.itemAtIndex_(2).title() == "Open panel"
+        native.menu.performActionForItemAtIndex_(6)
+        controller.quit.assert_called_once()
     finally:
-        tray.menu.hide()
         tray.close()
-        native.setActivationPolicy_(old_policy)
+    assert native.item is None
