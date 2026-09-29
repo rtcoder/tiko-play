@@ -1,9 +1,10 @@
 import asyncio
 import time
 from contextlib import suppress
-from src.core.models import ListenerState, AppError
-from src.core.matching import Matcher
+
 from src.core.keyboard import KeyAction
+from src.core.matching import Matcher
+from src.core.models import AppError, ListenerState
 
 
 class ListenerService:
@@ -95,7 +96,7 @@ class ListenerService:
             self._change(status="stopping", output="disabled")
             self._cancel_once()
         else:
-            self._change(status="stopped", output="disabled", error=None)
+            self._change(status="stopped", output="disabled")
         return self.state()
 
     def _cancel_once(self):
@@ -108,11 +109,15 @@ class ListenerService:
         if self._task:
             with suppress(asyncio.CancelledError):
                 await asyncio.shield(self._task)
-        self._change(status="stopped", output="disabled", error=None)
+        self._change(status="stopped", output="disabled")
         return self.state()
 
     def keyboard_result(self, kind, payload):
-        if payload.get("generation", self._state.generation) != self._state.generation:
+        if (
+            payload.get("code") != "keyboard_release_error"
+            and payload.get("generation", self._state.generation)
+            != self._state.generation
+        ):
             return
         self.events.publish("action" if kind == "executed" else kind, payload)
         if kind == "error":
@@ -147,9 +152,18 @@ class ListenerService:
                 )
                 if self._stop or self._state.output != "enabled":
                     return
-                keys = matcher.match(user, text)
-                if keys:
-                    self.keyboard.submit(KeyAction(keys, generation, self.clock()))
+                mapping = matcher.match_mapping(user, text)
+                if mapping:
+                    self.keyboard.submit(
+                        KeyAction(
+                            (),
+                            generation,
+                            self.clock(),
+                            definition=mapping.action,
+                            mapping_id=mapping.id,
+                            actor_id=user,
+                        )
+                    )
 
             self._client = self.factory(snapshot.config)
             child = await self._client.connect(comment)

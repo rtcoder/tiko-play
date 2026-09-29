@@ -18,8 +18,11 @@ async def test_network_flow_continues_without_browser(tmp_path, twitch_auth):
     calls = []
 
     class Port:
-        def execute(self, keys):
-            calls.append(keys)
+        def key_down(self, key):
+            calls.append(("down", key))
+
+        def key_up(self, key):
+            calls.append(("up", key))
 
     class Client:
         async def connect(self, cb):
@@ -69,14 +72,20 @@ async def test_network_flow_continues_without_browser(tmp_path, twitch_auth):
             ).json()
             headers = {"Origin": origin, "X-CSRF-Token": session["csrf_token"]}
             config = {
-                "version": 5,
+                "version": 6,
                 "active_profile_id": "game",
                 "tiktok": {"channel": "test"},
                 "countdown_enabled": False,
-                "profiles": [{"id": "game", "name": "Integration", "mappings": [
-                    {"id": "1", "trigger": "x", "keys": ["ctrl", "a"]},
-                    {"id": "2", "trigger": "y", "keys": ["left"]},
-                ]}],
+                "profiles": [
+                    {
+                        "id": "game",
+                        "name": "Integration",
+                        "mappings": [
+                            {"id": "1", "trigger": "x", "keys": ["ctrl", "a"]},
+                            {"id": "2", "trigger": "y", "keys": ["left"]},
+                        ],
+                    }
+                ],
             }
             response = await http.put(
                 "/api/config",
@@ -105,10 +114,17 @@ async def test_network_flow_continues_without_browser(tmp_path, twitch_auth):
                 await client.cb("viewer", "x")
             await client.cb("viewer", "y")
             for _ in range(100):
-                if len(calls) == 2:
+                if len(calls) == 6:
                     break
                 await asyncio.sleep(0.01)
-            assert calls == [("ctrl", "a"), ("left",)]
+            assert calls == [
+                ("down", "ctrl"),
+                ("down", "a"),
+                ("up", "a"),
+                ("up", "ctrl"),
+                ("down", "left"),
+                ("up", "left"),
+            ]
             async with connect(
                 origin.replace("http:", "ws:") + "/api/events",
                 origin=origin,
@@ -120,7 +136,7 @@ async def test_network_flow_continues_without_browser(tmp_path, twitch_auth):
             ).status_code == 202
             await client.cb("viewer", "x")
             await asyncio.sleep(0.02)
-            assert len(calls) == 2
+            assert len(calls) == 6
     finally:
         server.should_exit = True
         await asyncio.wait_for(task, 5)

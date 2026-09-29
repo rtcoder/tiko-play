@@ -1,5 +1,17 @@
 # TikoPlay — kontekst techniczny
 
+## Sekwencje klawiszy — v0.14, 2026-09-29
+
+Wdrożono propozycję 2: `ActionDefinition.steps` (1–20), `press(keys)`, `hold(keys, duration_ms)` 50–3000 ms i `wait(duration_ms)` 10–3000 ms, suma czasów do 10000 ms. Modele są niezmienne, nie dopuszczają dodatkowych pól w krokach ani niecałkowitych czasów. `Mapping.action` jest źródłem prawdy; wejściowe `keys` migruje do jednego press, właściwość `Mapping.keys` służy tylko odczytowi pojedynczej starej kombinacji (dla sekwencji zgłasza błąd).
+
+Konfiguracja ma schemat v6. ConfigStore migruje v1–v5 z kopią bajtów oryginału; dotychczasowe profile, ID, filtry i dodatkowe pola mapowań pozostają zachowane. Eksport profilu v2 zawiera wyłącznie nazwę, triggery i action; importer obsługuje v1/v2, zachowuje limity 1 MiB/500 mapowań. NumPad 2468 i szablony nadal tworzą pojedyncze press.
+
+KeyboardExecutor wykonuje jeden krok po drugim, z metadanymi mapowania/widza, epoką wyjścia i terminem rozpoczęcia (domyślnie 1 s od otrzymania). Kolejka ma 100 miejsc; ważność sprawdzana przed rozpoczęciem, nie ucina aktywnej sekwencji po sekundzie. disable/enable zmienia epokę, opróżnia kolejkę i budzi Condition. Klawisze są rejestrowane przed keyDown, zwalniane w finally w odwrotnej kolejności, także po częściowym błędzie down. Cleanup adaptera wywołuje `pyautogui.keyUp.__wrapped__` (przypięte 0.9.54), omijając wyłącznie dekorator fail-safe przy zwalnianiu, bez zmiany globalnego FAILSAFE. Nowe naciśnięcia nadal mają fail-safe, a hold/wait sprawdzają go w interwałach do 50 ms. Wszystkie keyUp są próbowane; błąd dowolnego blokuje wyjście do restartu. Callback błędu release jest globalny, także ze starej generacji. Wywołania OS nie są przerywalne; Stop odcina kolejne kroki i czeka tylko na powrót trwającego wywołania systemowego. Twarde zabicie procesu nie daje gwarancji cleanup.
+
+ActionEditor zapewnia edycję typów, czasów, kombinacji i kolejności, zachowuje niepełne szkice i blokuje ich autosave/Start. Profile, podgląd importu, kopiowanie i EventLog obsługują sekwencje. Dodatkowy koszt: domyślne 1 s na rozpoczęcie może odrzucać kolejkę podczas długiego hold — konfigurowalne limity pozostają propozycją 5. Ochrona fokusu to propozycja 6; wyjście nadal trafia do aktywnego okna.
+
+Plan i decyzje: `docs/superpowers/plans/2026-09-29-key-sequences.md`. Wcześniejsze wpisy poniżej opisują historyczne schematy konfiguracji i profile v1.
+
 ## Profile gier — v0.12, 2026-09-28
 
 Wdrożono zadanie 1 z roadmapy wraz z dodatkowym presetem **NumPad 2468**. Schemat konfiguracji v5 zapisuje `profiles` i `active_profile_id`; mapowania i filtry widzów należą do profilu. `AppConfig.mappings` oraz `active_source()` rozwiązują aktywny profil dla istniejącego rdzenia. Pole kanału `target_user` jest wyłącznie wewnętrznym widokiem zgodności, wyłączonym z serializacji; nie jest drugim źródłem danych. Kanały, konta i klucze pozostają globalne. Migracje v1–v4 zachowują bajty oryginału i wszystkie stare mapowania, także ponad 500 wpisów.

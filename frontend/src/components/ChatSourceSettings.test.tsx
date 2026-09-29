@@ -9,7 +9,7 @@ vi.mock("../api/client", () => ({
   youtubeKeyApi: { state: vi.fn(async () => ({ configured: false })) },
 }));
 const config: AppConfig = {
-  version: 5,
+  version: 6,
   platform: "tiktok",
   tiktok: { channel: "alice", target_user: "Bob" },
   twitch: { channel: "other", target_user: "carol" },

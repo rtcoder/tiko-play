@@ -1,4 +1,5 @@
 import time
+
 from src.core.models import AppConfig
 from src.core.users import allowed_users
 
@@ -13,11 +14,15 @@ class Matcher:
         self.targets = allowed_users(config.active_source().target_user)
         if self.fold_users:
             self.targets = frozenset(u.lower() for u in self.targets)
-        self.rules = {m.trigger: m.keys for m in config.mappings}
+        self.rules = {m.trigger: m for m in config.mappings}
         self.clock = clock
         self.last = {}
 
     def match(self, user_id: str, comment: str):
+        mapping = self.match_mapping(user_id, comment)
+        return mapping.keys if mapping is not None else None
+
+    def match_mapping(self, user_id: str, comment: str):
         if self.fold_users:
             user_id = user_id.lower()
         if self.targets and user_id not in self.targets:

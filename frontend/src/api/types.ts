@@ -1,7 +1,15 @@
+export type ActionStep =
+  | { type: "press"; keys: string[] }
+  | { type: "hold"; keys: string[]; duration_ms: number }
+  | { type: "wait"; duration_ms: number };
+export interface ActionDefinition {
+  steps: ActionStep[];
+}
 export interface Mapping {
   id: string;
   trigger: string;
-  keys: string[];
+  keys?: string[]; // Accepted for legacy presets and drafts. Saved responses use action.
+  action?: ActionDefinition;
   [key: string]: unknown;
 }
 export type Platform = "tiktok" | "twitch" | "youtube" | "kick";
@@ -10,7 +18,7 @@ export interface ChannelConfig {
   [key: string]: unknown;
 }
 export interface AppConfig {
-  version: 5;
+  version: 6;
   platform: Platform;
   tiktok: ChannelConfig;
   twitch: ChannelConfig;

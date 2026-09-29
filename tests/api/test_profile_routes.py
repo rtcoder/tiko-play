@@ -103,7 +103,10 @@ def test_create_switch_persist_export_and_conflict(profiles_api):
     exported = c.get("/api/profiles/other/export")
     assert exported.status_code == 200
     assert "private" not in exported.text
-    assert exported.json()["mappings"] == [{"trigger": "go", "keys": ["left"]}]
+    assert exported.json()["format_version"] == 2
+    assert exported.json()["mappings"] == [
+        {"trigger": "go", "action": {"steps": [{"type": "press", "keys": ["left"]}]}}
+    ]
     assert c.get("/api/profiles/missing/export").status_code == 404
     invalid = c.get("/api/config").json()
     invalid["config"]["profiles"] = []

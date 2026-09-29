@@ -1,7 +1,7 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { ConfigController } from "./configController";
 const config = {
-  version: 5 as const,
+  version: 6 as const,
   platform: "tiktok" as const,
   tiktok: { channel: "a", target_user: "" },
   twitch: { channel: "", target_user: "" },
@@ -105,5 +105,39 @@ it("retains incomplete row locally without replacing saved mappings", async () =
   await expect(ctrl.flush()).rejects.toThrow();
   expect(api.save).not.toHaveBeenCalled();
   expect(ctrl.state.draft?.profiles[0].mappings).toHaveLength(1);
+  ctrl.dispose();
+});
+
+it("keeps an incomplete sequence draft and refuses autosave and Start", async () => {
+  const api = {
+    load: async () => ({ config, config_revision: 1 }),
+    save: vi.fn(),
+    start: vi.fn(),
+  };
+  const ctrl = new ConfigController(api);
+  await ctrl.reload();
+  const draft = {
+    ...config,
+    profiles: [
+      {
+        ...config.profiles[0],
+        mappings: [
+          {
+            id: "m",
+            trigger: "go",
+            action: {
+              steps: [{ type: "hold" as const, keys: ["a"], duration_ms: NaN }],
+            },
+          },
+        ],
+      },
+    ],
+  };
+  ctrl.edit(draft);
+  await expect(ctrl.start()).rejects.toThrow();
+  expect(ctrl.state.draft).toBe(draft);
+  expect(ctrl.state.saveStatus).toBe("invalid");
+  expect(api.save).not.toHaveBeenCalled();
+  expect(api.start).not.toHaveBeenCalled();
   ctrl.dispose();
 });

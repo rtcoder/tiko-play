@@ -1,3 +1,5 @@
+import { actionSummary } from "../state/actions";
+import type { ActionDefinition } from "../api/types";
 import { t, getLanguage, statusLabel } from "../i18n";
 import { sourceLabel } from "../api/platforms";
 import type { AppEvent } from "../api/types";
@@ -60,7 +62,11 @@ export function EventLog({
                       : e.type === "config_changed"
                         ? t("Zapisano")
                         : e.type === "action"
-                          ? (e.payload.keys as string[]).join(" + ")
+                          ? e.payload.action
+                            ? actionSummary(
+                                e.payload.action as ActionDefinition,
+                              )
+                            : (e.payload.keys as string[]).join(" + ")
                           : e.payload.message
                             ? t(String(e.payload.message))
                             : statusLabel(String(e.payload.status ?? ""))}

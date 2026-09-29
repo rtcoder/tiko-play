@@ -1,6 +1,8 @@
 import sys
 from types import SimpleNamespace
+
 import pytest
+
 from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
 from src.adapters.tiktok import TikTokAdapter
 from src.core.models import AppError
@@ -82,3 +84,37 @@ async def test_tiktok_disconnect_always_closes_http_sessions(cancelled):
     except asyncio.CancelledError:
         pass
     assert closed == [True]
+
+
+def test_cleanup_releases_even_when_pyautogui_failsafe_is_active(monkeypatch):
+    import functools
+    import sys
+    from types import SimpleNamespace
+
+    from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
+
+    calls = []
+
+    class FailSafeException(Exception):
+        pass
+
+    def raw_up(key, **kwargs):
+        calls.append(("up", key))
+
+    @functools.wraps(raw_up)
+    def guarded_up(key, **kwargs):
+        raise FailSafeException()
+
+    def guarded_down(key, **kwargs):
+        raise FailSafeException()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "pyautogui",
+        SimpleNamespace(keyUp=guarded_up, keyDown=guarded_down),
+    )
+    port = PyAutoGUIKeyboard()
+    port.key_up("ctrl")
+    assert calls == [("up", "ctrl")]
+    with pytest.raises(FailSafeException):
+        port.key_down("a")

@@ -2,7 +2,7 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
-[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12; pozostałe zadania są propozycjami.
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14; pozostałe zadania są propozycjami.
 
 ## Profile gier
 
@@ -10,9 +10,17 @@ Od wersji 0.12 sekcja **Twoje gry** pozwala tworzyć, przełączać, przemianowy
 
 **Nowy profil**: zacznij od pustego albo wybierz szablon. Ogólne: WASD, Strzałki i **NumPad 2468** (`2` → dół, `4` → lewo, `6` → prawo, `8` → góra). Cyfry są komentarzami czatu; aplikacja wysyła strzałki, nie klawisze numpada. Retro: Hugo, Tetris, Pac-Man i Sokoban. Nowsze: Baba Is You. Szablony są edytowalnymi propozycjami przypisań klawiatury, nie potwierdzeniem integracji z konkretną wersją gry. Nie dodają przytrzymywania klawiszy.
 
-**Importuj plik** pokazuje podgląd przed utworzeniem nowego profilu. Format JSON v1: maksymalnie 1 MiB i 500 mapowań. Import nie nadpisuje poprzedniego profilu. Eksport zawiera nazwę i mapowania, ale pomija filtry widzów, kanały, konta i klucze. Limit importu nie ogranicza liczby mapowań w migrowanej konfiguracji; plik eksportowany z większego profilu wymaga podziału przed importem. Maksymalnie można zapisać 100 profili. Przy usuwaniu aktywnego wybierz profil zastępczy; ostatniego profilu nie można usunąć.
+**Importuj plik** pokazuje podgląd przed utworzeniem nowego profilu. Eksport JSON v2; import v1/v2: maksymalnie 1 MiB i 500 mapowań. Import nie nadpisuje poprzedniego profilu. Eksport zawiera nazwę i mapowania, ale pomija filtry widzów, kanały, konta i klucze. Limit importu nie ogranicza liczby mapowań w migrowanej konfiguracji; plik eksportowany z większego profilu wymaga podziału przed importem. Maksymalnie można zapisać 100 profili. Przy usuwaniu aktywnego wybierz profil zastępczy; ostatniego profilu nie można usunąć.
 
-Dotychczasowa konfiguracja v1–v4 jest migrowana do v5 z zachowaniem oryginalnej kopii `config.v<N>.backup.json`. Mapowania i filtry trafiają do profilu „Domyślny”. Starsza aplikacja nie odczyta formatu v5; powrót wymaga zachowanej kopii starej konfiguracji.
+Dotychczasowa konfiguracja v1–v5 jest migrowana do v6 z zachowaniem oryginalnej kopii `config.v<N>.backup.json`. Przy migracji v1–v4 mapowania i filtry trafiają do profilu „Domyślny”; istniejące profile v5 pozostają zachowane. Starsza aplikacja nie odczyta formatu v6; powrót wymaga zachowanej kopii starej konfiguracji.
+
+## Przytrzymania i sekwencje
+
+W **Mapowaniach** wybierz typ kroku: **Naciśnięcie**, **Przytrzymanie** (50–3000 ms) lub **Pauza** (10–3000 ms). Przyciski dodają kroki, strzałki zmieniają ich kolejność. Limit: 20 kroków i łącznie 10000 ms przytrzymań/pauz. Przykład: `right` przytrzymany 750 ms → pauza 100 ms → naciśnięcie `space`.
+
+Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; ochrona fokusu nie jest częścią tej wersji. Kolejka zachowuje limit 100 akcji i 1 s na rozpoczęcie — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
+
+Stare mapowania automatycznie stają się pojedynczym krokiem naciśnięcia. Niepełne kroki i niepoprawne czasy pozostają w szkicu, blokując zapis i Start do poprawienia.
 
 ## Uruchamianie dla użytkownika
 
@@ -26,7 +34,7 @@ Panel i API są dostępne tylko na `127.0.0.1`. Python/Node.js nie są wymagane 
 
 ## Zachowanie
 
-Cały komentarz dopasowany po usunięciu skrajnych spacji i zmianie liter na małe. Jeden klawisz oznacza `press`, kilka — kombinację `hotkey`. Cooldown: 0,3 s na trigger. Filtr TikToka rozróżnia wielkość liter, Twitcha — nie. Nicki można podać po przecinku, średniku lub w osobnych wierszach, opcjonalnie z @; puste pole dopuszcza wszystkich.
+Cały komentarz dopasowany po usunięciu skrajnych spacji i zmianie liter na małe. Każde mapowanie ma sekwencję kroków `press`, `hold` lub `wait`. Kilka klawiszy w jednym kroku to jednoczesna kombinacja. Cooldown: 0,3 s na trigger. Filtr TikToka rozróżnia wielkość liter, Twitcha — nie. Nicki można podać po przecinku, średniku lub w osobnych wierszach, opcjonalnie z @; puste pole dopuszcza wszystkich.
 
 Zmiany konfiguracji zapisują się automatycznie po 500 ms; aktywny listener używa snapshotu ze Startu. Panel informuje o konieczności restartu nasłuchu. Niepełne mapowania pozostają lokalnym szkicem. Konflikt kilku kart nie nadpisuje danych po cichu.
 
@@ -38,7 +46,7 @@ Klawisze trafiają do aktywnego okna. Uprawnienia systemowe i ograniczenia PyAut
 - Windows: `%APPDATA%/TikoPlay/`
 - Pozostałe systemy (tryb źródłowy): `~/.config/TikoPlay/`
 
-Konfiguracja v1/v2/v3/v4 jest migrowana do v5 z kopią `config.v<N>.backup.json`; przy kolizji nazwa dostaje UUID. TikTok pozostaje domyślnym źródłem, a każda platforma zapamiętuje własny kanał. Mapowania należą do profilu i są wspólne dla jego platform; filtr każdej platformy jest osobny w każdym profilu. Uszkodzone dane wymagają jawnej naprawy w panelu; oryginał jest zachowany. Nieznana nowsza wersja schematu nie jest nadpisywana. Repozytoryjny `config.json` nie jest wczytywany ani pakowany.
+Konfiguracja v1/v2/v3/v4/v5 jest migrowana do v6 z kopią `config.v<N>.backup.json`; przy kolizji nazwa dostaje UUID. TikTok pozostaje domyślnym źródłem, a każda platforma zapamiętuje własny kanał. Mapowania należą do profilu i są wspólne dla jego platform; filtr każdej platformy jest osobny w każdym profilu. Uszkodzone dane wymagają jawnej naprawy w panelu; oryginał jest zachowany. Nieznana nowsza wersja schematu nie jest nadpisywana. Repozytoryjny `config.json` nie jest wczytywany ani pakowany.
 
 ## Development
 

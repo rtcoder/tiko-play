@@ -1,8 +1,10 @@
 from dataclasses import dataclass
-from uuid import uuid4
 from typing import Literal
+from uuid import uuid4
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from src.core.keys import get_keys
+
+from src.core.actions import ActionDefinition, PressStep
 from src.core.users import allowed_users
 
 
@@ -26,7 +28,26 @@ class Mapping(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
     id: str = Field(min_length=1)
     trigger: str
-    keys: tuple[str, ...]
+    action: ActionDefinition
+
+    @model_validator(mode="before")
+    @classmethod
+    def legacy_keys(cls, value):
+        if isinstance(value, dict) and "keys" in value:
+            value = dict(value)
+            keys = value.pop("keys")
+            if "action" in value:
+                raise ValueError("Podaj action albo keys, nie oba pola")
+            value["action"] = {"steps": [{"type": "press", "keys": keys}]}
+        return value
+
+    @property
+    def keys(self):
+        if len(self.action.steps) != 1 or not isinstance(
+            self.action.steps[0], PressStep
+        ):
+            raise ValueError("Sekwencja nie jest pojedynczą kombinacją")
+        return self.action.steps[0].keys
 
     @field_validator("trigger")
     @classmethod
@@ -34,13 +55,6 @@ class Mapping(BaseModel):
         value = value.strip().lower()
         if not value:
             raise ValueError("Komentarz nie może być pusty")
-        return value
-
-    @field_validator("keys")
-    @classmethod
-    def keys_valid(cls, value):
-        if not value or any(k not in get_keys() for k in value):
-            raise ValueError("Wybierz poprawne klawisze")
         return value
 
 
@@ -138,7 +152,7 @@ class GameProfile(BaseModel):
 
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
-    version: Literal[5] = 5
+    version: Literal[6] = 6
     platform: Platform = "tiktok"
     tiktok: ChannelConfig = Field(default_factory=ChannelConfig)
     twitch: TwitchChannelConfig = Field(default_factory=TwitchChannelConfig)

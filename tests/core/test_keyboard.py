@@ -10,7 +10,11 @@ async def test_queue_generation_expiry_and_serial_execution():
     now = [0.0]
 
     class Port:
-        def execute(self, keys):
+        def key_up(self, key):
+            pass
+
+        def key_down(self, key):
+            keys = (key,)
             calls.append(keys)
             entered.set()
             release.wait(2)
@@ -25,8 +29,8 @@ async def test_queue_generation_expiry_and_serial_execution():
     k.disable()
     k.enable(2)
     now[0] = 2
-    assert not k.submit(KeyAction(("old",), 1, 2))
-    k.submit(KeyAction(("expired",), 2, 0))
+    assert not k.submit(KeyAction(("o",), 1, 2))
+    k.submit(KeyAction(("e",), 2, 0))
     release.set()
     await k.close(2)
     assert calls == [("a",)]
@@ -36,7 +40,11 @@ async def test_fault_disables_pending_keys():
     reports = []
 
     class Port:
-        def execute(self, keys):
+        def key_up(self, key):
+            pass
+
+        def key_down(self, key):
+            keys = (key,)
             raise RuntimeError("denied")
 
     k = KeyboardExecutor(Port(), report=lambda *a: reports.append(a))
@@ -56,7 +64,11 @@ async def test_old_inflight_error_does_not_clear_new_generation():
     calls = []
 
     class Port:
-        def execute(self, keys):
+        def key_up(self, key):
+            pass
+
+        def key_down(self, key):
+            keys = (key,)
             if keys == ("a",):
                 entered.set()
                 release.wait(2)

@@ -789,3 +789,19 @@ label > textarea {
 .profile-preview { overflow-wrap: anywhere; line-height: 1.8; }
 .profile-import-list { max-height: 220px; overflow: auto; overflow-wrap: anywhere; }
 .profile-file-input { display: none; }
+
+/* Multi-step actions stay within the existing mapping grid. */
+.mapping-row { align-items: start; }
+.action-editor { min-width: 0; display: grid; gap: 10px; }
+.action-step { border: 1px solid var(--border, #334155); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+.step-heading, .step-add, .step-order { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.step-heading select { width: auto; min-width: 120px; flex: 1; }
+.step-duration { display: flex; align-items: center; gap: 4px; }
+.step-duration input { width: 90px; }
+.step-order { margin-left: auto; flex-wrap: nowrap; }
+.step-order button { padding: 5px 9px; min-width: 30px; }
+.step-add button { padding: 6px 10px; font-size: 12px; }
+.step-add span, .step-number { color: var(--muted, #94a3b8); font-size: 12px; }
+.action-error { color: #f87171; margin: 0; font-size: 12px; }
+
+@media (max-width: 640px) { .action-editor { grid-column: 1; } }

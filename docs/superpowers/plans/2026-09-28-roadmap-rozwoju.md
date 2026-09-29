@@ -1,3 +1,5 @@
+> Stan 2026-09-29: zadanie 1 wdrożone w v0.12; zadanie 2 wdrożone w v0.14. Szczegóły zakresu i zależności: [plan sekwencji](2026-09-29-key-sequences.md). Pozostałe zadania są propozycjami.
+
 # TikoPlay — opis funkcji i plan rozwoju
 
 > **Dla wykonawcy:** dokument zawiera osiem propozycji, a nie zgodę na ich implementację. Po wyborze i zatwierdzeniu zakresu konkretnego zadania użyj `superpowers:executing-plans` albo, jeśli użytkownik wybierze delegowanie, `superpowers:subagent-driven-development`. Kroki mają pola do odznaczania; nie zaczynaj wszystkich ośmiu zadań jednocześnie.

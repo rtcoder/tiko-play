@@ -12,7 +12,7 @@ export function ConfigRecovery({
   const [text, setText] = useState(
     JSON.stringify(
       state.recovery_data ?? {
-        version: 5,
+        version: 6,
         active_profile_id: "default",
         profiles: [
           {
@@ -63,7 +63,7 @@ export function ConfigRecovery({
             onClick={async () => {
               try {
                 const value = JSON.parse(text);
-                if (![undefined, 1, 2, 3, 4, 5].includes(value.version))
+                if (![undefined, 1, 2, 3, 4, 5, 6].includes(value.version))
                   throw new Error("Nieobsługiwana wersja konfiguracji.");
                 if ([undefined, 1, 2].includes(value.version)) {
                   value.version = 3;
@@ -82,7 +82,7 @@ export function ConfigRecovery({
                     }),
                   );
                 }
-                if (value.version !== 5) {
+                if (![5, 6].includes(value.version)) {
                   const id = crypto.randomUUID();
                   value.profiles = [
                     {
@@ -100,7 +100,7 @@ export function ConfigRecovery({
                   value.active_profile_id = id;
                   delete value.mappings;
                 }
-                value.version = 5;
+                value.version = 6;
                 value.youtube ??= { channel: "", target_user: "" };
                 value.kick ??= {
                   channel: "",

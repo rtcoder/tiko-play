@@ -21,7 +21,7 @@ async def test_v4_migrates_to_one_profile_and_keeps_original(tmp_path):
     )
     path.write_text(original)
     config = (await ConfigStore(path).load()).config
-    assert config.version == 5
+    assert config.version == 6
     assert len(config.profiles) == 1
     assert config.active_profile.name == "Domyślny"
     assert config.active_profile.filters.twitch == "bob"
@@ -100,7 +100,7 @@ def test_import_rejects_future_version_and_limits():
     from src.core.profiles import import_profile
 
     for payload in (
-        {"format_version": 2, "name": "x", "mappings": []},
+        {"format_version": 3, "name": "x", "mappings": []},
         {
             "format_version": 1,
             "name": "x",

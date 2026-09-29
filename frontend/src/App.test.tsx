@@ -5,7 +5,7 @@ import App from "./App";
 vi.mock("../../VERSION?raw", () => ({ default: "8.13\n" }));
 const fixture = vi.hoisted(() => ({
   config: {
-    version: 5,
+    version: 6,
     platform: "tiktok",
     tiktok: { channel: "a", target_user: "" },
     twitch: { channel: "b", target_user: "" },

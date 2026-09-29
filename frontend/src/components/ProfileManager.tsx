@@ -1,3 +1,4 @@
+import { mappingAction, actionSummary } from "../state/actions";
 import { useEffect, useRef, useState } from "react";
 import type { AppConfig, GameProfile, ProfileTemplate } from "../api/types";
 import { request } from "../api/client";
@@ -156,8 +157,7 @@ export function ProfileManager({
                   id: crypto.randomUUID(),
                   name: `${original.name.slice(0, 65)} (${t("kopia")})`,
                   mappings: original.mappings.map((m) => ({
-                    ...m,
-                    keys: [...m.keys],
+                    ...structuredClone(m),
                     id: crypto.randomUUID(),
                   })),
                 };
@@ -304,7 +304,7 @@ export function ProfileManager({
               {template && (
                 <p className="profile-preview">
                   {template.mappings
-                    .map((m) => `${m.trigger} → ${m.keys.join(" + ")}`)
+                    .map((m) => `${m.trigger} → ${actionSummary(mappingAction(m))}`)
                     .join(" · ")}
                 </p>
               )}
@@ -382,7 +382,7 @@ export function ProfileManager({
           <div className="profile-import-list">
             {preview.mappings.map((m) => (
               <div key={m.id}>
-                {m.trigger} → {m.keys.join(" + ")}
+                {m.trigger} → {actionSummary(mappingAction(m))}
               </div>
             ))}
           </div>
