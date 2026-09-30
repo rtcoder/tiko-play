@@ -472,6 +472,7 @@ header p {
   background: #243246;
   color: #bcdaee;
   display: flex;
+  align-items: center;
   gap: 10px;
   font-family: monospace;
 }
