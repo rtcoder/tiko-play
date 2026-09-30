@@ -164,6 +164,8 @@ W trybie „Głosowanie” wiadomości stają się głosami. Po zakończeniu okn
 
 ## Zadanie 4. Nakładka do transmisji
 
+Implementacja podstawowa v0.21. Testy protokołu i przeglądarki zakończone; odbiór w prawdziwym OBS na macOS/Windows pozostaje otwarty. Szczegóły: [instrukcja](../../OBS_OVERLAY.md).
+
 ### Opis i zakres
 
 Oddzielny, przezroczysty widok do źródła przeglądarkowego OBS pokazuje dostępne komendy, ostatnią faktycznie wykonaną akcję, opcjonalny nick autora i stan pauzy. Po zadaniu 3 dochodzą wyniki głosowania; po zadaniu 8 osoba przy sterach i czas tury. Panel operatora pozwala wybrać widoczne elementy, rozmiar tekstu i kolor akcentu.
@@ -188,10 +190,10 @@ Oddzielny, przezroczysty widok do źródła przeglądarkowego OBS pokazuje dost�
 ### Plan
 
 - [ ] 1. Wykonać ograniczoną próbę w OBS na macOS i Windows: przezroczystość, fragment URL, ponowne połączenie i trwałość adresu po restarcie. Zapisać wynik przed wyborem wariantu portu.
-- [ ] 2. Dodać `tests/api/test_overlay.py`: token nakładki nie autoryzuje Start/Stop ani odczytu konfiguracji; brak tokenu i zły origin są odrzucane; obrócony token traci ważność. Potwierdzić niepowodzenie testów.
-- [ ] 3. Wdrożyć projekcję stanu, osobne uwierzytelnienie odczytu i pełny snapshot po reconnect. Testować zerwanie połączenia wolnego klienta bez blokowania rdzenia.
-- [ ] 4. Dodać widok i ustawienia. W `frontend/src/overlay/Overlay.test.tsx` sprawdzić tekst `<script>`, ukryty nick, brak głosowania, pauzę i dane ostatniej wykonanej akcji.
-- [ ] 5. Uruchomić `python -m pytest tests/api/test_overlay.py tests/api/test_session.py -q` oraz frontend. Powtórzyć odbiór w OBS po buildzie, w tym restart aplikacji i unieważnienie adresu.
+- [x] 2. Dodać `tests/api/test_overlay_routes.py`: token nakładki nie autoryzuje Start/Stop ani odczytu konfiguracji; brak tokenu i zły origin są odrzucane; obrócony token traci ważność. Potwierdzić niepowodzenie testów.
+- [x] 3. Wdrożyć projekcję stanu, osobne uwierzytelnienie odczytu i pełny snapshot po reconnect. Testować zerwanie połączenia wolnego klienta bez blokowania rdzenia.
+- [x] 4. Dodać widok i ustawienia. W `frontend/src/overlay/Overlay.test.tsx` sprawdzić tekst `<script>`, ukryty nick, brak głosowania, pauzę i dane ostatniej wykonanej akcji.
+- [ ] 5. Uruchomić `python -m pytest tests/api/test_overlay_routes.py tests/api/test_session.py -q` oraz frontend. Powtórzyć odbiór w OBS po buildzie, w tym restart aplikacji i unieważnienie adresu.
 - [ ] 6. Wykonać wspólny odbiór i wydanie z instrukcją dodania źródła OBS.
 
 **Kryterium odbioru:** nakładka odtwarza stan po restarcie i nie daje uprawnień panelu; działa w rzeczywistym źródle OBS, a nie tylko w zwykłej przeglądarce.

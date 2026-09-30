@@ -1,5 +1,6 @@
 import asyncio
 import time
+from copy import deepcopy
 from contextlib import suppress
 
 from src.core.keyboard import KeyAction
@@ -17,6 +18,9 @@ class ListenerService:
         self.clock = clock
         self.sleep = sleep
         self._state = ListenerState()
+        self.active_snapshot = None
+        self.last_executed = None
+        self._execution_id = 0
         self._task = None
         self._client = None
         self._stop = False
@@ -56,6 +60,8 @@ class ListenerService:
         self._stop = False
         self._cancel_requested = False
         self._cleaning = False
+        self.active_snapshot = snapshot
+        self.last_executed = None
         self._change(
             status="connecting",
             output="disabled",
@@ -119,6 +125,9 @@ class ListenerService:
             != self._state.generation
         ):
             return
+        if kind == "executed":
+            self._execution_id += 1
+            self.last_executed = {**deepcopy(payload), "id": self._execution_id}
         self.events.publish("action" if kind == "executed" else kind, payload)
         if kind == "error":
             self.keyboard.disable()
@@ -161,7 +170,8 @@ class ListenerService:
                             self.clock(),
                             definition=mapping.action,
                             mapping_id=mapping.id,
-                            actor_id=user,
+                            actor_id=user[:128],
+                            comment=text[:2000],
                         )
                     )
 

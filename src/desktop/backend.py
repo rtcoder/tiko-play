@@ -24,6 +24,8 @@ from src.core.keyboard import KeyboardExecutor
 from src.core.listener_service import ListenerService
 from src.core.models import AppError
 from src.core.preferences import PreferencesStore
+from src.core.overlay import OverlayProjection, OverlayStore
+from src.desktop.overlay_server import OverlayServer
 from src.twitch_settings import get_twitch_client_id
 
 
@@ -44,6 +46,7 @@ class BackendHost(QObject):
         self.loop = None
         self.server = None
         self.listener = None
+        self.overlay = None
         self.sessions = None
         self._closing = False
         self._finished = concurrent.futures.Future()
@@ -118,6 +121,15 @@ class BackendHost(QObject):
                 keyboard,
                 bus,
             )
+            overlay_store = OverlayStore(self.data_dir / "overlay.json")
+            self.overlay = OverlayServer(
+                overlay_store,
+                OverlayProjection(
+                    self.listener, store, overlay_store, lambda: self.language
+                ),
+                self.static_dir,
+            )
+            await self.overlay.start()
             auth.subscribe_invalidated(self.listener.authorization_lost)
             restore_task = asyncio.create_task(auth.restore())
             app = create_app(
@@ -130,6 +142,7 @@ class BackendHost(QObject):
                 youtube_keys=youtube_keys,
                 preferences=self.preferences,
                 on_language_changed=self.language_changed.emit,
+                overlay=self.overlay,
             )
             config = uvicorn.Config(
                 app,
@@ -202,6 +215,8 @@ class BackendHost(QObject):
                 watch_task.cancel()
                 await asyncio.gather(watch_task, return_exceptions=True)
             sock.close()
+            if self.overlay:
+                await self.overlay.close()
 
     def open_url(self):
         async def issue():

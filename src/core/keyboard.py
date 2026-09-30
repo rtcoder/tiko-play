@@ -23,6 +23,7 @@ class KeyAction:
     actor_id: str = ""
     output_epoch: int | None = None
     expires_at: float | None = None
+    comment: str = ""
 
     def __post_init__(self):
         if self.definition is None:
@@ -180,6 +181,8 @@ class KeyboardExecutor:
                             "keys": list(action.keys),
                             "action": action.definition.model_dump(mode="json"),
                             "mapping_id": action.mapping_id,
+                            "actor_id": action.actor_id,
+                            "comment": action.comment,
                             "generation": action.generation,
                         },
                     )

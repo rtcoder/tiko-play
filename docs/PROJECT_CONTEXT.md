@@ -1,5 +1,18 @@
 # TikoPlay — kontekst techniczny
 
+## Nakładka OBS — v0.21, 2026-09-30
+
+Zadanie 4 ma implementację podstawową, z odbiorem OBS pozostającym do wykonania (OBS nie zainstalowano w środowisku, Windows niedostępny). Osobna zakładka zawiera włącznik, port, kopię adresu, próbny podgląd i ustawienia widoczności/fontu/koloru. `/overlay` jest niezależnym widokiem React z przezroczystym HTML/body. Osobny serwer udostępnia tylko stronę, assets i WebSocket, bez operator API. Domyślnie wyłączony, port 18765 (1024–65535); panel zachowuje port losowy. Konfiguracja gry nadal v6, profile wymiany v2.
+
+`OverlayStore` zapisuje oddzielny `overlay.json` atomowo, 0600 na POSIX. Zawiera token 32 bajtów URL-safe i prezentację. Nick ukryty domyślnie; snapshot nie zawiera wówczas pola autora. Token przechodzi we fragmencie adresu i pierwszej wiadomości WS, z limitem 5 s; Host i Origin muszą odpowiadać dedykowanemu serwerowi. Rotacja jest trwała, odcina istniejące źródła; token nie autoryzuje sesji operatora. Maks. 16 połączeń, odczyt tylko auth/ping. Aktualizacje co najwyżej 5/s, pełny snapshot po reconnect. Timeout send 2 s i close 0,2 s gwarantują wyjście handlera także przy zatkanym transporcie (uvicorn zamyka go po return).
+
+`ListenerService.active_snapshot` przechowuje snapshot Startu dla listy komend w trakcie LIVE. `KeyAction.comment` oraz istniejący actor_id przechodzą do potwierdzenia executora po wykonaniu wszystkich kroków. `last_executed` powstaje tylko z tego potwierdzenia, ma licznik ID i jest czyszczone przed nowym Startem. Komentarz/autor są ograniczone do 2000/128 znaków. Publiczna projekcja ma allowlistę: schema/sequence/mode/paused/commands/last_action/language/presentation — bez kanałów, filtrów, tokenów, błędów i całego czatu.
+
+`OverlayServer.configure` rezerwuje nowy port przed zapisem i zamknięciem poprzedniego; kolizja lub błąd zapisu zachowują poprzednie ustawienia i usługę. Awaria portu przy starcie jest pokazywana w panelu i nie zatrzymuje głównego backendu. GET/PUT `/api/overlay`, POST `/api/overlay/rotate` podlegają sesji/origin/CSRF panelu. Osobny serwer jest zamykany przy shutdown.
+
+Weryfikacja: 257 testów Python zaliczonych (1 natywny pominięty) i 47 testów frontendu zaliczonych, prawdziwy restart serwera z otwartym WS, kolizja portu/błąd zapisu, regresja backpressure z niezależnego review; testy nie używają czatów ani klawiatury systemowej. Przeglądarka: włączenie, przezroczysty CSS, brak poziomego overflow, font 24→32 w otwartej stronie, Pauza→Czat steruje grą z atrapą nasłuchu. Instrukcja i ograniczenia: `docs/OBS_OVERLAY.md`; plan: `docs/superpowers/plans/2026-09-30-obs-overlay.md`.
+
+
 ## Symulator czatu — v0.18, 2026-09-30
 
 Wdrożono zadanie 7 roadmapy: osobna zakładka Symulator, wybór zapisanego profilu/platformy, pojedynczy komentarz oraz rozwijany scenariusz z przykładem spamu. Raport pokazuje przyczyny odrzucenia, kroki press/hold/wait, profil, platformę i rewizję; ostrzega po zmianie zapisu. Niezapisany szkic jest pomijany. Brak zmian schematu konfiguracji v6.
@@ -48,7 +61,7 @@ Weryfikacja: 191 testów Python poprawnych, 1 natywny pominięty; 31 testów fro
 
 ## Roadmapa rozwoju — 2026-09-28
 
-Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2 i 7; pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
+Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2 i 7 oraz podstawową nakładkę z zadania 4 (bez odbioru w OBS); pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
 
 Wersja 0.9 obejmuje dokumentację roadmapy i aktualizację numeru wymaganą przez zasady tagowania każdego zestawu zmian. Nie zmienia zachowania aplikacji; wcześniejsze sekcje opisują stan odpowiednich historycznych wydań.
 

@@ -2,7 +2,7 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
-[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18; pozostałe zadania są propozycjami.
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18, nakładka OBS od 0.21; pozostałe zadania są propozycjami.
 
 ## Profile gier
 
@@ -29,6 +29,12 @@ W zakładce **Symulator** wybierz zapisany profil i platformę, wpisz login widz
 **Więcej wiadomości / test spamu** rozwija scenariusz z czasami w milisekundach i gotowym przykładem. Limit: 1000 wiadomości w 60 sekundach, 2000 znaków na komentarz. Każdy test ma pustą, niezależną kolejkę; czasy są wirtualne, więc nie trzeba czekać do końca scenariusza.
 
 Test korzysta z ostatnio zapisanych ustawień, pokazuje ich numer i ostrzega o pominięciu niezapisanego szkicu. Wybór profilu/platformy dotyczy tylko symulacji. Można testować podczas LIVE — symulator nie wysyła klawiszy, nie łączy się z czatem i nie zmienia nasłuchu. Symulacja pokazuje idealne czasy przytrzymań i pauz; naciśnięcie ma umownie 0 ms. Nie potwierdza odbioru klawiszy przez grę ani rzeczywistych opóźnień systemu.
+
+## Nakładka OBS
+
+**Nakładka OBS → Włącz nakładkę → Zapisz i zastosuj → Kopiuj adres**. W OBS dodaj źródło przeglądarkowe, wklej adres i ustaw na początek 900 × 600. Przezroczysta nakładka pokazuje komendy, ostatni wykonany ruch i stan pauzy. Nick jest domyślnie ukryty; wygląd można dostosować w panelu.
+
+Stały adres przetrwa restart; token ma wyłącznie uprawnienia odczytu nakładki. Szczegóły i ograniczenia odbioru: [instrukcja OBS](docs/OBS_OVERLAY.md). Obsługa głosowania i tur nie jest częścią tej wersji.
 
 ## Uruchamianie dla użytkownika
 

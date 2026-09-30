@@ -24,6 +24,7 @@ import type {
   ProfileTemplate,
 } from "./api/types";
 import { ConfigController } from "./state/configController";
+import { OverlaySettings } from "./components/OverlaySettings";
 import { ChatSimulator } from "./components/ChatSimulator";
 import { MappingEditor } from "./components/MappingEditor";
 import { ProfileManager } from "./components/ProfileManager";
@@ -169,6 +170,7 @@ export default function App() {
             ["Pulpit", "◫"],
             ["Mapowania", "⌨"],
             ["Symulator", "▷"],
+            ["Nakładka OBS", "▣"],
             ["Ustawienia", "⚙"],
           ].map(([name, icon]) => (
             <button
@@ -205,14 +207,18 @@ export default function App() {
             <h1>{t(section)}</h1>
             <p>{t("Oddaj stery swojej społeczności.")}</p>
           </div>
-          <div className="header-actions">
-            <div className="save-indicator">
-              <span
-                className={"dot " + (editor.saveStatus === "saved" ? "on" : "")}
-              />
-              {t(saves[editor.saveStatus])}
+          {section !== "Nakładka OBS" && (
+            <div className="header-actions">
+              <div className="save-indicator">
+                <span
+                  className={
+                    "dot " + (editor.saveStatus === "saved" ? "on" : "")
+                  }
+                />
+                {t(saves[editor.saveStatus])}
+              </div>
             </div>
-          </div>
+          )}
         </header>
         {error && (
           <div className="notice error" role="alert">
@@ -269,7 +275,7 @@ export default function App() {
           <ConfigRecovery state={state} onRecovered={() => location.reload()} />
         ) : editor.draft ? (
           <>
-            {section !== "Symulator" && (
+            {!["Symulator", "Nakładka OBS"].includes(section) && (
               <>
                 <section className="connection-card">
                   <div className="connection-title">
@@ -373,6 +379,9 @@ export default function App() {
               </>
             )}
             <fieldset className="editor-fields" disabled={busy}>
+              {section === "Nakładka OBS" && (
+                <OverlaySettings connected={connected} />
+              )}
               {section === "Symulator" && editor.saved && (
                 <ChatSimulator
                   config={editor.saved}
@@ -499,19 +508,22 @@ export default function App() {
                   </p>
                 </section>
               )}
-              {section !== "Symulator" && editor.draft.show_logs && (
-                <EventLog events={events} onClear={() => setEvents([])} />
-              )}
+              {!["Symulator", "Nakładka OBS"].includes(section) &&
+                editor.draft.show_logs && (
+                  <EventLog events={events} onClear={() => setEvents([])} />
+                )}
             </fieldset>
-            <footer>
-              <span>{t("Ustawienia zapisują się automatycznie.")}</span>
-              <button
-                disabled={busy || !connected || editor.conflict}
-                onClick={() => void action(() => controller.flush())}
-              >
-                {t("Zapisz teraz")}
-              </button>
-            </footer>
+            {section !== "Nakładka OBS" && (
+              <footer>
+                <span>{t("Ustawienia zapisują się automatycznie.")}</span>
+                <button
+                  disabled={busy || !connected || editor.conflict}
+                  onClick={() => void action(() => controller.flush())}
+                >
+                  {t("Zapisz teraz")}
+                </button>
+              </footer>
+            )}
           </>
         ) : (
           <section className="card">

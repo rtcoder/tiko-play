@@ -1,0 +1,96 @@
+html.overlay-page,
+html.overlay-page body {
+  background: transparent !important;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  color-scheme: dark;
+}
+.overlay-page #root {
+  background: transparent;
+}
+.broadcast-overlay {
+  --overlay-accent: #7c83ff;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  max-width: 900px;
+  color: #fff;
+  font-size: 24px;
+  line-height: 1.4;
+}
+.broadcast-overlay section {
+  margin: 0;
+  padding: 18px 22px;
+  border: 1px solid #ffffff30;
+  border-left: 4px solid var(--overlay-accent);
+  border-radius: 14px;
+  background: #11182ee8;
+  overflow-wrap: anywhere;
+}
+.overlay-status {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 10px;
+  border-radius: 30px;
+  padding: 8px 16px;
+  background: #11182ee8;
+  font-size: 0.75em;
+  font-weight: 700;
+}
+.overlay-status.offline,
+.overlay-status.paused {
+  color: #f1d38c;
+}
+.overlay-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #edcc80;
+}
+.overlay-status.live .overlay-dot {
+  background: #54e9ba;
+}
+.overlay-caption {
+  display: block;
+  font-size: 0.6em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #c2c9df;
+  margin-bottom: 8px;
+}
+.overlay-actor {
+  display: block;
+  color: var(--overlay-accent);
+  font-size: 0.75em;
+  margin-bottom: 4px;
+}
+.overlay-action q {
+  font-weight: 750;
+}
+.overlay-action p {
+  margin: 6px 0 0;
+  font-size: 0.85em;
+}
+.overlay-commands > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.overlay-command {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #ffffff25;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.7em;
+}
+.overlay-command strong {
+  color: var(--overlay-accent);
+}
+.overlay-command span {
+  color: #d4daeb;
+}

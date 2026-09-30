@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.api.events import stream_events
+from src.api.overlay import create_overlay_router
 from src.api.twitch import create_twitch_router
 from src.api.youtube import create_youtube_router
 from src.api.simulation import create_simulation_router
@@ -43,6 +44,7 @@ def create_app(
     youtube_keys=None,
     preferences=None,
     on_language_changed=None,
+    overlay=None,
 ):
     preferences = preferences or PreferencesStore(
         store.path.with_name("preferences.json")
@@ -276,6 +278,8 @@ def create_app(
             return
         await stream_events(ws, events, state)
 
+    if overlay is not None:
+        app.include_router(create_overlay_router(overlay))
     app.include_router(create_twitch_router(twitch_auth))
     app.include_router(create_profiles_router(store))
     app.include_router(create_simulation_router(store))
