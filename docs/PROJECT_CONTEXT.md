@@ -1,5 +1,18 @@
 # TikoPlay — kontekst techniczny
 
+## Symulator czatu — v0.18, 2026-09-30
+
+Wdrożono zadanie 7 roadmapy: osobna zakładka Symulator, wybór zapisanego profilu/platformy, pojedynczy komentarz oraz rozwijany scenariusz z przykładem spamu. Raport pokazuje przyczyny odrzucenia, kroki press/hold/wait, profil, platformę i rewizję; ostrzega po zmianie zapisu. Niezapisany szkic jest pomijany. Brak zmian schematu konfiguracji v6.
+
+`Matcher.resolve` daje czystą decyzję `MatchDecision`; `decide` dodaje istniejący cooldown. Produkcyjna ścieżka używa tej samej decyzji. `output_policy` współdzieli limity 300 ms, 100 oczekujących i TTL 1 s oraz porównanie wygaśnięcia strict >. Symulator używa integer ms, LIVE nadal sekund monotonicznych. Zachowano zużycie cooldownu przed odmową kolejki. Zakończenie akcji w chwili wiadomości obsługiwane jest pierwsze. Press kosztuje umownie 0 ms; hold/wait według deklaracji, bez opóźnień OS/gry/wątku.
+
+`POST /api/simulation` ma istniejące session/origin/CSRF, limit strumienia 4 MiB i expected_revision (409 przy konflikcie). Model: 1–1000 wiadomości, offset całkowity 0–60000 ms, widz 1–128 znaków, komentarz do 2000 znaków. Wybór profilu nie zmienia aktywnego profilu. Snapshot jest kopiowany, obliczenia wykonują się poza pętlą API; silnik nie ma dostępu do listenera, adaptera klawiatury ani sieci. Symulacja podczas LIVE nie zmienia historii, konfiguracji ani cooldownu.
+
+Weryfikacja: 241 testów Python zaliczonych (1 natywny pominięty), 41 testów frontend zaliczonych; TypeScript/Vite i build macOS arm64 poprawne, podpis ad-hoc zweryfikowany.
+
+Niezależny review odtworzył błędy float przy dokładnie 300 ms cooldownu i 1000 ms TTL; poprawione przez integer clock i test regresji. Test API nazwano `tests/api/test_simulation_routes.py`, aby uniknąć kolizji modułów pytest z testami core. Podgląd przeglądarki na danych tymczasowych potwierdził wyrównanie pól oraz wynik komentarza 8; rzeczywistych czatów i gry nie używano. Plan: `docs/superpowers/plans/2026-09-30-chat-simulator.md`.
+
+
 ## Czytelność mapowań — v0.15, 2026-09-30
 
 Mapowania mają teraz kompaktowy widok „Widz pisze → Naciśnij klawisz”. Jedno press z najwyżej jednym klawiszem ma bezpośredni select; pozostałe akcje opis słowny i przycisk edycji. MappingRow przechowuje wyłącznie stan rozwinięcia, nie kopię danych. Opcje sekwencji rozwijają się bez konwersji lub spłaszczania akcji. Niepoprawne zaawansowane akcje są rozwijane automatycznie i nie można ukryć błędu do czasu poprawienia. Czytelne etykiety/optgroup nie zmieniają identyfikatorów klawiszy zapisywanych w konfiguracji.
@@ -35,7 +48,7 @@ Weryfikacja: 191 testów Python poprawnych, 1 natywny pominięty; 31 testów fro
 
 ## Roadmapa rozwoju — 2026-09-28
 
-Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. To propozycja do wyboru i zatwierdzenia; nie wdrożono żadnej z tych funkcji. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
+Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2 i 7; pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
 
 Wersja 0.9 obejmuje dokumentację roadmapy i aktualizację numeru wymaganą przez zasady tagowania każdego zestawu zmian. Nie zmienia zachowania aplikacji; wcześniejsze sekcje opisują stan odpowiednich historycznych wydań.
 

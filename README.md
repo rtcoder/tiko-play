@@ -2,7 +2,7 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
-[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14; pozostałe zadania są propozycjami.
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18; pozostałe zadania są propozycjami.
 
 ## Profile gier
 
@@ -21,6 +21,14 @@ W **Mapowaniach** wpisz komentarz i wybierz klawisz. **Więcej opcji** otwiera e
 Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; ochrona fokusu nie jest częścią tej wersji. Kolejka zachowuje limit 100 akcji i 1 s na rozpoczęcie — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
 
 Stare mapowania automatycznie stają się pojedynczym krokiem naciśnięcia. Niepełne kroki i niepoprawne czasy pozostają w szkicu, blokując zapis i Start do poprawienia.
+
+## Symulator czatu
+
+W zakładce **Symulator** wybierz zapisany profil i platformę, wpisz login widza (dla YouTube ID kanału) oraz komentarz, a następnie kliknij **Sprawdź komentarz**. Wynik pokaże planowane kroki albo przyczynę pominięcia: filtr widza, brak mapowania, cooldown, pełna kolejka lub przekroczona ważność.
+
+**Więcej wiadomości / test spamu** rozwija scenariusz z czasami w milisekundach i gotowym przykładem. Limit: 1000 wiadomości w 60 sekundach, 2000 znaków na komentarz. Każdy test ma pustą, niezależną kolejkę; czasy są wirtualne, więc nie trzeba czekać do końca scenariusza.
+
+Test korzysta z ostatnio zapisanych ustawień, pokazuje ich numer i ostrzega o pominięciu niezapisanego szkicu. Wybór profilu/platformy dotyczy tylko symulacji. Można testować podczas LIVE — symulator nie wysyła klawiszy, nie łączy się z czatem i nie zmienia nasłuchu. Symulacja pokazuje idealne czasy przytrzymań i pauz; naciśnięcie ma umownie 0 ms. Nie potwierdza odbioru klawiszy przez grę ani rzeczywistych opóźnień systemu.
 
 ## Uruchamianie dla użytkownika
 

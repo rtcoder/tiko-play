@@ -6,6 +6,11 @@ from dataclasses import dataclass, replace
 
 from src.core.actions import ActionDefinition, HoldStep, PressStep, WaitStep
 from src.core.models import AppError
+from src.core.output_policy import (
+    ACTION_TTL_SECONDS,
+    action_expired,
+    queue_has_capacity,
+)
 
 
 @dataclass(frozen=True)
@@ -25,7 +30,7 @@ class KeyAction:
                 self, "definition", ActionDefinition(steps=(PressStep(keys=self.keys),))
             )
         if self.expires_at is None:
-            object.__setattr__(self, "expires_at", self.created_at + 1)
+            object.__setattr__(self, "expires_at", self.created_at + ACTION_TTL_SECONDS)
 
 
 class ReleaseError(Exception):
@@ -85,7 +90,7 @@ class KeyboardExecutor:
                 return False
             if action.output_epoch is not None and action.output_epoch != self._epoch:
                 return False
-            if len(self._pending) >= 100:
+            if not queue_has_capacity(len(self._pending)):
                 self._drop()
                 return False
             self._pending.append(replace(action, output_epoch=self._epoch))
@@ -164,7 +169,7 @@ class KeyboardExecutor:
                 action = self._pending.popleft()
                 if not self._valid(action):
                     continue
-                if self.clock() > action.expires_at:
+                if action_expired(self.clock(), action.expires_at):
                     self._drop()
                     continue
             try:

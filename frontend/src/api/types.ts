@@ -96,3 +96,37 @@ export interface TwitchActivation extends TwitchAuthState {
   verification_uri: string;
   expires_at: number;
 }
+
+export interface SimulationMessage {
+  offset_ms: number;
+  user_id: string;
+  comment: string;
+}
+export interface SimulationReport {
+  config_revision: number;
+  profile_id: string;
+  profile_name: string;
+  platform: Platform;
+  planned_count: number;
+  rejected_count: number;
+  duration_ms: number;
+  decisions: (SimulationMessage & {
+    message_index: number;
+    reason:
+      | "planned"
+      | "user_filtered"
+      | "no_mapping"
+      | "action_cooldown"
+      | "queue_full"
+      | "expired";
+    started_at_ms: number | null;
+    finished_at_ms: number | null;
+    steps: {
+      type: "press" | "hold" | "wait";
+      keys: string[];
+      start_ms: number;
+      end_ms: number;
+      duration_ms: number;
+    }[];
+  })[];
+}

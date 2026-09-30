@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from src.api.events import stream_events
 from src.api.twitch import create_twitch_router
 from src.api.youtube import create_youtube_router
+from src.api.simulation import create_simulation_router
 from src.api.profiles import create_profiles_router
 from src.core.keys import get_keys
 from src.core.models import AppConfig, AppError
@@ -277,6 +278,7 @@ def create_app(
 
     app.include_router(create_twitch_router(twitch_auth))
     app.include_router(create_profiles_router(store))
+    app.include_router(create_simulation_router(store))
     if youtube_keys is not None:
         app.include_router(create_youtube_router(youtube_keys, listener))
 

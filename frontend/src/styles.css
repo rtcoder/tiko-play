@@ -851,3 +851,124 @@ label > textarea {
   .step-order { grid-column: 1 / -1; }
   .step-order button { white-space: nowrap; }
 }
+
+.simulator-badge {
+  display: inline-flex;
+  align-items: center;
+  color: #77e4c1;
+  background: #173a3b;
+  border: 1px solid #386764;
+  border-radius: 30px;
+  padding: 7px 12px;
+  font-weight: 600;
+}
+.simulator h2 {
+  margin-top: 18px;
+}
+.simulator label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.simulator label input,
+.simulator label select {
+  width: 100%;
+  height: 44px;
+  margin: 0;
+}
+.simulator-context {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  max-width: 660px;
+  margin-top: 28px;
+}
+.simulator-inputs {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(160px, 2fr) auto;
+  align-items: end;
+  gap: 16px;
+  margin: 28px 0;
+}
+.simulator-inputs button {
+  min-height: 44px;
+}
+.simulator-advanced {
+  border-top: 1px solid #ffffff26;
+  padding-top: 20px;
+}
+.simulator summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.simulator-messages {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+  max-height: 440px;
+  overflow: auto;
+}
+.simulator-message {
+  display: grid;
+  grid-template-columns: 110px minmax(120px, 1fr) minmax(120px, 2fr) 40px;
+  align-items: end;
+  gap: 12px;
+}
+.simulator-message button {
+  height: 44px;
+  padding: 8px;
+}
+.simulator-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.simulator-results {
+  margin-top: 28px;
+  border-top: 1px solid #ffffff26;
+  padding-top: 12px;
+}
+.simulator-decisions {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  max-height: 600px;
+  overflow: auto;
+}
+.simulator-decisions > li {
+  background: #141a2a66;
+  border-left: 3px solid #aaa0df;
+  border-radius: 6px;
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+.simulator-decisions > li.planned {
+  border-left-color: #51d8b2;
+}
+.simulator-decision-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.simulator-decision-context span {
+  color: #b2bdd3;
+}
+.simulator-decisions details {
+  margin-top: 8px;
+}
+@media (max-width: 850px) {
+  .simulator-inputs {
+    grid-template-columns: 1fr;
+  }
+  .simulator-context {
+    grid-template-columns: 1fr;
+  }
+  .simulator-message {
+    grid-template-columns: 1fr 1fr;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ffffff26;
+  }
+}

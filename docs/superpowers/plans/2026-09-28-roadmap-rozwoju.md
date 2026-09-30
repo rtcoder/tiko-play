@@ -271,6 +271,8 @@ Użytkownik wybiera uruchomioną aplikację docelową. TikoPlay wysyła wejście
 
 ## Zadanie 7. Symulator czatu
 
+Wdrożone w v0.18. Plan wykonania i ograniczenia czasowe: [chat-simulator](2026-09-30-chat-simulator.md). Wspólny odbiór z użytkownikiem pozostaje możliwy po instalacji; wykonano lokalny odbiór i niezależny przegląd.
+
 ### Opis i zakres
 
 Oddzielna zakładka pozwala wybrać profil, wpisać identyfikator widza i komentarz oraz zobaczyć wynik dopasowania, filtrów, limitów i planowanej akcji. Scenariusz wielu wiadomości pokazuje zachowanie przy spamie, a później wyniki rund głosowania i tur. Symulator ma własny stan i nigdy nie wysyła klawiszy.
@@ -293,12 +295,12 @@ Oddzielna zakładka pozwala wybrać profil, wpisać identyfikator widza i koment
 
 ### Plan
 
-- [ ] 1. Dodać `tests/core/test_simulation.py`: poprawna komenda, obcy widz, brak mapowania, cooldown, identyczne czasy i przekroczenie limitów. Atrapa prawdziwego adaptera ma zgłaszać błąd, jeśli zostanie skonstruowana lub wywołana.
-- [ ] 2. Wydzielić wspólne dopasowanie i wdrożyć izolowany wirtualny przebieg. Potwierdzić równoważność decyzji symulatora i produkcyjnej ścieżki z tym samym zegarem.
-- [ ] 3. Dodać chroniony endpoint oraz test `tests/api/test_simulation.py`: wymagane uwierzytelnienie, walidacja rozmiaru, brak zmiany rewizji konfiguracji i brak zmiany stanu LIVE.
-- [ ] 4. Zbudować panel pojedynczej wiadomości oraz tabelę scenariusza z gotowym przykładem spamu. Test `ChatSimulator.test.tsx` sprawdza powody odrzuceń i oznaczenie trybu bez klawiszy.
-- [ ] 5. Uruchomić `python -m pytest tests/core/test_simulation.py tests/api/test_simulation.py -q` i frontend. Przy późniejszym wdrażaniu zadań 2, 3, 5 i 8 rozszerzyć symulator w tym samym zestawie zmian.
-- [ ] 6. Wykonać wspólny odbiór i wydanie.
+- [x] 1. Dodać `tests/core/test_simulation.py`: poprawna komenda, obcy widz, brak mapowania, cooldown, identyczne czasy i przekroczenie limitów. Atrapa prawdziwego adaptera ma zgłaszać błąd, jeśli zostanie skonstruowana lub wywołana.
+- [x] 2. Wydzielić wspólne dopasowanie i wdrożyć izolowany wirtualny przebieg. Potwierdzić równoważność decyzji symulatora i produkcyjnej ścieżki z tym samym zegarem.
+- [x] 3. Dodać chroniony endpoint oraz test `tests/api/test_simulation_routes.py`: wymagane uwierzytelnienie, walidacja rozmiaru, brak zmiany rewizji konfiguracji i brak zmiany stanu LIVE.
+- [x] 4. Zbudować panel pojedynczej wiadomości oraz tabelę scenariusza z gotowym przykładem spamu. Test `ChatSimulator.test.tsx` sprawdza powody odrzuceń i oznaczenie trybu bez klawiszy.
+- [x] 5. Uruchomić `python -m pytest tests/core/test_simulation.py tests/api/test_simulation_routes.py -q` i frontend. Przy późniejszym wdrażaniu zadań 2, 3, 5 i 8 rozszerzyć symulator w tym samym zestawie zmian.
+- [x] 6. Wykonać lokalny odbiór, niezależny przegląd i przygotować wydanie.
 
 **Kryterium odbioru:** użytkownik wyjaśnia z wyniku, dlaczego komenda zadziałałaby lub została odrzucona; symulacja nie powoduje żadnego wywołania klawiatury ani integracji sieciowej.
 

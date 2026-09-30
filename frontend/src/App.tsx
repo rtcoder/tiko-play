@@ -24,6 +24,7 @@ import type {
   ProfileTemplate,
 } from "./api/types";
 import { ConfigController } from "./state/configController";
+import { ChatSimulator } from "./components/ChatSimulator";
 import { MappingEditor } from "./components/MappingEditor";
 import { ProfileManager } from "./components/ProfileManager";
 import { activeProfile, updateProfile } from "./state/profiles";
@@ -167,6 +168,7 @@ export default function App() {
           {[
             ["Pulpit", "◫"],
             ["Mapowania", "⌨"],
+            ["Symulator", "▷"],
             ["Ustawienia", "⚙"],
           ].map(([name, icon]) => (
             <button
@@ -267,102 +269,119 @@ export default function App() {
           <ConfigRecovery state={state} onRecovered={() => location.reload()} />
         ) : editor.draft ? (
           <>
-            <section className="connection-card">
-              <div className="connection-title">
-                <span
-                  className={
-                    "status-orb " +
-                    (connected && state?.status === "connected" ? "live" : "")
-                  }
-                >
-                  ◉
-                </span>
-                <div>
-                  <h2>
-                    {!connected
-                      ? t("Stan nasłuchu nieznany")
-                      : state
-                        ? statusLabel(state.status)
-                        : t("Łączenie z aplikacją…")}
-                  </h2>
-                  {running && connected && state?.active_platform && (
-                    <p className="active-source">
-                      {t("Aktywne źródło:")}{" "}
-                      {sourceLabel(
-                        state.active_platform,
-                        state.active_channel ?? "",
+            {section !== "Symulator" && (
+              <>
+                <section className="connection-card">
+                  <div className="connection-title">
+                    <span
+                      className={
+                        "status-orb " +
+                        (connected && state?.status === "connected"
+                          ? "live"
+                          : "")
+                      }
+                    >
+                      ◉
+                    </span>
+                    <div>
+                      <h2>
+                        {!connected
+                          ? t("Stan nasłuchu nieznany")
+                          : state
+                            ? statusLabel(state.status)
+                            : t("Łączenie z aplikacją…")}
+                      </h2>
+                      {running && connected && state?.active_platform && (
+                        <p className="active-source">
+                          {t("Aktywne źródło:")}{" "}
+                          {sourceLabel(
+                            state.active_platform,
+                            state.active_channel ?? "",
+                          )}
+                        </p>
                       )}
-                    </p>
-                  )}
-                  {running && connected && state?.active_profile_name && (
-                    <p className="active-source">
-                      {t("Profil sesji:")} {state.active_profile_name}
-                    </p>
-                  )}
-                  <p>
-                    {!connected
-                      ? t(
-                          "Brak aktualnego stanu. Otwórz TikoPlay z ikony lub poczekaj na ponowne połączenie.",
-                        )
-                      : state?.output === "countdown"
-                        ? t(
-                            "Przełącz się do gry. Klawisze zostaną włączone po 3 sekundach.",
-                          )
-                        : state?.output === "enabled"
-                          ? t("Wysyłanie klawiszy jest aktywne.")
-                          : t("Nasłuch gotowy do uruchomienia.")}
-                  </p>
-                </div>
-              </div>
-              <button
-                className={running ? "stop-button" : "primary start-button"}
-                disabled={
-                  !connected ||
-                  busy ||
-                  state?.status === "stopping" ||
-                  (!running &&
-                    (!editor.draft[editor.draft.platform].channel.trim() ||
-                      (editor.draft.platform === "twitch" &&
-                        auth?.status !== "connected") ||
-                      editor.saveStatus === "error" ||
-                      editor.conflict ||
-                      editor.saveStatus === "invalid"))
-                }
-                onClick={() =>
-                  void action(() =>
-                    running
-                      ? request("/api/listener/stop", "POST")
-                      : controller.start(),
-                  )
-                }
-              >
-                {running ? t("■ Zatrzymaj nasłuch") : t("▶ Rozpocznij nasłuch")}
-              </button>
-            </section>
-            {pending && (
-              <div className="notice">
-                {t(
-                  "Zapisano nowe ustawienia. Zatrzymaj i ponownie uruchom nasłuch, aby je zastosować.",
+                      {running && connected && state?.active_profile_name && (
+                        <p className="active-source">
+                          {t("Profil sesji:")} {state.active_profile_name}
+                        </p>
+                      )}
+                      <p>
+                        {!connected
+                          ? t(
+                              "Brak aktualnego stanu. Otwórz TikoPlay z ikony lub poczekaj na ponowne połączenie.",
+                            )
+                          : state?.output === "countdown"
+                            ? t(
+                                "Przełącz się do gry. Klawisze zostaną włączone po 3 sekundach.",
+                              )
+                            : state?.output === "enabled"
+                              ? t("Wysyłanie klawiszy jest aktywne.")
+                              : t("Nasłuch gotowy do uruchomienia.")}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    className={running ? "stop-button" : "primary start-button"}
+                    disabled={
+                      !connected ||
+                      busy ||
+                      state?.status === "stopping" ||
+                      (!running &&
+                        (!editor.draft[editor.draft.platform].channel.trim() ||
+                          (editor.draft.platform === "twitch" &&
+                            auth?.status !== "connected") ||
+                          editor.saveStatus === "error" ||
+                          editor.conflict ||
+                          editor.saveStatus === "invalid"))
+                    }
+                    onClick={() =>
+                      void action(() =>
+                        running
+                          ? request("/api/listener/stop", "POST")
+                          : controller.start(),
+                      )
+                    }
+                  >
+                    {running
+                      ? t("■ Zatrzymaj nasłuch")
+                      : t("▶ Rozpocznij nasłuch")}
+                  </button>
+                </section>
+                {pending && (
+                  <div className="notice">
+                    {t(
+                      "Zapisano nowe ustawienia. Zatrzymaj i ponownie uruchom nasłuch, aby je zastosować.",
+                    )}
+                  </div>
                 )}
-              </div>
+                <ProfileManager
+                  compact={section === "Mapowania"}
+                  config={editor.draft}
+                  templates={templates}
+                  disabled={!!running || busy || !connected || editor.conflict}
+                  dirty={editor.saveStatus !== "saved"}
+                  onReload={() => controller.reload()}
+                  onMutate={async (transform) => {
+                    setBusy(true);
+                    try {
+                      await controller.mutate(transform);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                />
+              </>
             )}
-            <ProfileManager
-              compact={section === "Mapowania"}
-              config={editor.draft}
-              templates={templates}
-              disabled={!!running || busy || !connected || editor.conflict}
-              dirty={editor.saveStatus !== "saved"}
-              onReload={() => controller.reload()}
-              onMutate={async (transform) => {
-                setBusy(true);
-                try {
-                  await controller.mutate(transform);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            />
             <fieldset className="editor-fields" disabled={busy}>
+              {section === "Symulator" && editor.saved && (
+                <ChatSimulator
+                  config={editor.saved}
+                  revision={editor.revision}
+                  dirty={editor.saveStatus !== "saved"}
+                  connected={connected}
+                  live={!!running}
+                />
+              )}
               {section === "Pulpit" && (
                 <>
                   <div className="two-columns">
@@ -480,7 +499,7 @@ export default function App() {
                   </p>
                 </section>
               )}
-              {editor.draft.show_logs && (
+              {section !== "Symulator" && editor.draft.show_logs && (
                 <EventLog events={events} onClear={() => setEvents([])} />
               )}
             </fieldset>
