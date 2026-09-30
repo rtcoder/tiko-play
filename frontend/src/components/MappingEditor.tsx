@@ -1,7 +1,8 @@
+import { KeyOptions } from "./KeyOptions";
 import { ActionEditor } from "./ActionEditor";
-import { mappingAction } from "../state/actions";
+import { actionError, mappingAction, readableAction } from "../state/actions";
 import { t } from "../i18n";
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { Mapping } from "../api/types";
 type Props = {
   mappings: Mapping[];
@@ -11,15 +12,15 @@ type Props = {
 };
 export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
   const [preset, setPreset] = useState("");
-  const update = (id: string, patch: Partial<Mapping>) =>
-    onChange(mappings.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   return (
     <section className="card mapping-card">
       <div className="section-heading">
         <div>
           <span className="eyebrow">{t("KOMENTARZ → AKCJA")}</span>
           <h2>{t("Mapowania klawiszy")}</h2>
-          <p>{t("Widz pisze komentarz. TikoPlay wykonuje Twoją akcję.")}</p>
+          <p>
+            {t("Wpisz komentarz i wybierz klawisz. Przykład: „lewo” → ← Lewo.")}
+          </p>
         </div>
         <span className="count">
           {mappings.length} {t("mapowań")}
@@ -64,11 +65,6 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
           {t("+ Dodaj mapowanie")}
         </button>
       </div>
-      <div className="table-labels">
-        <span>{t("Komentarz widza")}</span>
-        <span>{t("Akcja / sekwencja")}</span>
-        <span />
-      </div>
       {!mappings.length && (
         <div className="empty">
           <span className="empty-symbol">⌨</span>
@@ -78,46 +74,153 @@ export function MappingEditor({ mappings, onChange, presets, keys }: Props) {
           </p>
         </div>
       )}
-      {mappings.map((m, index) => (
-        <div className="mapping-row" key={m.id}>
-          <div className="trigger-input">
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <input
-              aria-label={t("Komentarz {number}", { number: index + 1 })}
-              placeholder={t("np. lewo")}
-              value={m.trigger}
-              onChange={(e) => update(m.id, { trigger: e.target.value })}
-            />
-          </div>
-          <ActionEditor
-            action={mappingAction(m)}
+      <div className="mapping-list">
+        {mappings.map((m, index) => (
+          <MappingRow
+            key={m.id}
+            mapping={m}
+            number={index + 1}
             keys={keys}
-            mappingNumber={index + 1}
-            onChange={(action) => {
-              const { keys: _legacyKeys, ...rest } = m;
-              onChange(
-                mappings.map((item) =>
-                  item.id === m.id ? { ...rest, action } : item,
-                ),
-              );
-            }}
-          />
-          <button
-            className="icon-button danger"
-            aria-label={t("Usuń mapowanie")}
-            onClick={() =>
+            onChange={(next) =>
+              onChange(mappings.map((item) => (item.id === m.id ? next : item)))
+            }
+            onRemove={() =>
               onChange(mappings.filter((item) => item.id !== m.id))
             }
-          >
-            ×
-          </button>
-        </div>
-      ))}
+          />
+        ))}
+      </div>
       <div className="card-foot">
         {t(
-          "Kilka klawiszy w kroku to jednoczesna kombinacja. Do 20 kroków, łącznie do 10 s przytrzymań i pauz. Stop przerywa sekwencję.",
+          "Chcesz przytrzymać klawisz lub wykonać kilka ruchów? Otwórz „Więcej opcji” przy mapowaniu.",
         )}
       </div>
     </section>
+  );
+}
+
+function MappingRow({
+  mapping,
+  number,
+  keys,
+  onChange,
+  onRemove,
+}: {
+  mapping: Mapping;
+  number: number;
+  keys: string[];
+  onChange: (mapping: Mapping) => void;
+  onRemove: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const panelId = useId();
+  const action = mappingAction(mapping);
+  const first = action.steps[0];
+  const simple =
+    action.steps.length === 1 &&
+    first.type === "press" &&
+    first.keys.length <= 1;
+  const error = actionError(action);
+  useEffect(() => {
+    if (!simple && error) setExpanded(true);
+  }, [simple, error]);
+  // Never hide an invalid advanced draft behind a collapsed summary.
+  const open = expanded || (!simple && !!error);
+  const updateAction = (value: typeof action) => {
+    const { keys: _legacyKeys, ...rest } = mapping;
+    onChange({ ...rest, action: value });
+  };
+  return (
+    <article className={`mapping-item${open ? " is-open" : ""}`}>
+      <div className="mapping-overview">
+        <label className="mapping-trigger">
+          <span>{t("Widz pisze")}</span>
+          <input
+            aria-label={t("Komentarz {number}", { number })}
+            placeholder={t("np. lewo")}
+            value={mapping.trigger}
+            onChange={(e) => onChange({ ...mapping, trigger: e.target.value })}
+          />
+        </label>
+        <span className="mapping-arrow" aria-hidden="true">
+          →
+        </span>
+        <div className="mapping-result">
+          <span className="mapping-label">
+            {t(simple ? "Naciśnij klawisz" : "Gra wykonuje")}
+          </span>
+          {simple ? (
+            <select
+              aria-label={t("Klawisz mapowania {number}", { number })}
+              value={first.type === "press" ? (first.keys[0] ?? "") : ""}
+              onChange={(e) =>
+                updateAction({
+                  steps: [
+                    {
+                      type: "press",
+                      keys: e.target.value ? [e.target.value] : [],
+                    },
+                  ],
+                })
+              }
+            >
+              <option value="">{t("Wybierz klawisz…")}</option>
+              <KeyOptions keys={keys} />
+            </select>
+          ) : (
+            <p className="mapping-summary">{readableAction(action)}</p>
+          )}
+        </div>
+        <div className="mapping-row-actions">
+          <button
+            className="mapping-options"
+            aria-expanded={open}
+            aria-controls={panelId}
+            disabled={!simple && !!error}
+            onClick={() => setExpanded(!open)}
+          >
+            {t(
+              open
+                ? "Zwiń opcje"
+                : simple
+                  ? "Więcej opcji"
+                  : action.steps.length === 1
+                    ? "Edytuj akcję"
+                    : "Edytuj sekwencję",
+            )}
+          </button>
+          <button
+            className="mapping-remove"
+            aria-label={t("Usuń mapowanie")}
+            onClick={onRemove}
+          >
+            {t("Usuń")}
+          </button>
+        </div>
+      </div>
+      {open && (
+        <div id={panelId} className="mapping-details">
+          <div className="mapping-details-heading">
+            <strong>{t("Co ma zrobić gra?")}</strong>
+            <p>
+              {t(
+                "Kroki wykonują się od góry do dołu. Klawisze w jednym kroku są wciskane razem.",
+              )}
+            </p>
+          </div>
+          <ActionEditor
+            action={action}
+            keys={keys}
+            mappingNumber={number}
+            onChange={updateAction}
+          />
+        </div>
+      )}
+      {!open && error && (
+        <p className="action-error" role="alert">
+          {t(error)}
+        </p>
+      )}
+    </article>
   );
 }

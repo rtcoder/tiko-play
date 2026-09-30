@@ -1,5 +1,6 @@
+import { KeyOptions } from "./KeyOptions";
 import type { ActionDefinition, ActionStep } from "../api/types";
-import { actionError } from "../state/actions";
+import { actionError, keyLabel } from "../state/actions";
 import { t } from "../i18n";
 
 type Props = {
@@ -34,28 +35,32 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
         <div className="action-step" key={index}>
           <div className="step-heading">
             <span className="step-number">{index + 1}.</span>
-            <select
-              aria-label={t("Typ kroku {number}", { number: index + 1 })}
-              value={step.type}
-              onChange={(e) => {
-                const type = e.target.value as ActionStep["type"];
-                const selected = step.type === "wait" ? [] : step.keys;
-                update(
-                  index,
-                  type === "wait"
-                    ? { type, duration_ms: 100 }
-                    : type === "hold"
-                      ? { type, keys: selected, duration_ms: 100 }
-                      : { type, keys: selected },
-                );
-              }}
-            >
-              <option value="press">{t("Naciśnięcie")}</option>
-              <option value="hold">{t("Przytrzymanie")}</option>
-              <option value="wait">{t("Pauza")}</option>
-            </select>
+            <label className="step-type">
+              <span>{t("Akcja")}</span>
+              <select
+                aria-label={t("Typ kroku {number}", { number: index + 1 })}
+                value={step.type}
+                onChange={(e) => {
+                  const type = e.target.value as ActionStep["type"];
+                  const selected = step.type === "wait" ? [] : step.keys;
+                  update(
+                    index,
+                    type === "wait"
+                      ? { type, duration_ms: 100 }
+                      : type === "hold"
+                        ? { type, keys: selected, duration_ms: 100 }
+                        : { type, keys: selected },
+                  );
+                }}
+              >
+                <option value="press">{t("Naciśnięcie")}</option>
+                <option value="hold">{t("Przytrzymanie")}</option>
+                <option value="wait">{t("Pauza")}</option>
+              </select>
+            </label>
             {step.type !== "press" && (
               <label className="step-duration">
+                <span>{t("Czas (ms)")}</span>
                 <input
                   type="number"
                   min={step.type === "hold" ? 50 : 10}
@@ -72,8 +77,7 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
                         e.target.value === "" ? NaN : Number(e.target.value),
                     })
                   }
-                />{" "}
-                ms
+                />
               </label>
             )}
             <div className="step-order">
@@ -104,7 +108,7 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
                   })
                 }
               >
-                ×
+                {t("Usuń krok")}
               </button>
             </div>
           </div>
@@ -122,7 +126,7 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
                     })
                   }
                 >
-                  {key}
+                  {keyLabel(key)}
                   <span>×</span>
                 </button>
               ))}
@@ -143,12 +147,8 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
                     });
                 }}
               >
-                <option value="">{t("+ klawisz")}</option>
-                {keys.map((key) => (
-                  <option key={key} value={key}>
-                    {key === " " ? t("spacja") : key}
-                  </option>
-                ))}
+                <option value="">{t("Dodaj klawisz…")}</option>
+                <KeyOptions keys={keys} />
               </select>
             </div>
           )}
@@ -161,7 +161,7 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
             onChange({ steps: [...action.steps, { type: "press", keys: [] }] })
           }
         >
-          {t("Dodaj naciśnięcie")}
+          {t("+ Dodaj krok")}
         </button>
         <button
           disabled={action.steps.length >= 20}
@@ -171,9 +171,9 @@ export function ActionEditor({ action, onChange, keys, mappingNumber }: Props) {
             })
           }
         >
-          {t("Dodaj pauzę")}
+          {t("+ Dodaj pauzę")}
         </button>
-        <span>{action.steps.length}/20</span>
+        <span>{t("Kroki: {count} / 20", { count: action.steps.length })}</span>
         <span>
           {t("Łącznie: {duration} / 10000 ms", {
             duration: Number.isFinite(total) ? total : "—",

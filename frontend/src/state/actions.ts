@@ -43,3 +43,42 @@ export function actionSummary(action: ActionDefinition): string {
     )
     .join(" → ");
 }
+
+export function keyLabel(key: string): string {
+  const labels: Record<string, string> = {
+    up: "↑ Góra",
+    down: "↓ Dół",
+    left: "← Lewo",
+    right: "→ Prawo",
+    space: "Spacja",
+    " ": "Spacja",
+    enter: "Enter",
+    esc: "Esc",
+    ctrl: "Ctrl",
+    shift: "Shift",
+    alt: "Alt",
+    command: "⌘ Command",
+    tab: "Tab",
+    "\t": "Tab",
+    "\n": "Enter",
+    "\r": "Enter",
+  };
+  return t(labels[key] ?? key);
+}
+
+export function readableAction(action: ActionDefinition): string {
+  return action.steps
+    .map((step) =>
+      step.type === "wait"
+        ? t("Poczekaj {duration} ms", { duration: step.duration_ms })
+        : step.type === "hold"
+          ? t("Przytrzymaj {keys} przez {duration} ms", {
+              keys: step.keys.map(keyLabel).join(" + "),
+              duration: step.duration_ms,
+            })
+          : t("Naciśnij {keys}", {
+              keys: step.keys.map(keyLabel).join(" + ") || "…",
+            }),
+    )
+    .join(" → ");
+}

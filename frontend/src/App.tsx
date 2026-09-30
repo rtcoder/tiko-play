@@ -347,6 +347,7 @@ export default function App() {
               </div>
             )}
             <ProfileManager
+              compact={section === "Mapowania"}
               config={editor.draft}
               templates={templates}
               disabled={!!running || busy || !connected || editor.conflict}

@@ -31,7 +31,7 @@ it("edits holds, inserts pauses, reorders and preserves invalid duration", () =>
   );
   expect(screen.getByRole("alert")).toHaveTextContent("50–3000");
   expect(screen.getByRole("spinbutton")).toHaveValue(25);
-  fireEvent.click(screen.getByRole("button", { name: "Dodaj pauzę" }));
+  fireEvent.click(screen.getByRole("button", { name: "+ Dodaj pauzę" }));
   fireEvent.click(
     screen.getByRole("button", { name: "Przesuń krok 2 w górę" }),
   );

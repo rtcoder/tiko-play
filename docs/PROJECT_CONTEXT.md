@@ -1,5 +1,14 @@
 # TikoPlay — kontekst techniczny
 
+## Czytelność mapowań — v0.15, 2026-09-30
+
+Mapowania mają teraz kompaktowy widok „Widz pisze → Naciśnij klawisz”. Jedno press z najwyżej jednym klawiszem ma bezpośredni select; pozostałe akcje opis słowny i przycisk edycji. MappingRow przechowuje wyłącznie stan rozwinięcia, nie kopię danych. Opcje sekwencji rozwijają się bez konwersji lub spłaszczania akcji. Niepoprawne zaawansowane akcje są rozwijane automatycznie i nie można ukryć błędu do czasu poprawienia. Czytelne etykiety/optgroup nie zmieniają identyfikatorów klawiszy zapisywanych w konfiguracji.
+
+ActionEditor ma osobne etykiety typu/czasu i reset marginesów odziedziczonych z globalnych label/input. Select i input mają 42 px oraz wspólną linię na desktopie; na małym ekranie są ułożone pionowo. ProfileManager.compact zwija narzędzia profili tylko na ekranie Mapowania. Brak zmian backendu i formatów danych.
+
+Weryfikacja: 213 testów Python zaliczonych, 1 natywny pominięty; 38 testów frontendu zaliczonych. Kontrola w przeglądarce na konfiguracji tymczasowej: widok prosty, edycja i zapis, wyrównanie select/input (42 px i to samo y), ekran 390 px bez poziomego overflow. Przegląd niezależny wychwycił zwijanie automatycznie otwartego szkicu po poprawieniu błędu; poprawione z testem RED→GREEN, rozwinięcie pozostaje do jawnego zamknięcia.
+
+
 ## Sekwencje klawiszy — v0.14, 2026-09-29
 
 Wdrożono propozycję 2: `ActionDefinition.steps` (1–20), `press(keys)`, `hold(keys, duration_ms)` 50–3000 ms i `wait(duration_ms)` 10–3000 ms, suma czasów do 10000 ms. Modele są niezmienne, nie dopuszczają dodatkowych pól w krokach ani niecałkowitych czasów. `Mapping.action` jest źródłem prawdy; wejściowe `keys` migruje do jednego press, właściwość `Mapping.keys` służy tylko odczytowi pojedynczej starej kombinacji (dla sekwencji zgłasza błąd).

@@ -51,3 +51,103 @@ it("applies translated presets using the original key and unchanged triggers", a
     keys: ["left"],
   });
 });
+
+it("keeps simple mappings compact and changes the key without opening a sequence", () => {
+  const change = vi.fn();
+  render(
+    <MappingEditor
+      mappings={[{ id: "m", trigger: "8", keys: ["up"] }]}
+      onChange={change}
+      presets={{}}
+      keys={["up", "down"]}
+    />,
+  );
+  expect(
+    screen.queryByRole("combobox", { name: "Typ kroku 1" }),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText(/10000/)).not.toBeInTheDocument();
+  fireEvent.change(
+    screen.getByRole("combobox", { name: "Klawisz mapowania 1" }),
+    { target: { value: "down" } },
+  );
+  expect(change.mock.calls[0][0][0]).toEqual({
+    id: "m",
+    trigger: "8",
+    action: { steps: [{ type: "press", keys: ["down"] }] },
+  });
+});
+
+it("opens and closes sequence options without flattening or losing existing steps", () => {
+  const change = vi.fn();
+  const mapping = {
+    id: "m",
+    trigger: "go",
+    action: {
+      steps: [
+        { type: "hold" as const, keys: ["up"], duration_ms: 500 },
+        { type: "wait" as const, duration_ms: 100 },
+      ],
+    },
+  };
+  render(
+    <MappingEditor
+      mappings={[mapping]}
+      onChange={change}
+      presets={{}}
+      keys={["up"]}
+    />,
+  );
+  expect(screen.getByText(/Przytrzymaj.*500 ms/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Edytuj sekwencję" }));
+  expect(
+    screen.getByRole("spinbutton", { name: "Czas kroku 1 (ms)" }),
+  ).toHaveValue(500);
+  fireEvent.click(screen.getByRole("button", { name: "Zwiń opcje" }));
+  expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument();
+  expect(change).not.toHaveBeenCalled();
+});
+
+it("shows invalid sequence fields immediately so a blocked save can be corrected", () => {
+  render(
+    <MappingEditor
+      mappings={[
+        {
+          id: "m",
+          trigger: "go",
+          action: { steps: [{ type: "hold", keys: ["up"], duration_ms: 25 }] },
+        },
+      ]}
+      onChange={() => {}}
+      presets={{}}
+      keys={["up"]}
+    />,
+  );
+  expect(
+    screen.getByRole("spinbutton", { name: "Czas kroku 1 (ms)" }),
+  ).toHaveValue(25);
+  expect(screen.getByRole("alert")).toHaveTextContent("50–3000");
+});
+
+it("keeps an automatically opened invalid action open while the user corrects it", () => {
+  const change = vi.fn();
+  const props = { onChange: change, presets: {}, keys: ["up"] };
+  const mapping = {
+    id: "m",
+    trigger: "go",
+    action: {
+      steps: [{ type: "hold" as const, keys: ["up"], duration_ms: 25 }],
+    },
+  };
+  const { rerender } = render(
+    <MappingEditor {...props} mappings={[mapping]} />,
+  );
+  fireEvent.change(
+    screen.getByRole("spinbutton", { name: "Czas kroku 1 (ms)" }),
+    { target: { value: "50" } },
+  );
+  rerender(<MappingEditor {...props} mappings={change.mock.calls[0][0]} />);
+  expect(
+    screen.getByRole("spinbutton", { name: "Czas kroku 1 (ms)" }),
+  ).toHaveValue(50);
+  expect(screen.getByRole("button", { name: "Zwiń opcje" })).toBeEnabled();
+});

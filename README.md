@@ -16,7 +16,7 @@ Dotychczasowa konfiguracja v1–v5 jest migrowana do v6 z zachowaniem oryginalne
 
 ## Przytrzymania i sekwencje
 
-W **Mapowaniach** wybierz typ kroku: **Naciśnięcie**, **Przytrzymanie** (50–3000 ms) lub **Pauza** (10–3000 ms). Przyciski dodają kroki, strzałki zmieniają ich kolejność. Limit: 20 kroków i łącznie 10000 ms przytrzymań/pauz. Przykład: `right` przytrzymany 750 ms → pauza 100 ms → naciśnięcie `space`.
+W **Mapowaniach** wpisz komentarz i wybierz klawisz. **Więcej opcji** otwiera edycję kombinacji i sekwencji. W rozwiniętym edytorze wybierz typ kroku: **Naciśnięcie**, **Przytrzymanie** (50–3000 ms) lub **Pauza** (10–3000 ms). Przyciski dodają kroki, strzałki zmieniają ich kolejność. Limit: 20 kroków i łącznie 10000 ms przytrzymań/pauz. Przykład: `right` przytrzymany 750 ms → pauza 100 ms → naciśnięcie `space`.
 
 Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; ochrona fokusu nie jest częścią tej wersji. Kolejka zachowuje limit 100 akcji i 1 s na rozpoczęcie — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
 

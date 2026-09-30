@@ -790,18 +790,63 @@ label > textarea {
 .profile-import-list { max-height: 220px; overflow: auto; overflow-wrap: anywhere; }
 .profile-file-input { display: none; }
 
-/* Multi-step actions stay within the existing mapping grid. */
-.mapping-row { align-items: start; }
-.action-editor { min-width: 0; display: grid; gap: 10px; }
-.action-step { border: 1px solid var(--border, #334155); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
-.step-heading, .step-add, .step-order { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.step-heading select { width: auto; min-width: 120px; flex: 1; }
-.step-duration { display: flex; align-items: center; gap: 4px; }
-.step-duration input { width: 90px; }
-.step-order { margin-left: auto; flex-wrap: nowrap; }
-.step-order button { padding: 5px 9px; min-width: 30px; }
-.step-add button { padding: 6px 10px; font-size: 12px; }
-.step-add span, .step-number { color: var(--muted, #94a3b8); font-size: 12px; }
-.action-error { color: #f87171; margin: 0; font-size: 12px; }
+/* Mapping overview: simple first, sequence controls on request. */
+.mapping-list { display: grid; gap: 12px; }
+.mapping-item { border: 1px solid #ffffff20; border-radius: 12px; padding: 18px; min-width: 0; }
+.mapping-item.is-open { border-color: #a8b3ff70; }
+.mapping-overview { display: grid; grid-template-columns: minmax(130px, .7fr) 22px minmax(180px, 1fr) 190px; gap: 14px; align-items: end; }
+.mapping-trigger, .mapping-result { min-width: 0; margin: 0; display: grid; gap: 8px; }
+.mapping-trigger > span, .mapping-label { font-size: 12px; font-weight: 600; color: #cbd2df; }
+.mapping-card .mapping-trigger > input, .mapping-card .mapping-result > select { height: 42px; width: 100%; margin: 0; padding: 0 12px; }
+.mapping-arrow { height: 42px; display: grid; place-items: center; color: #a9b6d4; font-size: 20px; }
+.mapping-summary { margin: 0; min-height: 42px; display: flex; align-items: center; line-height: 1.6; overflow-wrap: anywhere; color: inherit; font-size: 13px; }
+.mapping-row-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; min-height: 42px; }
+.mapping-row-actions button { min-height: 42px; font-size: 12px; padding: 8px 12px; white-space: nowrap; }
+.mapping-remove { color: #f1b2b8; }
+.mapping-details { border-top: 1px solid #ffffff20; margin-top: 18px; padding-top: 18px; }
+.mapping-details-heading { margin-bottom: 14px; }
+.mapping-details-heading p { margin: 6px 0 0; font-size: 12px; }
+.action-editor { min-width: 0; display: grid; gap: 12px; }
+.action-step { border: 1px solid #ffffff20; border-radius: 10px; padding: 14px; display: grid; gap: 12px; background: #10182822; }
+.step-heading { display: grid; grid-template-columns: 24px minmax(130px, 1fr) 110px auto; gap: 12px; align-items: end; }
+.step-number { height: 42px; display: grid; align-items: center; color: #a9b6d4; font-size: 13px; }
+.step-heading .step-type, .step-heading .step-duration { display: grid; gap: 8px; margin: 0; font-size: 12px; }
+.step-heading .step-type > select, .step-heading .step-duration > input { margin: 0; width: 100%; min-width: 0; height: 42px; padding: 0 12px; }
+.step-order { grid-column: 4; display: flex; align-items: center; gap: 6px; height: 42px; }
+.step-order button { height: 42px; min-width: 36px; padding: 0 10px; font-size: 12px; }
+.action-step .key-picker { padding-left: 36px; gap: 8px; }
+.action-step .key-picker select, .action-step .key-chip { height: 36px; padding: 0 10px; }
+.step-add { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.step-add button { padding: 9px 12px; font-size: 12px; }
+.step-add span { color: #a9b6d4; font-size: 12px; }
+.action-error { color: #fca5a5; margin: 12px 0 0; font-size: 12px; }
+@media (max-width: 1100px) {
+  .mapping-overview { grid-template-columns: minmax(110px, .7fr) 22px minmax(150px, 1fr); }
+  .mapping-row-actions { grid-column: 3; }
+}
+@media (max-width: 640px) {
+  .mapping-item { padding: 14px; }
+  .mapping-overview { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .mapping-arrow { display: none; }
+  .mapping-row-actions { grid-column: 1; justify-content: space-between; }
+  .step-heading { grid-template-columns: 20px minmax(0, 1fr) 90px; gap: 8px; }
+  .step-order { grid-column: 2 / -1; justify-content: end; }
+  .action-step .key-picker { padding-left: 28px; }
+  .step-add span { flex-basis: 100%; }
+}
 
-@media (max-width: 640px) { .action-editor { grid-column: 1; } }
+.profile-compact { border: 1px solid #ffffff25; border-radius: 12px; margin-bottom: 18px; background: #ffffff05; }
+.profile-compact > summary { padding: 16px 18px; cursor: pointer; font-size: 13px; }
+.profile-compact > summary > span { margin-left: 8px; }
+.profile-compact-hint { float: right; color: #b4bed7; font-size: 12px; }
+.profile-compact > .profile-card { margin: 0; border: 0; border-top: 1px solid #ffffff20; border-radius: 0 0 12px 12px; }
+.profile-compact > summary:focus-visible { outline: 2px solid #a9b7ff; outline-offset: 3px; border-radius: 12px; }
+@media (max-width: 640px) { .profile-compact-hint { float: none; display: block; margin-top: 6px; } }
+
+.action-step .key-picker select { width: auto; min-width: 155px; }
+@media (max-width: 640px) {
+  .step-heading { grid-template-columns: 20px minmax(0, 1fr); }
+  .step-heading .step-type, .step-heading .step-duration { grid-column: 2; }
+  .step-order { grid-column: 1 / -1; }
+  .step-order button { white-space: nowrap; }
+}

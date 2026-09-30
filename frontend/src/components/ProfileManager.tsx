@@ -6,6 +6,7 @@ import { activeProfile, createProfile } from "../state/profiles";
 import { t } from "../i18n";
 
 type Props = {
+  compact?: boolean;
   config: AppConfig;
   templates: ProfileTemplate[];
   disabled: boolean;
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export function ProfileManager({
+  compact = false,
   config,
   templates,
   disabled,
@@ -91,7 +93,7 @@ export function ProfileManager({
       if (attempt === importAttempt.current) setWorking(false);
     }
   }
-  return (
+  const content = (
     <section className="card profile-card">
       <div className="section-heading">
         <div>
@@ -304,7 +306,10 @@ export function ProfileManager({
               {template && (
                 <p className="profile-preview">
                   {template.mappings
-                    .map((m) => `${m.trigger} → ${actionSummary(mappingAction(m))}`)
+                    .map(
+                      (m) =>
+                        `${m.trigger} → ${actionSummary(mappingAction(m))}`,
+                    )
                     .join(" · ")}
                 </p>
               )}
@@ -412,5 +417,20 @@ export function ProfileManager({
       </p>
       {error && <p role="alert">{t(error)}</p>}
     </section>
+  );
+  return compact ? (
+    <details className="profile-compact">
+      <summary>
+        <span>
+          {t("Profil gry")}: <strong>{profile.name}</strong>
+        </span>
+        <span className="profile-compact-hint">
+          {t("Zmień lub zarządzaj profilem")}
+        </span>
+      </summary>
+      {content}
+    </details>
+  ) : (
+    content
   );
 }
