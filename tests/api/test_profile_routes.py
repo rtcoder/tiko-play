@@ -103,7 +103,7 @@ def test_create_switch_persist_export_and_conflict(profiles_api):
     exported = c.get("/api/profiles/other/export")
     assert exported.status_code == 200
     assert "private" not in exported.text
-    assert exported.json()["format_version"] == 2
+    assert exported.json()["format_version"] == 3
     assert exported.json()["mappings"] == [
         {"trigger": "go", "action": {"steps": [{"type": "press", "keys": ["left"]}]}}
     ]

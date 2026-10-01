@@ -34,6 +34,9 @@ def twitch_api(tmp_path):
         def enable(self, g):
             pass
 
+        def submit_reason(self, a, capacity=100):
+            self.submit(a)
+
         def submit(self, a):
             raise AssertionError("unauthorized action")
 

@@ -1,5 +1,18 @@
 # TikoPlay — kontekst techniczny
 
+## Kontrola spamu i kolejki — v0.24, 2026-10-01
+
+Wdrożono zadanie 5 roadmapy. Zakładka Kontrola spamu zapisuje `GameProfile.limits`: action_cooldown_ms 0–60000 (300), viewer_cooldown_ms 0–60000 (0), queue_capacity 1–100 (100), action_ttl_ms 100–5000 (1000). Nowe ustawienia działają od kolejnego Startu. Konfiguracja v7 migruje wcześniejsze pliki z kopią oryginału; format eksportu v3 obejmuje limity, importer v1/v2 zachowuje domyślne. Podgląd importu pokazuje parametry.
+
+LIVE używa czystego `Matcher.resolve`, następnie `RateLimiter.check`, `KeyboardExecutor.submit_reason` i `commit` tylko po przyjęciu. Jedynym właścicielem limitera jest pętla listenera; brak await między check i commit. Limiter porównuje całkowite ticki milisekundowe z monotonicznego zegara; symulator korzysta z tego samego mechanizmu. Stan widzów jest ograniczony do 10000 ostatnio przyjętych autorów i czyszczony po 120 s podczas kolejnego sprawdzania/przyjęcia. Przy wyłączonym limicie widza nie jest przechowywany. Nie chroni to przed wieloma kontami/botami.
+
+Kolejka liczy wyłącznie oczekujących. Pełna odrzuca nowe; odmowa nie zużywa cooldownu. TTL sprawdzany tylko przed wykonaniem (strict >, zachowana ważność dokładnie na granicy). Executor raportuje wykonane, wygasłe, anulowane i błędy. Listener odcina wyniki poprzedniej generacji; spóźnione wykonanie po Stop/zmianie epoki nie aktualizuje OBS.
+
+`ControlStats` ma dokładne liczniki przyjęć, wykonań i powodów pominięcia oraz deque 30 decyzji. `ListenerState.control_stats` zapewnia snapshot po reconnect; event control_stats publikuje zmianę najwyżej raz na sekundę. Start resetuje stan i odcina poprzedni timer. Komentarze i wykonania w starym EventLog są próbkowane do 1/s na typ, co jest opisane w panelu; bieżący stan OBS nadal jest aktualizowany po każdym potwierdzonym wykonaniu. Publiczna projekcja OBS nie obejmuje nowych statystyk.
+
+Testy izolują konfigurację i wywołania klawiatury. Sprawdzono odmowę bez cooldownu, granice czasu, 10000 komentarzy, reset/generacje, pojemność, TTL, migrację i eksport. W przeglądarce potwierdzono układ pól, zapis i trwałość po reload oraz wspólne limity w symulatorze. Niezależny review: brak P1/P2. Końcowa kontrola wychwyciła stare numery schematu w formularzu naprawy; poprawiono z regresją v6/v7 zachowującą profile i limity. 266 testów Python zaliczonych (1 natywny pominięty); 51 testów frontendu zaliczonych. Build macOS arm64 0.24 zakończony, metadane wersji, codesign --verify --deep --strict i hdiutil verify poprawne. Odbiór rzeczywistych czatów, gier i Windows pozostaje niewykonany. Plan: `docs/superpowers/plans/2026-10-01-spam-queue.md`.
+
+
 ## Nakładka OBS — v0.21, 2026-09-30
 
 Zadanie 4 ma implementację podstawową, z odbiorem OBS pozostającym do wykonania (OBS nie zainstalowano w środowisku, Windows niedostępny). Osobna zakładka zawiera włącznik, port, kopię adresu, próbny podgląd i ustawienia widoczności/fontu/koloru. `/overlay` jest niezależnym widokiem React z przezroczystym HTML/body. Osobny serwer udostępnia tylko stronę, assets i WebSocket, bez operator API. Domyślnie wyłączony, port 18765 (1024–65535); panel zachowuje port losowy. Konfiguracja gry nadal v6, profile wymiany v2.
@@ -61,7 +74,7 @@ Weryfikacja: 191 testów Python poprawnych, 1 natywny pominięty; 31 testów fro
 
 ## Roadmapa rozwoju — 2026-09-28
 
-Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2 i 7 oraz podstawową nakładkę z zadania 4 (bez odbioru w OBS); pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
+Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2, 5 i 7 oraz podstawową nakładkę z zadania 4 (bez odbioru w OBS); pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
 
 Wersja 0.9 obejmuje dokumentację roadmapy i aktualizację numeru wymaganą przez zasady tagowania każdego zestawu zmian. Nie zmienia zachowania aplikacji; wcześniejsze sekcje opisują stan odpowiednich historycznych wydań.
 

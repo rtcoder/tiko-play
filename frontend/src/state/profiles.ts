@@ -1,3 +1,4 @@
+import { defaultLimits } from "./limits";
 import type { AppConfig, GameProfile, ProfileTemplate } from "../api/types";
 
 export function activeProfile(config: AppConfig): GameProfile {
@@ -27,6 +28,7 @@ export function createProfile(
   return {
     id: crypto.randomUUID(),
     name: name.trim(),
+    limits: { ...defaultLimits },
     filters: { tiktok: "", twitch: "", youtube: "", kick: "" },
     mappings: (template?.mappings ?? []).map((m) => ({
       ...m,

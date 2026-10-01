@@ -7,18 +7,13 @@ import type {
   SimulationReport,
 } from "../api/types";
 import { t } from "../i18n";
+import { controlReasons, defaultLimits } from "../state/limits";
 import { keyLabel } from "../state/actions";
 
-const reasons: Record<SimulationReport["decisions"][number]["reason"], string> =
-  {
-    planned: "Akcja zaplanowana",
-    user_filtered: "Ten widz nie jest na liście dozwolonych osób.",
-    no_mapping: "Brak mapowania dla tego komentarza.",
-    action_cooldown:
-      "Za szybko: od poprzedniej takiej komendy nie minęło 0,3 s.",
-    queue_full: "Kolejka jest pełna (100 oczekujących akcji).",
-    expired: "Polecenie czekało w kolejce ponad 1 sekundę.",
-  };
+const reasons: Record<string, string> = {
+  ...controlReasons,
+  planned: "Akcja zaplanowana",
+};
 const platforms = {
   tiktok: "TikTok",
   twitch: "Twitch",
@@ -143,6 +138,17 @@ export function ChatSimulator({
         <p className="hint">
           {t(
             "Wybór dotyczy tylko testu. Nie przełącza profilu ani źródła LIVE.",
+          )}
+        </p>
+        <p className="hint">
+          {t(
+            "Limity profilu: widz {viewer} ms · komenda {action} ms · kolejka {capacity} · ważność {ttl} ms",
+            {
+              viewer: (profile.limits ?? defaultLimits).viewer_cooldown_ms,
+              action: (profile.limits ?? defaultLimits).action_cooldown_ms,
+              capacity: (profile.limits ?? defaultLimits).queue_capacity,
+              ttl: (profile.limits ?? defaultLimits).action_ttl_ms,
+            },
           )}
         </p>
         {profile.filters[platform] && (

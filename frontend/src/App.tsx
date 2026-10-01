@@ -24,6 +24,7 @@ import type {
   ProfileTemplate,
 } from "./api/types";
 import { ConfigController } from "./state/configController";
+import { ControlLimits } from "./components/ControlLimits";
 import { OverlaySettings } from "./components/OverlaySettings";
 import { ChatSimulator } from "./components/ChatSimulator";
 import { MappingEditor } from "./components/MappingEditor";
@@ -107,7 +108,7 @@ export default function App() {
               ++authRevision.current;
               setAuth(event.payload as unknown as TwitchAuthState);
             }
-            if (event.type === "status")
+            if (event.type === "status" || event.type === "control_stats")
               setState((s) => (s ? { ...s, ...event.payload } : s));
             if (event.type === "config_changed") {
               const revision = event.payload.config_revision as number;
@@ -170,6 +171,7 @@ export default function App() {
             ["Pulpit", "◫"],
             ["Mapowania", "⌨"],
             ["Symulator", "▷"],
+            ["Kontrola spamu", "◷"],
             ["Nakładka OBS", "▣"],
             ["Ustawienia", "⚙"],
           ].map(([name, icon]) => (
@@ -361,7 +363,7 @@ export default function App() {
                   </div>
                 )}
                 <ProfileManager
-                  compact={section === "Mapowania"}
+                  compact={["Mapowania", "Kontrola spamu"].includes(section)}
                   config={editor.draft}
                   templates={templates}
                   disabled={!!running || busy || !connected || editor.conflict}
@@ -453,6 +455,18 @@ export default function App() {
                   keys={keys}
                 />
               )}
+              {section === "Kontrola spamu" && (
+                <ControlLimits
+                  value={activeProfile(editor.draft).limits}
+                  profileName={activeProfile(editor.draft).name}
+                  sessionProfile={state?.active_profile_name}
+                  stats={state?.control_stats}
+                  connected={connected}
+                  onChange={(limits) =>
+                    controller.edit(updateProfile(editor.draft!, { limits }))
+                  }
+                />
+              )}
               {section === "Ustawienia" && (
                 <section className="card">
                   <span className="eyebrow">{t("PREFERENCJE")}</span>
@@ -502,7 +516,7 @@ export default function App() {
                     )}
                   </div>
                   <p className="hint">
-                    {t("Wersja {version} · Cooldown: 0,3 s na komentarz", {
+                    {t("Wersja {version}", {
                       version: buildVersion.trim(),
                     })}
                   </p>

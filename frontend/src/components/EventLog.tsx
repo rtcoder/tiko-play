@@ -19,6 +19,11 @@ export function EventLog({
         </div>
         <button onClick={onClear}>{t("Wyczyść podgląd")}</button>
       </div>
+      <p className="hint">
+        {t(
+          "Panel aktywności pokazuje próbkę komentarzy i wykonanych akcji. Pełne liczniki znajdziesz w Kontroli spamu.",
+        )}
+      </p>
       <div className="event-list" aria-live="polite">
         {!events.length ? (
           <div className="empty small">
@@ -26,6 +31,7 @@ export function EventLog({
           </div>
         ) : (
           events
+            .filter((e) => e.type !== "control_stats")
             .slice(-150)
             .reverse()
             .map((e) => (

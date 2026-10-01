@@ -5,6 +5,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.core.actions import ActionDefinition, PressStep
+from src.core.rate_limits import ControlLimits
 from src.core.users import allowed_users
 
 
@@ -135,6 +136,7 @@ class GameProfile(BaseModel):
     name: str = Field(min_length=1, max_length=80)
     mappings: tuple[Mapping, ...] = ()
     filters: ProfileFilters = Field(default_factory=ProfileFilters)
+    limits: ControlLimits = Field(default_factory=ControlLimits)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -152,7 +154,7 @@ class GameProfile(BaseModel):
 
 class AppConfig(BaseModel):
     model_config = ConfigDict(extra="allow", frozen=True)
-    version: Literal[6] = 6
+    version: Literal[7] = 7
     platform: Platform = "tiktok"
     tiktok: ChannelConfig = Field(default_factory=ChannelConfig)
     twitch: TwitchChannelConfig = Field(default_factory=TwitchChannelConfig)
@@ -238,3 +240,4 @@ class ListenerState(BaseModel):
     active_config_revision: int | None = None
     error: dict | None = None
     generation: int = 0
+    control_stats: dict = Field(default_factory=dict)

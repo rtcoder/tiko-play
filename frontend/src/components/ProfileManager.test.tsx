@@ -8,7 +8,7 @@ import { request } from "../api/client";
 import { act } from "@testing-library/react";
 
 const initial = {
-  version: 6,
+  version: 7,
   platform: "tiktok",
   tiktok: { channel: "host" },
   twitch: { channel: "" },

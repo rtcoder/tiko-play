@@ -34,7 +34,7 @@ class ConfigStore:
         self.recovery_data = data
         if not isinstance(data, dict):
             raise ValueError("Konfiguracja musi być obiektem JSON")
-        if data.get("version", 1) not in (1, 2, 3, 4, 5, 6):
+        if data.get("version", 1) not in (1, 2, 3, 4, 5, 6, 7):
             self._future = True
             raise AppError(
                 "future_version",
@@ -67,9 +67,9 @@ class ConfigStore:
                 "youtube": data.get("youtube", {}),
                 "kick": data.get("kick", {}),
             }
-        if source_version != 6:
-            data = {**data, "version": 6}
-        return AppConfig.model_validate(data), raw if source_version != 6 else None
+        if source_version != 7:
+            data = {**data, "version": 7}
+        return AppConfig.model_validate(data), raw if source_version != 7 else None
 
     async def load(self):
         async with self._lock:

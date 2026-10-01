@@ -1,11 +1,13 @@
 import asyncio
 import time
-from copy import deepcopy
 from contextlib import suppress
+from copy import deepcopy
 
+from src.core.control_stats import ControlStats
 from src.core.keyboard import KeyAction
 from src.core.matching import Matcher
 from src.core.models import AppError, ListenerState
+from src.core.rate_limits import RateLimiter
 
 
 class ListenerService:
@@ -27,13 +29,36 @@ class ListenerService:
         self._cancel_requested = False
         self._cleaning = False
         self._stop_revision = 0
+        self._stats = ControlStats()
+        self._stats_timer = None
+        self._last_comment = float("-inf")
+        self._last_action = float("-inf")
 
     def state(self):
-        return self._state.model_copy(deep=True)
+        return self._state.model_copy(
+            update={"control_stats": self._stats.snapshot()}, deep=True
+        )
 
     def _change(self, **kwargs):
         self._state = self._state.model_copy(update=kwargs)
-        self.events.publish("status", self._state.model_dump())
+        self.events.publish("status", self.state().model_dump())
+
+    def _record(self, reason, actor_id="", comment="", mapping_id=""):
+        self._stats.record(reason, actor_id, comment, mapping_id)
+        if self._stats_timer is None:
+            self._stats_timer = asyncio.get_running_loop().call_later(
+                1, self._publish_stats
+            )
+
+    def _publish_stats(self):
+        self._stats_timer = None
+        self.events.publish(
+            "control_stats",
+            {
+                "generation": self._state.generation,
+                "control_stats": self._stats.snapshot(),
+            },
+        )
 
     @property
     def stop_revision(self):
@@ -60,6 +85,11 @@ class ListenerService:
         self._stop = False
         self._cancel_requested = False
         self._cleaning = False
+        if self._stats_timer is not None:
+            self._stats_timer.cancel()
+            self._stats_timer = None
+        self._stats = ControlStats()
+        self._last_comment = self._last_action = float("-inf")
         self.active_snapshot = snapshot
         self.last_executed = None
         self._change(
@@ -125,11 +155,49 @@ class ListenerService:
             != self._state.generation
         ):
             return
+        if kind == "skipped":
+            self._record(
+                payload["reason"],
+                payload.get("actor_id", ""),
+                payload.get("comment", ""),
+                payload.get("mapping_id", ""),
+            )
+            return
         if kind == "executed":
+            if (
+                self._stop
+                or self._state.output != "enabled"
+                or (
+                    "output_epoch" in payload
+                    and payload["output_epoch"] != self.keyboard.output_epoch
+                )
+            ):
+                self._record(
+                    "stale_epoch",
+                    payload.get("actor_id", ""),
+                    payload.get("comment", ""),
+                )
+                return
+            self._record(
+                "executed",
+                payload.get("actor_id", ""),
+                payload.get("comment", ""),
+                payload.get("mapping_id", ""),
+            )
             self._execution_id += 1
             self.last_executed = {**deepcopy(payload), "id": self._execution_id}
-        self.events.publish("action" if kind == "executed" else kind, payload)
+        # Keep the legacy activity log as a sample, not an event per spam message.
+        if kind != "executed" or self.clock() - self._last_action >= 1:
+            self.events.publish("action" if kind == "executed" else kind, payload)
+            if kind == "executed":
+                self._last_action = self.clock()
         if kind == "error":
+            if payload.get("generation") == self._state.generation:
+                self._record(
+                    "execution_error",
+                    payload.get("actor_id", ""),
+                    payload.get("comment", ""),
+                )
             self.keyboard.disable()
             self._change(status="error", output="disabled", error=payload)
             if self._task and not self._task.done():
@@ -141,6 +209,8 @@ class ListenerService:
         try:
             matcher = Matcher(snapshot.config, self.clock)
             generation = self._state.generation
+            limits = snapshot.config.active_profile.limits
+            limiter = RateLimiter(limits)
 
             async def comment(user, text):
                 if (
@@ -149,31 +219,50 @@ class ListenerService:
                     or self._state.status not in ("connecting", "connected")
                 ):
                     return
-                self.events.publish(
-                    "comment",
-                    {
-                        "user": user,
-                        "comment": text,
-                        "platform": snapshot.config.platform,
-                        "channel": snapshot.config.active_source().channel,
-                        "generation": generation,
-                    },
-                )
-                if self._stop or self._state.output != "enabled":
-                    return
-                mapping = matcher.match_mapping(user, text)
-                if mapping:
-                    self.keyboard.submit(
-                        KeyAction(
-                            (),
-                            generation,
-                            self.clock(),
-                            definition=mapping.action,
-                            mapping_id=mapping.id,
-                            actor_id=user[:128],
-                            comment=text[:2000],
-                        )
+                now = self.clock()
+                # One raw comment sample per second; exact totals live in control_stats.
+                if now - self._last_comment >= 1:
+                    self._last_comment = now
+                    self.events.publish(
+                        "comment",
+                        {
+                            "user": user[:128],
+                            "comment": text[:2000],
+                            "platform": snapshot.config.platform,
+                            "channel": snapshot.config.active_source().channel,
+                            "generation": generation,
+                        },
                     )
+                decision = matcher.resolve(user, text)
+                reason = decision.reason
+                if reason == "matched":
+                    if self._state.output != "enabled":
+                        reason = "output_disabled"
+                    else:
+                        limiter.prune(now)
+                        reason = limiter.check(
+                            decision.actor_id, decision.mapping_id, now
+                        ).reason
+                        if reason is None:
+                            reason = self.keyboard.submit_reason(
+                                KeyAction(
+                                    (),
+                                    generation,
+                                    now,
+                                    definition=decision.mapping.action,
+                                    mapping_id=decision.mapping_id,
+                                    actor_id=decision.actor_id[:128],
+                                    comment=text[:2000],
+                                    expires_at=now + limits.action_ttl_ms / 1000,
+                                ),
+                                capacity=limits.queue_capacity,
+                            )
+                            if reason is None:
+                                limiter.commit(
+                                    decision.actor_id, decision.mapping_id, now
+                                )
+                                reason = "accepted"
+                self._record(reason, decision.actor_id, text, decision.mapping_id or "")
 
             self._client = self.factory(snapshot.config)
             child = await self._client.connect(comment)

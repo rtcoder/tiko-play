@@ -202,6 +202,9 @@ Oddzielny, przezroczysty widok do źródła przeglądarkowego OBS pokazuje dost�
 
 ## Zadanie 5. Kontrola spamu i kolejki
 
+Status 2026-10-01: wdrożono w v0.24. Szczegóły i rzeczywisty zakres w `2026-10-01-spam-queue.md` oraz `docs/PROJECT_CONTEXT.md`. Granica TTL zachowuje zgodność: równość jest ważna, wygasa po przekroczeniu. Odbiór LIVE/Windows pozostaje otwarty.
+
+
 ### Opis i zakres
 
 Rozszerzamy istniejące zabezpieczenia o ustawienia profilu i informację, dlaczego wiadomość nie wywołała ruchu. Użytkownik ustawia cooldown akcji, limit na widza, pojemność kolejki i ważność oczekujących poleceń. Panel pokazuje liczniki odrzuceń zamiast zasypywać log osobnym wpisem za każdą wiadomość.

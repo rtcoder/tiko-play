@@ -9,11 +9,10 @@ from src.core.actions import ActionDefinition
 from src.core.matching import Matcher
 from src.core.models import AppError, ConfigSnapshot, Platform
 from src.core.output_policy import (
-    ACTION_COOLDOWN_SECONDS,
-    ACTION_TTL_SECONDS,
     action_expired,
     queue_has_capacity,
 )
+from src.core.rate_limits import ControlLimits, RateLimiter
 
 
 class SimulationMessage(BaseModel):
@@ -57,6 +56,7 @@ class SimulationDecision(BaseModel):
         "user_filtered",
         "no_mapping",
         "action_cooldown",
+        "user_cooldown",
         "queue_full",
         "expired",
     ]
@@ -76,6 +76,7 @@ class SimulationReport(BaseModel):
     planned_count: int
     rejected_count: int
     duration_ms: int
+    limits: ControlLimits
 
 
 def simulate(
@@ -97,7 +98,9 @@ def simulate(
         }
     )
     now = 0
-    matcher = Matcher(config, lambda: now, cooldown=int(ACTION_COOLDOWN_SECONDS * 1000))
+    matcher = Matcher(config)
+    limits = config.active_profile.limits
+    limiter = RateLimiter(limits)
     decisions = []
     pending = deque()
     busy_until = None
@@ -133,9 +136,7 @@ def simulate(
         cursor = busy_until if busy_until is not None else until
         while pending:
             record, definition = pending.popleft()
-            if action_expired(
-                cursor, record["offset_ms"] + int(ACTION_TTL_SECONDS * 1000)
-            ):
+            if action_expired(cursor, record["offset_ms"] + limits.action_ttl_ms):
                 record.update(reason="expired", decided_at_ms=cursor)
                 continue
             busy_until = plan(record, definition, cursor)
@@ -149,7 +150,7 @@ def simulate(
     ):
         now = message.offset_ms
         advance(now)
-        decision = matcher.decide(message.user_id, message.comment)
+        decision = matcher.resolve(message.user_id, message.comment)
         record = {
             "message_index": original_index,
             "offset_ms": now,
@@ -164,19 +165,26 @@ def simulate(
         decisions.append(record)
         if decision.reason != "matched":
             continue
+        limit = limiter.check(decision.actor_id, decision.mapping_id, now / 1000)
+        if limit.reason:
+            record["reason"] = limit.reason
+            continue
         definition = decision.mapping.action
         if busy_until is None:
             busy_until = plan(record, definition, now)
-        elif queue_has_capacity(len(pending)):
+        elif queue_has_capacity(len(pending), limits.queue_capacity):
             pending.append((record, definition))
         else:
             record["reason"] = "queue_full"
+            continue
+        limiter.commit(decision.actor_id, decision.mapping_id, now / 1000)
     # Finish virtual output, including a hold extending past the last input message.
     while busy_until is not None:
         advance(busy_until)
     results = tuple(SimulationDecision(**d) for d in decisions)
     planned = sum(d.reason == "planned" for d in results)
     return SimulationReport(
+        limits=limits,
         config_revision=snapshot.revision,
         profile_id=profile_id,
         profile_name=config.active_profile.name,

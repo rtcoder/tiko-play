@@ -16,6 +16,9 @@ class Keyboard:
     def disable(self):
         self.enabled = False
 
+    def submit_reason(self, a, capacity=100):
+        self.submit(a)
+
     def submit(self, a):
         if self.enabled:
             self.actions.append(a)

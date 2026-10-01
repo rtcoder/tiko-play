@@ -2,7 +2,7 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
-[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18, nakładka OBS od 0.21; pozostałe zadania są propozycjami.
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18, nakładka OBS od 0.21, kontrola spamu i kolejki od 0.24; pozostałe zadania są propozycjami.
 
 ## Profile gier
 
@@ -10,17 +10,23 @@ Od wersji 0.12 sekcja **Twoje gry** pozwala tworzyć, przełączać, przemianowy
 
 **Nowy profil**: zacznij od pustego albo wybierz szablon. Ogólne: WASD, Strzałki i **NumPad 2468** (`2` → dół, `4` → lewo, `6` → prawo, `8` → góra). Cyfry są komentarzami czatu; aplikacja wysyła strzałki, nie klawisze numpada. Retro: Hugo, Tetris, Pac-Man i Sokoban. Nowsze: Baba Is You. Szablony są edytowalnymi propozycjami przypisań klawiatury, nie potwierdzeniem integracji z konkretną wersją gry. Nie dodają przytrzymywania klawiszy.
 
-**Importuj plik** pokazuje podgląd przed utworzeniem nowego profilu. Eksport JSON v2; import v1/v2: maksymalnie 1 MiB i 500 mapowań. Import nie nadpisuje poprzedniego profilu. Eksport zawiera nazwę i mapowania, ale pomija filtry widzów, kanały, konta i klucze. Limit importu nie ogranicza liczby mapowań w migrowanej konfiguracji; plik eksportowany z większego profilu wymaga podziału przed importem. Maksymalnie można zapisać 100 profili. Przy usuwaniu aktywnego wybierz profil zastępczy; ostatniego profilu nie można usunąć.
+**Importuj plik** pokazuje podgląd przed utworzeniem nowego profilu. Eksport JSON v3; import v1/v2/v3: maksymalnie 1 MiB i 500 mapowań. Import nie nadpisuje poprzedniego profilu. Eksport zawiera nazwę, mapowania i limity, ale pomija filtry widzów, kanały, konta i klucze. Limit importu nie ogranicza liczby mapowań w migrowanej konfiguracji; plik eksportowany z większego profilu wymaga podziału przed importem. Maksymalnie można zapisać 100 profili. Przy usuwaniu aktywnego wybierz profil zastępczy; ostatniego profilu nie można usunąć.
 
-Dotychczasowa konfiguracja v1–v5 jest migrowana do v6 z zachowaniem oryginalnej kopii `config.v<N>.backup.json`. Przy migracji v1–v4 mapowania i filtry trafiają do profilu „Domyślny”; istniejące profile v5 pozostają zachowane. Starsza aplikacja nie odczyta formatu v6; powrót wymaga zachowanej kopii starej konfiguracji.
+Dotychczasowa konfiguracja v1–v6 jest migrowana do v7 z zachowaniem oryginalnej kopii `config.v<N>.backup.json`. Przy migracji v1–v4 mapowania i filtry trafiają do profilu „Domyślny”; istniejące profile v5 pozostają zachowane. Starsza aplikacja nie odczyta formatu v7; powrót wymaga zachowanej kopii starej konfiguracji.
 
 ## Przytrzymania i sekwencje
 
 W **Mapowaniach** wpisz komentarz i wybierz klawisz. **Więcej opcji** otwiera edycję kombinacji i sekwencji. W rozwiniętym edytorze wybierz typ kroku: **Naciśnięcie**, **Przytrzymanie** (50–3000 ms) lub **Pauza** (10–3000 ms). Przyciski dodają kroki, strzałki zmieniają ich kolejność. Limit: 20 kroków i łącznie 10000 ms przytrzymań/pauz. Przykład: `right` przytrzymany 750 ms → pauza 100 ms → naciśnięcie `space`.
 
-Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; ochrona fokusu nie jest częścią tej wersji. Kolejka zachowuje limit 100 akcji i 1 s na rozpoczęcie — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
+Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; ochrona fokusu nie jest częścią tej wersji. Kolejka domyślnie ma 100 oczekujących akcji i 1 s na rozpoczęcie; wartości można zmienić w Kontroli spamu — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
 
 Stare mapowania automatycznie stają się pojedynczym krokiem naciśnięcia. Niepełne kroki i niepoprawne czasy pozostają w szkicu, blokując zapis i Start do poprawienia.
+
+## Kontrola spamu i kolejki
+
+W **Kontroli spamu** ustaw odstęp między komendami jednego widza i powtórzeniami tej samej komendy (0–60000 ms, 0 wyłącza dany limit). W rozwijanej kolejce ustaw liczbę oczekujących (1–100) i ich ważność (100–5000 ms). Przy pełnej kolejce nowe polecenie jest pomijane bez zużywania cooldownu. Zmiany stosują się przy następnym Start.
+
+Panel pokazuje przyjęte i faktycznie wykonane akcje, powody pominięcia/anulowania oraz ostatnie 30 decyzji. Liczniki obejmują wszystkie komentarze i zerują się przy nowej sesji. Podgląd aktualizuje się raz na sekundę; stary panel aktywności jest próbkowany, więc nie służy do liczenia spamu. Ustawienia należą do profilu i są przenoszone w eksporcie v3. Starsze importy v1/v2 dostają ustawienia domyślne.
 
 ## Symulator czatu
 
@@ -48,7 +54,7 @@ Panel i API są dostępne tylko na `127.0.0.1`. Python/Node.js nie są wymagane 
 
 ## Zachowanie
 
-Cały komentarz dopasowany po usunięciu skrajnych spacji i zmianie liter na małe. Każde mapowanie ma sekwencję kroków `press`, `hold` lub `wait`. Kilka klawiszy w jednym kroku to jednoczesna kombinacja. Cooldown: 0,3 s na trigger. Filtr TikToka rozróżnia wielkość liter, Twitcha — nie. Nicki można podać po przecinku, średniku lub w osobnych wierszach, opcjonalnie z @; puste pole dopuszcza wszystkich.
+Cały komentarz dopasowany po usunięciu skrajnych spacji i zmianie liter na małe. Każde mapowanie ma sekwencję kroków `press`, `hold` lub `wait`. Kilka klawiszy w jednym kroku to jednoczesna kombinacja. Domyślny cooldown: 0,3 s na trigger, konfigurowalny wraz z limitem widza w profilu. Filtr TikToka rozróżnia wielkość liter, Twitcha — nie. Nicki można podać po przecinku, średniku lub w osobnych wierszach, opcjonalnie z @; puste pole dopuszcza wszystkich.
 
 Zmiany konfiguracji zapisują się automatycznie po 500 ms; aktywny listener używa snapshotu ze Startu. Panel informuje o konieczności restartu nasłuchu. Niepełne mapowania pozostają lokalnym szkicem. Konflikt kilku kart nie nadpisuje danych po cichu.
 

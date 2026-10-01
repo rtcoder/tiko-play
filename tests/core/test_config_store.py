@@ -16,7 +16,7 @@ async def test_migration_backup_and_stable_ids(tmp_path):
     p.write_bytes(original)
     s = ConfigStore(p)
     a = await s.load()
-    assert a.config.version == 6 and a.config.mappings[0].keys == ("ctrl", "a")
+    assert a.config.version == 7 and a.config.mappings[0].keys == ("ctrl", "a")
     assert a.config.model_dump()["custom"] == "kept"
     assert p.with_name("config.v1.backup.json").read_bytes() == original
     b = await ConfigStore(p).load()
@@ -84,7 +84,7 @@ async def test_v4_migration_preserves_source_and_backup_collision(tmp_path, vers
     old = tmp_path / f'config.v{version}.backup.json'
     old.write_bytes(b'older backup')
     cfg = (await ConfigStore(p).load()).config
-    assert cfg.version == 6
+    assert cfg.version == 7
     assert cfg.platform == 'tiktok'
     assert cfg.tiktok.channel == 'Alice'
     assert cfg.tiktok.target_user == 'Bob'

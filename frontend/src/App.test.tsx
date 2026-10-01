@@ -5,7 +5,7 @@ import App from "./App";
 vi.mock("../../VERSION?raw", () => ({ default: "8.13\n" }));
 const fixture = vi.hoisted(() => ({
   config: {
-    version: 6,
+    version: 7,
     platform: "tiktok",
     tiktok: { channel: "a", target_user: "" },
     twitch: { channel: "b", target_user: "" },
@@ -91,7 +91,7 @@ it("shows the build version in the badge and settings", async () => {
     "TikoPlay 8.13",
   );
   fireEvent.click(screen.getByRole("button", { name: /Ustawienia/ }));
-  expect(screen.getByText(/Wersja 8.13 · Cooldown/)).toBeInTheDocument();
+  expect(screen.getByText(/Wersja 8.13/)).toBeInTheDocument();
 });
 
 it("saves multiple allowed users from the multiline field", async () => {

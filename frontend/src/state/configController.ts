@@ -1,3 +1,4 @@
+import { validLimits } from "./limits";
 import { mappingAction, actionError } from "./actions";
 import type { AppConfig, ConfigSnapshot } from "../api/types";
 type Api = {
@@ -96,8 +97,11 @@ export class ConfigController {
             m.trigger.trim().toLowerCase(),
           );
           return (
+            !validLimits(p.limits) ||
             !p.name.trim() ||
-            p.mappings.some((m) => !m.trigger.trim() || !!actionError(mappingAction(m))) ||
+            p.mappings.some(
+              (m) => !m.trigger.trim() || !!actionError(mappingAction(m)),
+            ) ||
             new Set(triggers).size !== triggers.length
           );
         })
@@ -105,7 +109,7 @@ export class ConfigController {
         this.update({
           saveStatus: "invalid",
           error:
-            "Uzupełnij komentarze i popraw kroki akcji. Komentarze nie mogą się powtarzać.",
+            "Sprawdź limity sterowania, komentarze i kroki akcji. Komentarze nie mogą się powtarzać.",
         });
         throw new Error(this.state.error);
       }

@@ -5,7 +5,7 @@ import { request } from "../api/client";
 import type { AppConfig } from "../api/types";
 vi.mock("../api/client", () => ({ request: vi.fn() }));
 const config: AppConfig = {
-  version: 6,
+  version: 7,
   platform: "tiktok",
   tiktok: { channel: "" },
   twitch: { channel: "" },
@@ -52,7 +52,7 @@ it("tests saved settings without saving a draft and shows the rejection reason",
   });
   fireEvent.click(screen.getByRole("button", { name: "Sprawdź komentarz" }));
   expect(
-    await screen.findByText("Brak mapowania dla tego komentarza."),
+    await screen.findByText("Brak pasującej komendy"),
   ).toBeInTheDocument();
   expect(request).toHaveBeenLastCalledWith("/api/simulation", "POST", {
     expected_revision: 7,

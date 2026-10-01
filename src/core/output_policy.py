@@ -5,8 +5,8 @@ ACTION_TTL_SECONDS = 1.0
 QUEUE_CAPACITY = 100
 
 
-def queue_has_capacity(pending_count: int) -> bool:
-    return pending_count < QUEUE_CAPACITY
+def queue_has_capacity(pending_count: int, capacity: int = QUEUE_CAPACITY) -> bool:
+    return pending_count < capacity
 
 
 def action_expired(now: float, expires_at: float) -> bool:

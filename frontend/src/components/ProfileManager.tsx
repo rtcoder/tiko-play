@@ -2,6 +2,7 @@ import { mappingAction, actionSummary } from "../state/actions";
 import { useEffect, useRef, useState } from "react";
 import type { AppConfig, GameProfile, ProfileTemplate } from "../api/types";
 import { request } from "../api/client";
+import { defaultLimits } from "../state/limits";
 import { activeProfile, createProfile } from "../state/profiles";
 import { t } from "../i18n";
 
@@ -99,7 +100,11 @@ export function ProfileManager({
         <div>
           <span className="eyebrow">{t("PROFILE GIER")}</span>
           <h2>{t("Twoje gry")}</h2>
-          <p>{t("Każdy profil ma własne mapowania i dozwolonych widzów.")}</p>
+          <p>
+            {t(
+              "Każdy profil ma własne mapowania, limity i dozwolonych widzów.",
+            )}
+          </p>
         </div>
       </div>
       <label>
@@ -384,6 +389,17 @@ export function ProfileManager({
           <p>
             {preview.mappings.length} {t("mapowań")}
           </p>
+          <p className="hint">
+            {t(
+              "Limity profilu: widz {viewer} ms · komenda {action} ms · kolejka {capacity} · ważność {ttl} ms",
+              {
+                viewer: (preview.limits ?? defaultLimits).viewer_cooldown_ms,
+                action: (preview.limits ?? defaultLimits).action_cooldown_ms,
+                capacity: (preview.limits ?? defaultLimits).queue_capacity,
+                ttl: (preview.limits ?? defaultLimits).action_ttl_ms,
+              },
+            )}
+          </p>
           <div className="profile-import-list">
             {preview.mappings.map((m) => (
               <div key={m.id}>
@@ -412,7 +428,7 @@ export function ProfileManager({
       )}
       <p className="hint">
         {t(
-          "Eksport zawiera nazwę i mapowania. Pomija kanały, konta, klucze i filtry widzów.",
+          "Eksport zawiera nazwę, mapowania i limity. Pomija kanały, konta, klucze i filtry widzów.",
         )}
       </p>
       {error && <p role="alert">{t(error)}</p>}

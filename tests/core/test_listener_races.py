@@ -11,6 +11,9 @@ class Keyboard:
     def disable(self):
         pass
 
+    def submit_reason(self, a, capacity=100):
+        self.submit(a)
+
     def submit(self, a):
         pass
 

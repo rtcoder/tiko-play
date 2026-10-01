@@ -32,6 +32,9 @@ def youtube_api(tmp_path, twitch_auth):
         def enable(self, _):
             pass
 
+        def submit_reason(self, _, capacity=100):
+            self.submit(_)
+
         def submit(self, _):
             raise AssertionError("unexpected keyboard")
 
@@ -133,6 +136,9 @@ async def test_stop_cancels_start_waiting_for_keyring(tmp_path, twitch_auth):
 
         def enable(self, _):
             raise AssertionError("must not enable keyboard")
+
+        def submit_reason(self, _, capacity=100):
+            self.submit(_)
 
         def submit(self, _):
             raise AssertionError("must not submit keyboard")

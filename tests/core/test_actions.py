@@ -42,7 +42,7 @@ def test_sequence_portable_roundtrip_and_legacy_import():
         }
     )
     payload = export_profile(profile)
-    assert payload["format_version"] == 2
+    assert payload["format_version"] == 3
     assert payload["mappings"][0]["action"]["steps"][0]["type"] == "press"
     payload["mappings"][0]["action"]["steps"] += [
         {"type": "wait", "duration_ms": 50},
@@ -75,7 +75,7 @@ async def test_v5_migration_keeps_profiles_and_raw_backup(tmp_path):
     ).encode()
     path.write_bytes(raw)
     config = (await ConfigStore(path).load()).config
-    assert config.version == 6
+    assert config.version == 7
     assert config.active_profile_id == "p"
     assert config.active_profile.filters.tiktok == "alice"
     assert config.mappings[0].id == "m"

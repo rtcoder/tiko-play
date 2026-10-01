@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from src.core.actions import ActionDefinition
 from src.core.models import AppError, GameProfile, Mapping
+from src.core.rate_limits import ControlLimits
 
 MAX_IMPORT_BYTES = 1024 * 1024
 
@@ -20,6 +21,7 @@ class PortableMapping(BaseModel):
 
 class PortableProfile(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    limits: ControlLimits | None = None
     format_version: int
     name: str
     mappings: tuple[PortableMapping, ...] = Field(max_length=500)
@@ -27,7 +29,8 @@ class PortableProfile(BaseModel):
 
 def export_profile(profile: GameProfile) -> dict:
     return {
-        "format_version": 2,
+        "format_version": 3,
+        "limits": profile.limits.model_dump(),
         "name": profile.name,
         "mappings": [
             {"trigger": m.trigger, "action": m.action.model_dump(mode="json")}
@@ -44,8 +47,12 @@ def import_profile(payload: dict) -> GameProfile:
         ):
             raise ValueError("size")
         portable = PortableProfile.model_validate(payload)
-        if portable.format_version not in (1, 2):
+        if portable.format_version not in (1, 2, 3):
             raise ValueError("version")
+        if portable.format_version < 3 and portable.limits is not None:
+            raise ValueError("limits require format 3")
+        if portable.format_version == 3 and portable.limits is None:
+            raise ValueError("missing limits")
         for m in portable.mappings:
             if portable.format_version == 1:
                 if m.keys is None or m.action is not None:
@@ -54,6 +61,7 @@ def import_profile(payload: dict) -> GameProfile:
                 raise ValueError("action mapping")
         return GameProfile(
             name=portable.name,
+            limits=portable.limits or ControlLimits(),
             mappings=tuple(
                 Mapping(
                     id=str(uuid4()),
@@ -70,6 +78,6 @@ def import_profile(payload: dict) -> GameProfile:
     except (ValueError, TypeError, ValidationError) as exc:
         raise AppError(
             "profile_import_error",
-            "Niepoprawny profil. Obsługiwany format: 1 lub 2, maksymalnie 1 MiB i 500 mapowań.",
+            "Niepoprawny profil. Obsługiwany format: 1, 2 lub 3, maksymalnie 1 MiB i 500 mapowań.",
             status=422,
         ) from exc

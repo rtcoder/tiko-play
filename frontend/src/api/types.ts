@@ -18,7 +18,7 @@ export interface ChannelConfig {
   [key: string]: unknown;
 }
 export interface AppConfig {
-  version: 6;
+  version: 7;
   platform: Platform;
   tiktok: ChannelConfig;
   twitch: ChannelConfig;
@@ -35,6 +35,7 @@ export interface GameProfile {
   name: string;
   mappings: Mapping[];
   filters: Record<Platform, string>;
+  limits?: ControlLimits;
   [key: string]: unknown;
 }
 export interface ProfileTemplate {
@@ -54,6 +55,7 @@ export interface ApiError {
   field_errors?: Record<string, string>;
 }
 export interface AppState {
+  control_stats?: ControlStats;
   active_profile_id?: string | null;
   active_profile_name?: string | null;
   language: "pl" | "en";
@@ -117,6 +119,7 @@ export interface SimulationReport {
       | "user_filtered"
       | "no_mapping"
       | "action_cooldown"
+      | "user_cooldown"
       | "queue_full"
       | "expired";
     started_at_ms: number | null;
@@ -129,4 +132,15 @@ export interface SimulationReport {
       duration_ms: number;
     }[];
   })[];
+}
+
+export interface ControlLimits {
+  action_cooldown_ms: number;
+  viewer_cooldown_ms: number;
+  queue_capacity: number;
+  action_ttl_ms: number;
+}
+export interface ControlStats {
+  counts: Record<string, number>;
+  recent: { id: number; reason: string; actor_id: string; comment: string; mapping_id: string }[];
 }

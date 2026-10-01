@@ -1,7 +1,7 @@
 import { it, expect, vi, afterEach } from "vitest";
 import { ConfigController } from "./configController";
 const config = {
-  version: 6 as const,
+  version: 7 as const,
   platform: "tiktok" as const,
   tiktok: { channel: "a", target_user: "" },
   twitch: { channel: "", target_user: "" },

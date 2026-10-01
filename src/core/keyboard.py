@@ -49,7 +49,6 @@ class KeyboardExecutor:
         self._epoch = 0
         self._closed = False
         self._fault = False
-        self._last_drop = float("-inf")
         self._thread = threading.Thread(
             target=self._run, name="TikoPlay-keyboard", daemon=True
         )
@@ -67,7 +66,7 @@ class KeyboardExecutor:
                     "keyboard_release_error",
                     "Nie udało się zwolnić klawiszy. Wyjście zablokowane. Sprawdź klawisze i uruchom aplikację ponownie.",
                 )
-            self._pending.clear()
+            self._clear_pending()
             self._epoch += 1
             self._generation = generation
             self._condition.notify_all()
@@ -76,27 +75,42 @@ class KeyboardExecutor:
         with self._condition:
             self._epoch += 1
             self._generation = None
-            self._pending.clear()
+            self._clear_pending()
             self._condition.notify_all()
 
-    def _drop(self):
-        now = self.clock()
-        if now - self._last_drop >= 1:
-            self._last_drop = now
-            self.report("dropped", {})
+    def _report_skip(self, action, reason):
+        self.report(
+            "skipped",
+            {
+                "generation": action.generation,
+                "output_epoch": action.output_epoch,
+                "reason": reason,
+                "actor_id": action.actor_id,
+                "comment": action.comment,
+                "mapping_id": action.mapping_id,
+            },
+        )
+
+    def _clear_pending(self):
+        while self._pending:
+            self._report_skip(self._pending.popleft(), "stale_epoch")
 
     def submit(self, action):
+        return self.submit_reason(action) is None
+
+    def submit_reason(self, action, capacity=100):
         with self._condition:
-            if self._closed or self._fault or self._generation != action.generation:
-                return False
+            if self._closed or self._fault or self._generation is None:
+                return "output_disabled"
+            if self._generation != action.generation:
+                return "stale_epoch"
             if action.output_epoch is not None and action.output_epoch != self._epoch:
-                return False
-            if not queue_has_capacity(len(self._pending)):
-                self._drop()
-                return False
+                return "stale_epoch"
+            if not queue_has_capacity(len(self._pending), capacity):
+                return "queue_full"
             self._pending.append(replace(action, output_epoch=self._epoch))
             self._condition.notify()
-            return True
+            return None
 
     def _valid(self, action):
         return (
@@ -171,7 +185,7 @@ class KeyboardExecutor:
                 if not self._valid(action):
                     continue
                 if action_expired(self.clock(), action.expires_at):
-                    self._drop()
+                    self._report_skip(action, "expired")
                     continue
             try:
                 if self._execute(action):
@@ -184,8 +198,11 @@ class KeyboardExecutor:
                             "actor_id": action.actor_id,
                             "comment": action.comment,
                             "generation": action.generation,
+                            "output_epoch": action.output_epoch,
                         },
                     )
+                else:
+                    self._report_skip(action, "stale_epoch")
             except Exception as exc:  # noqa: BLE001 - isolate OS/driver failures
                 release_failed = isinstance(exc, ReleaseError)
                 with self._condition:
@@ -193,7 +210,7 @@ class KeyboardExecutor:
                         self._fault = True
                     if release_failed or self._valid(action):
                         self._generation = None
-                        self._pending.clear()
+                        self._clear_pending()
                         self._epoch += 1
                     self._condition.notify_all()
                 code = (
@@ -210,6 +227,9 @@ class KeyboardExecutor:
                     {
                         "generation": action.generation,
                         "code": code,
+                        "actor_id": action.actor_id,
+                        "comment": action.comment,
+                        "mapping_id": action.mapping_id,
                         "message": "Nie udało się zwolnić klawiszy. Wyjście zablokowane. Sprawdź klawisze i uruchom aplikację ponownie."
                         if release_failed
                         else "Wysyłanie klawiszy zatrzymane. Sprawdź uprawnienia lub fail-safe PyAutoGUI.",
@@ -220,6 +240,6 @@ class KeyboardExecutor:
         with self._condition:
             self._closed = True
             self._generation = None
-            self._pending.clear()
+            self._clear_pending()
             self._condition.notify_all()
         await asyncio.to_thread(self._thread.join, timeout)

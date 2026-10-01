@@ -21,7 +21,7 @@ async def test_v4_migrates_to_one_profile_and_keeps_original(tmp_path):
     )
     path.write_text(original)
     config = (await ConfigStore(path).load()).config
-    assert config.version == 6
+    assert config.version == 7
     assert len(config.profiles) == 1
     assert config.active_profile.name == "Domyślny"
     assert config.active_profile.filters.twitch == "bob"
