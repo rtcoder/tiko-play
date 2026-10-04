@@ -52,7 +52,7 @@ Stały adres przetrwa restart; token ma wyłącznie uprawnienia odczytu nakładk
 
 ## Uruchamianie dla użytkownika
 
-- **Windows:** zainstaluj paczkę, kliknij skrót **TikoPlay** na pulpicie. Program sam uruchamia serwer i panel.
+- **Windows:** uruchom instalator i wybierz PL lub EN. Otwórz **TikoPlay** z menu Start lub opcjonalnego skrótu na pulpicie. Program sam uruchamia serwer i panel. Przed aktualizacją zatrzymaj nasłuch i zakończ program z traya. Aktualizacja i deinstalacja zachowują dane użytkownika. [Szczegóły instalacji](docs/PACKAGING.md#windows).
 - **macOS:** przenieś **TikoPlay.app** do Aplikacji; uruchom aplikację lub jej alias na pulpicie. Instrukcja aliasu: [instalacja macOS](docs/INSTALL_MACOS.txt).
 - Wybierz źródło czatu, wpisz login kanału, ustaw mapowania i kliknij **Rozpocznij nasłuch**. Przełącz fokus do gry; opcjonalne odliczanie daje 3 sekundy po połączeniu.
 - Zamknięcie karty **nie zatrzymuje nasłuchu**. Ikona w trayu/pasku menu pozwala otworzyć panel, zatrzymać nasłuch lub zakończyć program.

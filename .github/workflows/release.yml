@@ -1,6 +1,7 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*'
@@ -23,8 +24,10 @@ jobs:
           python-version: '3.14'
       - name: Validate tag, version and release notes
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: python release_support.py "$RELEASE_TAG"
+          RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+        run: |
+          version=$(python release_support.py)
+          python release_support.py "${RELEASE_TAG:-v$version}"
 
   build:
     needs: validate
@@ -69,6 +72,33 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: build-windows.bat
+      - name: Test Windows installation and upgrade
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          $releases = gh release list --repo $env:GITHUB_REPOSITORY --limit 100 --json tagName,isDraft,isPrerelease | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot list baseline releases' }
+          $previous = $releases | Where-Object {
+            !$_.isDraft -and !$_.isPrerelease -and $_.tagName -match '^v\d+\.\d+$' -and
+            [version]($_.tagName.Substring(1)) -lt [version]$version
+          } | Sort-Object { [version]($_.tagName.Substring(1)) } -Descending | Select-Object -First 1
+          if (!$previous) { throw 'No previous release available for upgrade test' }
+          $baseline = Join-Path $env:RUNNER_TEMP 'installer-baseline'
+          gh release download $previous.tagName --repo $env:GITHUB_REPOSITORY --pattern '*-windows-x64-setup.exe' --dir $baseline
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot download baseline installer' }
+          $oldInstaller = Get-ChildItem "$baseline\*-setup.exe" | Select-Object -ExpandProperty FullName
+          Write-Output "Testing upgrade from $($previous.tagName) to $version"
+          ./packaging/test-windows-installer.ps1 -Installer "dist/installer/TikoPlay-$version-windows-x64-setup.exe" -PreviousInstaller $oldInstaller -Version $version
+      - name: Save Windows installer test logs
+        if: always() && runner.os == 'Windows'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-installer-logs
+          path: ${{ runner.temp }}/installer-logs/*.log
+          if-no-files-found: ignore
       - name: Test Python
         shell: bash
         run: |
@@ -89,6 +119,7 @@ jobs:
           retention-days: 7
 
   publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 10

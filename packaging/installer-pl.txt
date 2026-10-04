@@ -1,0 +1,9 @@
+TikoPlay instaluje się tylko dla bieżącego użytkownika. Nie potrzebujesz Pythona ani Node.js.
+
+Przed aktualizacją zatrzymaj nasłuch i wybierz „Zakończ TikoPlay” z ikony obok zegara. Zamknięcie karty przeglądarki nie zamyka aplikacji.
+
+Aktualizacja zachowuje profile i ustawienia. Instalator używa katalogu poprzedniej instalacji. Skrót w menu Start jest zawsze dostępny; skrót na pulpicie możesz wybrać w kolejnym kroku. Istniejący skrót nie jest usuwany przez odznaczenie tej opcji.
+
+Odinstalowanie usuwa program i jego skróty, ale pozostawia dane w %APPDATA%\TikoPlay. Dzięki temu ponowna instalacja zachowa konfigurację. Dane logowania w Menedżerze poświadczeń Windows również pozostają; odłącz konta i usuń klucze w aplikacji przed jej odinstalowaniem, jeśli chcesz je usunąć.
+
+Po instalacji uruchom TikoPlay z menu Start. Panel otworzy się w domyślnej przeglądarce. Instalator nie uruchamia nasłuchu LIVE.

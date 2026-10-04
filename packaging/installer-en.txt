@@ -1,0 +1,9 @@
+TikoPlay installs for the current user only. Python and Node.js are not required.
+
+Before updating, stop listening and select "Quit TikoPlay" from the system tray icon. Closing the browser tab does not close the application.
+
+Updates preserve profiles and settings and reuse the previous installation folder. A Start menu shortcut is always available; the desktop shortcut is optional. Deselecting this option does not remove an existing shortcut.
+
+Uninstalling removes the application and its shortcuts, but keeps data in %APPDATA%\TikoPlay so that reinstalling preserves your configuration. Credentials in Windows Credential Manager also remain; disconnect accounts and remove API keys in the application before uninstalling if you want to remove them.
+
+After installation, launch TikoPlay from the Start menu. The panel opens in your default browser. The installer does not start LIVE listening.

@@ -1,5 +1,13 @@
 # TikoPlay — kontekst techniczny
 
+## Instalator Windows — v0.28, 2026-10-04
+
+Ograniczona zmiana istniejącego Inno Setup: PL/EN i informacje przed instalacją, opcjonalny pulpit (unchecked, UsePreviousTasks), jawnie opcjonalny start po instalacji, ograniczenie x64compatible. Zachowano AppId, per-user, tryb rejestru i UsePreviousAppDir, żeby aktualizacja trafiała w poprzednią instalację. Restart Manager uwzględnia także PYD; bez force i bez automatycznego restartu. Brak usuwania AppData/poświadczeń lub wildcardowego czyszczenia instalacji. Odznaczenie pulpitu nie usuwa istniejącego skrótu.
+
+Nowy test `packaging/test-windows-installer.ps1` wymaga jednorazowego GitHub-hosted Windows i czystego stanu TikoPlay. Sprawdza świeżą instalację PL bez pulpitu, aktualizację poprzedniego opublikowanego instalatora w niestandardowym katalogu, EN z pulpitem, reinstalację, hash EXE, rejestr i skróty, start gotowego EXE/health/panel, deinstalację i hashe fixtur AppData. Aplikacja startuje na osobnych danych, bez LIVE; wymuszone zakończenie to wyłącznie sprzątanie testu, nie test poprawnego shutdown. `workflow_dispatch` buduje/testuje bez publikacji; publikacja tylko z tagu po sukcesie wszystkich jobów. Szczegóły i ograniczenia: `docs/PACKAGING.md`, `releases/v0.28.md`.
+
+Lokalnie: 274 testy Python zaliczone (1 natywny pominięty), 53 frontend. Pierwszy przebieg Python w sandboxie miał 11 błędów blokady gniazd; ten sam zestaw poza sandboxem przeszedł. Review wykrył maskowanie testu pulpitu przez skrót z poprzedniej wersji — test teraz usuwa odziedziczony skrót i sprawdza jego odtworzenie oraz pamięć wyboru. Build Windows i test instalatora oczekują na workflow. Ręczny odbiór na czystym Windows 10/11 bez Pythona/Node, konta bez uprawnień administratora, kreatora PL/EN i zamykania z traya podczas LIVE pozostaje otwarty. Nie utożsamiać runnera Windows Server 2022 z takim odbiorem.
+
 ## Ochrona gry i awaryjny STOP — v0.27, 2026-10-04
 
 Wdrożono podstawowy zakres zadania 6; natywny odbiór Windows i fizycznego skrótu w paczce pozostaje otwarty. `OutputGuard` i `TargetIdentity` porównują ścieżkę aplikacji, PID i czas uruchomienia procesu. macOS: NSWorkspace/NSRunningApplication (Cocoa już w zależnościach); Windows: GetForegroundWindow, EnumWindows, QueryFullProcessImageNameW, GetProcessTimes. Brak wyniku lub wyjątek odczytu blokuje chronione wyjście. Cel dotyczy całej aplikacji, nie konkretnego okna/dialogu.

@@ -20,9 +20,13 @@ Potrzebne Python, Node.js oraz Inno Setup 6 z ISCC.exe w PATH:
 build-windows.bat
 ```
 
-Wynik: `dist\TikoPlay\TikoPlay.exe` i `dist\installer\TikoPlay-<VERSION>-windows-x64-setup.exe`. Buduj Pythonem x64. Instalacja per-user tworzy skróty na pulpicie i w menu Start. Dane w AppData nie należą do katalogu instalacji i pozostają po odinstalowaniu.
+Wynik: `dist\TikoPlay\TikoPlay.exe` i `dist\installer\TikoPlay-<VERSION>-windows-x64-setup.exe`. Buduj Pythonem x64. Kreator PL/EN instaluje dla bieżącego użytkownika bez UAC w `%LOCALAPPDATA%\Programs\TikoPlay`. Wymaga systemu obsługującego aplikacje x64. Skrót w menu Start jest stały, pulpit jest opcjonalny (domyślnie odznaczony); przy ponownej instalacji wybór jest zapamiętywany. Odznaczenie nie usuwa istniejącego skrótu. Uruchomienie na ostatniej stronie również wymaga zaznaczenia.
 
-Przed aktualizacją zakończ program z traya. Podpis Authenticode i certyfikat dystrybucyjny muszą zostać dostarczone przez wydawcę. Automatyczny build i testy nie zastępują odbioru instalatora na Windows.
+Aktualizacja używa tego samego AppId i poprzedniego katalogu instalacji, także niestandardowego. Zachowujemy dotychczasowy tryb rejestru instalatora; samo dodanie ograniczenia architektury nie zmienia go na 64-bitowy. Profile, preferencje, ustawienia OBS i kopie konfiguracji w `%APPDATA%\TikoPlay` pozostają przy aktualizacji i odinstalowaniu. Poświadczenia systemowe też pozostają — w celu ich usunięcia wcześniej odłącz konta/usuń klucze w aplikacji. Instalator nie czyści całych katalogów wildcardem i nie usuwa danych użytkownika.
+
+Przed aktualizacją zakończ program z traya (zamknięcie karty nie wystarcza). Restart Manager sprawdza używane EXE/DLL/PYD; nie stosujemy `CloseApplications=force` ani automatycznego restartu aplikacji. Rzeczywiste zamykanie podczas LIVE wymaga ręcznego odbioru. Podpis Authenticode i certyfikat dystrybucyjny muszą zostać dostarczone przez wydawcę.
+
+`packaging/test-windows-installer.ps1` działa wyłącznie na jednorazowym runnerze GitHub Windows i odmawia pracy przy istniejącej instalacji/danych. Testuje świeżą instalację PL bez pulpitu, aktualizację z poprzedniego opublikowanego instalatora w niestandardowym katalogu, EN z pulpitem, reinstalację, start zainstalowanego EXE i odpowiedzi health/panel oraz deinstalację. Sumy kontrolne plików-fixtur w AppData potwierdzają zachowanie danych. Start używa osobnego katalogu i nie uruchamia LIVE; proces jest kończony wymuszenie tylko w sprzątaniu testu. Nie jest to odbiór traya, klawiatury ani migracji konfiguracji aplikacji. Runner ma narzędzia developerskie, więc nadal potrzebny jest ręczny odbiór na czystym Windows 10/11 bez Pythona/Node, na zwykłym koncie: PL/EN, obie opcje skrótu, aktualizacja działającej aplikacji po jej zamknięciu z traya, profile i deinstalacja.
 
 ## Wydanie z tagu
 
@@ -40,3 +44,5 @@ Workflow korzysta wyłącznie z oficjalnych akcji GitHub i wbudowanego `GITHUB_T
 Uruchom z ikony na komputerze bez środowiska developerskiego. Sprawdź ponowne kliknięcie, otwarcie panelu, restart, zamknięcie z traya, konfigurację po aktualizacji i prawa do wysyłania klawiszy. Na macOS testuj tożsamość gotowej .app, nie tylko interpretera Python, ponieważ uprawnienia Dostępność są przypisane do aplikacji.
 
 Paczki testowe nie powinny zastępować stabilnego wydania przed zakończeniem macierzy w WEB_UI_ACCEPTANCE.md.
+
+Workflow można uruchomić ręcznie (`workflow_dispatch`) przed tagowaniem: buduje i testuje wszystkie paczki, ale nie publikuje wydania. Test instalatora pobiera najwyższe wcześniejsze stabilne wydanie spośród ostatnich 100 i blokuje publikację przy błędzie. Logi Inno Setup są zapisywane jako osobny artefakt.
