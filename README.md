@@ -2,7 +2,7 @@
 
 Komentarze TikTok LIVE lub wiadomości czatu Twitch uruchamiają klawisze w aktywnym oknie gry. Aplikacja działa lokalnie w Pythonie, a panel otwiera się w przeglądarce.
 
-[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18, nakładka OBS od 0.21, kontrola spamu i kolejki od 0.24; pozostałe zadania są propozycjami.
+[Pomysły i szczegółowy plan rozwoju](docs/superpowers/plans/2026-09-28-roadmap-rozwoju.md) — osiem kierunków rozwoju, zależności, etapy wdrożenia i kryteria odbioru. Profile gier są wdrożone od 0.12, przytrzymania i sekwencje od 0.14, symulator od 0.18, nakładka OBS od 0.21, kontrola spamu i kolejki od 0.24, ochrona gry i STOP od 0.27; pozostałe zadania są propozycjami.
 
 ## Profile gier
 
@@ -18,9 +18,17 @@ Dotychczasowa konfiguracja v1–v6 jest migrowana do v7 z zachowaniem oryginalne
 
 W **Mapowaniach** wpisz komentarz i wybierz klawisz. **Więcej opcji** otwiera edycję kombinacji i sekwencji. W rozwiniętym edytorze wybierz typ kroku: **Naciśnięcie**, **Przytrzymanie** (50–3000 ms) lub **Pauza** (10–3000 ms). Przyciski dodają kroki, strzałki zmieniają ich kolejność. Limit: 20 kroków i łącznie 10000 ms przytrzymań/pauz. Przykład: `right` przytrzymany 750 ms → pauza 100 ms → naciśnięcie `space`.
 
-Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; ochrona fokusu nie jest częścią tej wersji. Kolejka domyślnie ma 100 oczekujących akcji i 1 s na rozpoczęcie; wartości można zmienić w Kontroli spamu — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
+Stop, rozłączenie i fail-safe przerywają sekwencję oraz zwalniają klawisze. Błąd zwalniania blokuje wyjście do restartu aplikacji. Klawisze nadal trafiają do aktywnego okna; opcjonalna ochrona fokusu jest dostępna w zakładce Ochrona gry. Kolejka domyślnie ma 100 oczekujących akcji i 1 s na rozpoczęcie; wartości można zmienić w Kontroli spamu — długa sekwencja może spowodować pominięcie starszych oczekujących komentarzy. Nie ma gwarancji czasu rzeczywistego ani cleanup po wymuszonym zabiciu procesu.
 
 Stare mapowania automatycznie stają się pojedynczym krokiem naciśnięcia. Niepełne kroki i niepoprawne czasy pozostają w szkicu, blokując zapis i Start do poprawienia.
+
+## Ochrona gry i awaryjny STOP
+
+Uruchom grę, otwórz **Ochronę gry**, zaznacz **Chroń wybraną aplikację**, wybierz proces i kliknij **Zastosuj ochronę i skrót**. Po rozpoczęciu nasłuchu przełącz się do gry; po 3 sekundach stabilnego fokusu wyjście zostanie włączone. Przełączenie aplikacji pauzuje sterowanie i usuwa kolejkę. Aby wrócić, kliknij **Wznów sterowanie** i przełącz się do gry. Powrót do gry sam nie wznawia wyjścia.
+
+Domyślny globalny STOP to **Ctrl+Alt+Shift+F10** (na Macu Alt = Option). W panelu można wybrać F9 lub F11. Status rejestracji jest widoczny; konflikt nie jest przedstawiany jako działający skrót. STOP tylko zatrzymuje, nigdy nie uruchamia. Po restarcie TikoPlay ochrona jest wyłączona, cel wymaga ponownego wyboru, a skrót wraca do F10. Po restarcie gry wybierz jej nowy proces.
+
+Ochrona dotyczy całej aplikacji, nie jej poszczególnych okien/dialogów. Między odczytem fokusu a wysłaniem klawisza pozostaje niewielki wyścig systemowy. Natywny odbiór Windows i fizycznego skrótu w spakowanej aplikacji pozostaje do wykonania — szczegóły w [opisie wydania](releases/v0.27.md).
 
 ## Kontrola spamu i kolejki
 

@@ -1004,3 +1004,6 @@ label > textarea {
 .control-decisions li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 12px 0; border-bottom: 1px solid #ffffff20; overflow-wrap: anywhere; }
 .control-decisions li > span { min-width: 0; }
 @media (max-width: 650px) { .control-limit-grid, .control-counters { grid-template-columns: 1fr; } }
+
+.output-safety select { display:block; width:100%; height:44px; margin:8px 0 16px; }
+.output-safety h3 { margin-top:28px; }

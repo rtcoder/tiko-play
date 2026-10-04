@@ -11,6 +11,7 @@ from PySide6.QtCore import QObject, Signal
 from websockets.asyncio.client import connect as websocket_connect
 
 from src.adapters.chat import ChatAdapterFactory
+from src.adapters.focus import focus_port
 from src.adapters.pyautogui_keyboard import PyAutoGUIKeyboard
 from src.adapters.twitch_auth import TwitchAuthService
 from src.adapters.twitch_credentials import NativeCredentialStore
@@ -23,8 +24,9 @@ from src.core.events import EventBus
 from src.core.keyboard import KeyboardExecutor
 from src.core.listener_service import ListenerService
 from src.core.models import AppError
-from src.core.preferences import PreferencesStore
+from src.core.output_guard import OutputGuard
 from src.core.overlay import OverlayProjection, OverlayStore
+from src.core.preferences import PreferencesStore
 from src.desktop.overlay_server import OverlayServer
 from src.twitch_settings import get_twitch_client_id
 
@@ -35,8 +37,9 @@ class BackendHost(QObject):
     state_changed = Signal(dict)
     language_changed = Signal(str)
 
-    def __init__(self, data_dir, static_dir, *, preferences=None):
+    def __init__(self, data_dir, static_dir, *, preferences=None, hotkey=None):
         super().__init__()
+        self.hotkey = hotkey
         self.preferences = preferences or PreferencesStore(
             data_dir / "preferences.json"
         )
@@ -106,7 +109,10 @@ class BackendHost(QObject):
                         self.listener.keyboard_result, kind, payload
                     )
 
-            keyboard = KeyboardExecutor(PyAutoGUIKeyboard(), report=report)
+            guard = OutputGuard(focus_port())
+            keyboard = KeyboardExecutor(
+                PyAutoGUIKeyboard(), report=report, output_check=guard.can_execute
+            )
             twitch_http = httpx.AsyncClient(
                 timeout=10, follow_redirects=False, trust_env=False
             )
@@ -120,6 +126,7 @@ class BackendHost(QObject):
                 ),
                 keyboard,
                 bus,
+                guard=guard,
             )
             overlay_store = OverlayStore(self.data_dir / "overlay.json")
             self.overlay = OverlayServer(
@@ -143,6 +150,8 @@ class BackendHost(QObject):
                 preferences=self.preferences,
                 on_language_changed=self.language_changed.emit,
                 overlay=self.overlay,
+                output_guard=guard,
+                emergency_hotkey=self.hotkey,
             )
             config = uvicorn.Config(
                 app,

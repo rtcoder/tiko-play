@@ -240,6 +240,8 @@ Rozszerzamy istniejące zabezpieczenia o ustawienia profilu i informację, dlacz
 
 ## Zadanie 6. Blokada sterowania poza grą i awaryjny STOP
 
+Status 2026-10-04: podstawowy zakres wdrożony w v0.27. Natywny odbiór Windows i fizycznego skrótu w paczce pozostaje otwarty. Szczegóły: `2026-10-04-output-safety.md`. F10 zastępuje proponowane F12, którego Windows rezerwuje dla debuggera.
+
 ### Opis i zakres
 
 Użytkownik wybiera uruchomioną aplikację docelową. TikoPlay wysyła wejście tylko, gdy ta aplikacja jest na pierwszym planie. Utrata fokusu pauzuje sterowanie, ale może pozostawić odczyt czatu. Niezależny systemowy skrót zatrzymuje całą sesję, także gdy panel jest schowany.

@@ -45,6 +45,8 @@ def create_app(
     preferences=None,
     on_language_changed=None,
     overlay=None,
+    output_guard=None,
+    emergency_hotkey=None,
 ):
     preferences = preferences or PreferencesStore(
         store.path.with_name("preferences.json")
@@ -133,6 +135,88 @@ def create_app(
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["Cache-Control"] = "no-store"
         return response
+
+    from src.core.output_guard import TargetIdentity
+    from typing import Literal
+
+    class SafetyWrite(BaseModel):
+        enabled: bool
+        target: TargetIdentity | None = None
+        key: Literal["F9", "F10", "F11"] = "F10"
+
+    @app.get("/api/output-safety")
+    async def safety_state():
+        state = (
+            output_guard.state() if output_guard else {"enabled": False, "target": None}
+        )
+        try:
+            targets = (
+                await asyncio.to_thread(output_guard.targets) if output_guard else []
+            )
+            error = None if output_guard else "Ochrona fokusu jest niedostępna."
+        except Exception:
+            targets = []
+            error = "Nie można odczytać aplikacji. Sprawdź uprawnienia systemowe."
+        return {
+            **state,
+            "targets": [t.model_dump() for t in targets],
+            "error": error,
+            "hotkey": emergency_hotkey.state()
+            if emergency_hotkey
+            else {
+                "key": "F10",
+                "active": False,
+                "error": "Skrót systemowy jest niedostępny.",
+            },
+        }
+
+    @app.put("/api/output-safety")
+    async def safety_write(payload: SafetyWrite):
+        async with configuration_action:
+            if listener.state().status in ("connecting", "connected", "stopping"):
+                raise AppError(
+                    "listener_busy",
+                    "Zatrzymaj nasłuch przed zmianą ochrony.",
+                    status=409,
+                )
+            if output_guard is None:
+                raise AppError(
+                    "focus_unavailable", "Ochrona fokusu jest niedostępna.", status=409
+                )
+            if payload.enabled:
+                try:
+                    targets = await asyncio.to_thread(output_guard.targets)
+                except Exception as exc:
+                    raise AppError(
+                        "focus_unavailable",
+                        "Nie można odczytać aplikacji. Sprawdź uprawnienia systemowe.",
+                        status=409,
+                    ) from exc
+                target = next(
+                    (
+                        t
+                        for t in targets
+                        if payload.target and t.same_process(payload.target)
+                    ),
+                    None,
+                )
+                if target is None:
+                    raise AppError(
+                        "target_missing",
+                        "Wybierz działającą aplikację. Po restarcie gry wybierz ją ponownie.",
+                        status=422,
+                    )
+            else:
+                target = None
+            if emergency_hotkey:
+                await asyncio.wrap_future(emergency_hotkey.configure(payload.key))
+            output_guard.configure(payload.enabled, target)
+            return await safety_state()
+
+    @app.post("/api/output-safety/resume")
+    async def safety_resume():
+        async with configuration_action:
+            return listener.resume_output().model_dump()
 
     @app.get("/api/health")
     async def health():

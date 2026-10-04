@@ -39,7 +39,15 @@ class ReleaseError(Exception):
 
 
 class KeyboardExecutor:
-    def __init__(self, port, clock=time.monotonic, report=lambda *a: None):
+    def __init__(
+        self,
+        port,
+        clock=time.monotonic,
+        report=lambda *a: None,
+        *,
+        output_check=lambda: True,
+    ):
+        self.output_check = output_check
         self.port = port
         self.clock = clock
         self.report = report
@@ -121,6 +129,23 @@ class KeyboardExecutor:
         )
 
     def _cancelled(self, action):
+        with self._condition:
+            if not self._valid(action):
+                return True
+        try:
+            allowed = self.output_check()
+        except Exception:
+            allowed = False
+        if not allowed:
+            with self._condition:
+                # Never disable a newer generation from an old in-flight check.
+                if self._valid(action):
+                    self.disable()
+                    self.report(
+                        "focus_lost",
+                        {"generation": action.generation, "output_epoch": self._epoch},
+                    )
+            return True
         with self._condition:
             return not self._valid(action)
 

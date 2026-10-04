@@ -1,5 +1,20 @@
 # TikoPlay — kontekst techniczny
 
+## Ochrona gry i awaryjny STOP — v0.27, 2026-10-04
+
+Wdrożono podstawowy zakres zadania 6; natywny odbiór Windows i fizycznego skrótu w paczce pozostaje otwarty. `OutputGuard` i `TargetIdentity` porównują ścieżkę aplikacji, PID i czas uruchomienia procesu. macOS: NSWorkspace/NSRunningApplication (Cocoa już w zależnościach); Windows: GetForegroundWindow, EnumWindows, QueryFullProcessImageNameW, GetProcessTimes. Brak wyniku lub wyjątek odczytu blokuje chronione wyjście. Cel dotyczy całej aplikacji, nie konkretnego okna/dialogu.
+
+Executor sprawdza `output_check` przed klawiszami/krokami i w pętli hold/wait z interwałem do 50 ms. Wynik negatywny wyłącza executor, zwiększa epokę, czyści kolejkę i raportuje focus_lost z generacją/epoką. Listener ma dodatkowy monitor 50 ms dla bezczynności. Pauza pozostawia czat, ale nie przyjmuje nowych akcji. Wznowienie z panelu czeka na fokus i 3 s jego ciągłości; powrót fokusu po pauzie nie wznawia automatycznie. STOP i cleanup anulują monitor/oczekiwanie, a stara generacja/epoka nie zatrzymuje nowego wyjścia.
+
+`EmergencyHotkey` żyje na głównym wątku Qt. macOS używa Carbon RegisterEventHotKey/InstallEventHandler, Windows RegisterHotKey/WM_HOTKEY i natywnego filtra Qt. Domyślnie Ctrl+Alt+Shift+F10, warianty F9/F11; F12 nie jest używany ze względu na rezerwację Windows. Zmiana z API idzie sygnałem Qt i Future; nowa rejestracja przed zwolnieniem starej. Błąd widoczny, poprzedni skrót pozostaje aktywny. Callback wywołuje istniejący BackendHost.request_stop. Rejestracja zwalniana przy zamknięciu.
+
+`GET/PUT /api/output-safety` i `POST /api/output-safety/resume` korzystają z sesji/origin/CSRF i wspólnej blokady Start/config. Zmiana celu lub skrótu zabroniona podczas connecting/connected/stopping. API ponownie weryfikuje wybraną tożsamość na liście aktualnych procesów. Stan ochrony i skrótu dotyczy bieżącego uruchomienia — brak zapisu PID w profilu. Konfiguracja pozostaje v7, eksport v3. Publiczny OBS nie zawiera nazw/ścieżek procesów.
+
+Weryfikacja: 274 testy Python (1 natywny pominięty), 53 frontend; PID reuse, wyjątek odczytu, przerwanie hold i release, oczekiwanie/odliczanie, brak auto-resume, STOP, konflikt skrótu, auth/CSRF i blokada zmian LIVE. Natywna próba macOS: tożsamości dostępne, rejestracja poprawna, duplikat odrzucony, ponowna rejestracja po close poprawna. Automatyzacja naciśnięcia skrótu w oknie testowym zakończyła się timeoutem — nie uznano odbioru fizycznego skrótu. Dodatkowy test potwierdza wykonanie rejestracji zgłoszonej z wątku backendu na głównym wątku Qt. Build macOS arm64 0.27, metadane wersji, codesign --verify --deep --strict i hdiutil verify poprawne. Panel PL/EN sprawdzony z atrapami (wybór, zastosowanie, odliczanie, Stop, pola blokowane podczas LIVE), brak poziomego overflow i błędów konsoli. Review wychwycił brak tłumaczeń, uzupełniono i zweryfikowano EN.
+
+Ograniczenia: odczyt i wejście OS nie są atomowe, 50 ms nie jest gwarancją, brak kontroli osobnych okien tej samej aplikacji. Odbiór Windows/gry/LIVE, dialogów systemowych i utraty uprawnień pozostaje niewykonany. Plan: `docs/superpowers/plans/2026-10-04-output-safety.md`.
+
+
 ## Kontrola spamu i kolejki — v0.24, 2026-10-01
 
 Wdrożono zadanie 5 roadmapy. Zakładka Kontrola spamu zapisuje `GameProfile.limits`: action_cooldown_ms 0–60000 (300), viewer_cooldown_ms 0–60000 (0), queue_capacity 1–100 (100), action_ttl_ms 100–5000 (1000). Nowe ustawienia działają od kolejnego Startu. Konfiguracja v7 migruje wcześniejsze pliki z kopią oryginału; format eksportu v3 obejmuje limity, importer v1/v2 zachowuje domyślne. Podgląd importu pokazuje parametry.
@@ -74,7 +89,7 @@ Weryfikacja: 191 testów Python poprawnych, 1 natywny pominięty; 31 testów fro
 
 ## Roadmapa rozwoju — 2026-09-28
 
-Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2, 5 i 7 oraz podstawową nakładkę z zadania 4 (bez odbioru w OBS); pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
+Na prośbę użytkownika zapisano [opis i szczegółowy plan ośmiu rozszerzeń](superpowers/plans/2026-09-28-roadmap-rozwoju.md): profile gier, przytrzymywanie/sekwencje, głosowanie, nakładka transmisji, konfigurowalne limity, ochrona fokusu i awaryjny STOP, symulator oraz widz przy sterach. Dokument określa zależności, proponowane parametry, pliki, interfejsy, kroki testowania i odbiór. W chwili zapisania roadmapy był to wyłącznie plan. Obecnie wdrożono zadania 1, 2, 5 i 7, podstawową ochronę z zadania 6 oraz podstawową nakładkę z zadania 4 (bez odbioru w OBS); pozostałe wymagają osobnego wdrożenia. Istniejące limity kolejki (100 akcji, ważność 1 s) zostały uwzględnione jako punkt wyjścia, nie jako brakująca funkcja.
 
 Wersja 0.9 obejmuje dokumentację roadmapy i aktualizację numeru wymaganą przez zasady tagowania każdego zestawu zmian. Nie zmienia zachowania aplikacji; wcześniejsze sekcje opisują stan odpowiednich historycznych wydań.
 

@@ -158,6 +158,10 @@ def run_desktop():
         guard.close()
         return 1
     host = BackendHost(data, resource_path("frontend/dist"), preferences=preferences)
+    from src.desktop.emergency_hotkey import EmergencyHotkey
+
+    hotkey = EmergencyHotkey(host.request_stop)
+    host.hotkey = hotkey
     controller = LauncherController(host)
     app.controller = controller
     from src.desktop.tray import TrayController
@@ -172,3 +176,4 @@ def run_desktop():
         host.thread.join(1)
         guard.close()
         tray.close()
+        hotkey.close()

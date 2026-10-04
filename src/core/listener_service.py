@@ -12,8 +12,17 @@ from src.core.rate_limits import RateLimiter
 
 class ListenerService:
     def __init__(
-        self, factory, keyboard, events, clock=time.monotonic, sleep=asyncio.sleep
+        self,
+        factory,
+        keyboard,
+        events,
+        clock=time.monotonic,
+        sleep=asyncio.sleep,
+        *,
+        guard=None,
     ):
+        self.guard = guard
+        self._arming = None
         self.factory = factory
         self.keyboard = keyboard
         self.events = events
@@ -148,12 +157,82 @@ class ListenerService:
         self._change(status="stopped", output="disabled")
         return self.state()
 
+    def pause_focus(self):
+        if self._state.status != "connected" or self._stop:
+            return
+        self.keyboard.disable()
+        if self._arming and not self._arming.done():
+            self._arming.cancel()
+        self._change(output="paused_focus")
+
+    def resume_output(self):
+        if (
+            not self.guard
+            or not self.guard.enabled
+            or self._state.status != "connected"
+            or self._stop
+        ):
+            raise AppError(
+                "resume_unavailable", "Wznowienie jest teraz niedostępne.", status=409
+            )
+        if self._state.output == "enabled" or (
+            self._arming and not self._arming.done()
+        ):
+            return self.state()
+        self._change(output="waiting_focus")
+        self._arming = asyncio.create_task(self._arm_output(self._state.generation))
+        return self.state()
+
+    async def _arm_output(self, generation):
+        since = None
+        try:
+            while (
+                not self._stop
+                and generation == self._state.generation
+                and self._state.status == "connected"
+            ):
+                if not self.guard.can_execute():
+                    since = None
+                    if self._state.output != "waiting_focus":
+                        self._change(output="waiting_focus")
+                else:
+                    if since is None:
+                        since = self.clock()
+                        self._change(output="countdown")
+                    if self.clock() - since >= 3:
+                        self.keyboard.enable(generation)
+                        self._change(output="enabled")
+                        return
+                await asyncio.sleep(0.05)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            self.keyboard.disable()
+            self._change(
+                output="paused_focus",
+                error={
+                    "code": "output_unavailable",
+                    "message": "Nie można włączyć sterowania. Sprawdź uprawnienia i uruchom aplikację ponownie.",
+                },
+            )
+
+    async def _watch_focus(self):
+        while True:
+            if self._state.output == "enabled" and not self.guard.can_execute():
+                self.pause_focus()
+            await asyncio.sleep(0.05)
+
     def keyboard_result(self, kind, payload):
         if (
             payload.get("code") != "keyboard_release_error"
             and payload.get("generation", self._state.generation)
             != self._state.generation
         ):
+            return
+        if kind == "focus_lost":
+            if payload.get("output_epoch") != self.keyboard.output_epoch:
+                return
+            self.pause_focus()
             return
         if kind == "skipped":
             self._record(
@@ -206,6 +285,7 @@ class ListenerService:
     async def _run(self, snapshot):
         child = None
         countdown = None
+        focus_watch = None
         try:
             matcher = Matcher(snapshot.config, self.clock)
             generation = self._state.generation
@@ -270,6 +350,13 @@ class ListenerService:
                 status="connected",
                 output="countdown" if snapshot.config.countdown_enabled else "disabled",
             )
+            if self.guard and self.guard.enabled:
+                self.resume_output()
+                focus_watch = asyncio.create_task(self._watch_focus())
+                await child
+                raise AppError(
+                    "connection_lost", "Połączenie z czatem zostało zakończone"
+                )
             if snapshot.config.countdown_enabled:
                 countdown = asyncio.create_task(self.sleep(3))
                 done, _ = await asyncio.wait(
@@ -311,7 +398,7 @@ class ListenerService:
         finally:
             self._cleaning = True
             self.keyboard.disable()
-            for task in (countdown, child):
+            for task in (self._arming, focus_watch, countdown, child):
                 if task:
                     task.cancel()
                     with suppress(asyncio.CancelledError, Exception):
@@ -320,5 +407,6 @@ class ListenerService:
                 with suppress(Exception, asyncio.CancelledError):
                     await asyncio.wait_for(self._client.disconnect(), 2)
             self._client = None
+            self._arming = None
             if self._stop:
                 self._change(status="stopped", output="disabled")

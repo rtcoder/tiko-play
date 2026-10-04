@@ -24,6 +24,7 @@ import type {
   ProfileTemplate,
 } from "./api/types";
 import { ConfigController } from "./state/configController";
+import { OutputSafety } from "./components/OutputSafety";
 import { ControlLimits } from "./components/ControlLimits";
 import { OverlaySettings } from "./components/OverlaySettings";
 import { ChatSimulator } from "./components/ChatSimulator";
@@ -172,6 +173,7 @@ export default function App() {
             ["Mapowania", "⌨"],
             ["Symulator", "▷"],
             ["Kontrola spamu", "◷"],
+            ["Ochrona gry", "◈"],
             ["Nakładka OBS", "▣"],
             ["Ustawienia", "⚙"],
           ].map(([name, icon]) => (
@@ -209,7 +211,7 @@ export default function App() {
             <h1>{t(section)}</h1>
             <p>{t("Oddaj stery swojej społeczności.")}</p>
           </div>
-          {section !== "Nakładka OBS" && (
+          {!["Nakładka OBS", "Ochrona gry"].includes(section) && (
             <div className="header-actions">
               <div className="save-indicator">
                 <span
@@ -324,7 +326,13 @@ export default function App() {
                               )
                             : state?.output === "enabled"
                               ? t("Wysyłanie klawiszy jest aktywne.")
-                              : t("Nasłuch gotowy do uruchomienia.")}
+                              : state?.output === "paused_focus"
+                                ? t(
+                                    "Sterowanie jest wstrzymane. Czat nadal jest połączony.",
+                                  )
+                                : state?.output === "waiting_focus"
+                                  ? t("Oczekiwanie na wybraną grę.")
+                                  : t("Nasłuch gotowy do uruchomienia.")}
                       </p>
                     </div>
                   </div>
@@ -363,7 +371,11 @@ export default function App() {
                   </div>
                 )}
                 <ProfileManager
-                  compact={["Mapowania", "Kontrola spamu"].includes(section)}
+                  compact={[
+                    "Mapowania",
+                    "Kontrola spamu",
+                    "Ochrona gry",
+                  ].includes(section)}
                   config={editor.draft}
                   templates={templates}
                   disabled={!!running || busy || !connected || editor.conflict}
@@ -380,7 +392,36 @@ export default function App() {
                 />
               </>
             )}
+            {state?.output === "paused_focus" && (
+              <div className="notice">
+                {t("Sterowanie wstrzymane — gra straciła fokus.")}
+                <button
+                  disabled={busy || !connected}
+                  onClick={() =>
+                    void action(() =>
+                      request("/api/output-safety/resume", "POST"),
+                    )
+                  }
+                >
+                  {t("Wznów sterowanie")}
+                </button>
+              </div>
+            )}
+            {state?.output === "waiting_focus" && (
+              <div className="notice">
+                {t(
+                  "Przełącz się do wybranej gry. Po 3 sekundach stabilnego fokusu sterowanie zostanie włączone.",
+                )}
+              </div>
+            )}
             <fieldset className="editor-fields" disabled={busy}>
+              {section === "Ochrona gry" && (
+                <OutputSafety
+                  running={!!running}
+                  connected={connected}
+                  output={state?.output ?? "disabled"}
+                />
+              )}
               {section === "Nakładka OBS" && (
                 <OverlaySettings connected={connected} />
               )}
@@ -527,7 +568,7 @@ export default function App() {
                   <EventLog events={events} onClear={() => setEvents([])} />
                 )}
             </fieldset>
-            {section !== "Nakładka OBS" && (
+            {!["Nakładka OBS", "Ochrona gry"].includes(section) && (
               <footer>
                 <span>{t("Ustawienia zapisują się automatycznie.")}</span>
                 <button
